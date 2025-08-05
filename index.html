@@ -26,14 +26,8 @@
 </style>
 </head>
 <body>
-<script>
-  setTimeout(() => {
-    const overlay = document.getElementById('glassOverlay');
-    if (overlay) overlay.remove();
-    // Aktifkan kembali scroll setelah overlay hilang
-    document.body.style.overflow = 'auto';
-  }, 3000); // ganti angka ini untuk durasi yang berbeda
-</script>
+<div id="glassOverlay"></div>
+
 
 <h1>BUKU TAMU INSPEKTORAT DAERAH</h1>
 
@@ -646,6 +640,14 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+</script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    const overlay = document.getElementById('glassOverlay');
+    if (overlay) overlay.remove();
+  }, 5000); // 5000ms = 5 detik
+});
 </script>
 
 </body>
