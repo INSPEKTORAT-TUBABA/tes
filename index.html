@@ -26,8 +26,7 @@
 </style>
 </head>
 <body>
-
-<!-- Tambahkan overlay di sini -->
+<!-- Overlay Super Transparan -->
 <div id="glassOverlay"></div>
 
 <style>
@@ -37,12 +36,13 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.03); /* sangat transparan */
+  backdrop-filter: blur(1px);            /* efek kaca lembut */
   z-index: 9999;
-  pointer-events: all;
+  pointer-events: all;                   /* blok interaksi */
 }
 </style>
+
 <h1>BUKU TAMU INSPEKTORAT DAERAH</h1>
 
 <!-- Tombol untuk toggle antara form dan data -->
