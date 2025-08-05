@@ -26,22 +26,14 @@
 </style>
 </head>
 <body>
-<!-- Overlay Super Transparan -->
-<div id="glassOverlay"></div>
-
-<style>
-#glassOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.03); /* sangat transparan */
-  backdrop-filter: blur(1px);            /* efek kaca lembut */
-  z-index: 9999;
-  pointer-events: all;                   /* blok interaksi */
-}
-</style>
+<script>
+  setTimeout(() => {
+    const overlay = document.getElementById('glassOverlay');
+    if (overlay) overlay.remove();
+    // Aktifkan kembali scroll setelah overlay hilang
+    document.body.style.overflow = 'auto';
+  }, 3000); // ganti angka ini untuk durasi yang berbeda
+</script>
 
 <h1>BUKU TAMU INSPEKTORAT DAERAH</h1>
 
