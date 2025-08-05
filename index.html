@@ -26,6 +26,23 @@
 </style>
 </head>
 <body>
+
+<!-- Tambahkan overlay di sini -->
+<div id="glassOverlay"></div>
+
+<style>
+#glassOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  pointer-events: all;
+}
+</style>
 <h1>BUKU TAMU INSPEKTORAT DAERAH</h1>
 
 <!-- Tombol untuk toggle antara form dan data -->
