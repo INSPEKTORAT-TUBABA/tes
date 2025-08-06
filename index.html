@@ -156,8 +156,7 @@
 </select><br/><br/>
 
 <label>URAIAN: <span class="required">*</span></label>
-<textarea id="uraian" required rows="2" style="width: 100%; resize: none; overflow: hidden;" oninput="autoResize(this)"></textarea><br/><br/>
-
+<input id="uraian" required type="text"/><br/><br/>
 
 <label>NOMOR HP: <span class="required">*</span></label>
 <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text"/><br/><br/>
@@ -181,10 +180,6 @@
 <img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
-function autoResize(textarea) {
-  textarea.style.height = 'auto'; // reset tinggi agar bisa dihitung ulang
-  textarea.style.height = (textarea.scrollHeight) + 'px';
-}
 
 </form>
 </div>
@@ -268,17 +263,10 @@ function autoResize(textarea) {
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
-ctx.strokeStyle = '#0b3dcc'; // Biru tinta
-ctx.lineWidth = 3.2; // Lebih tebal
-ctx.lineCap = 'round';
-ctx.lineJoin = 'round';
-
-// Efek bayangan seperti tinta basah
-ctx.shadowColor = '#0b3dcc';
-ctx.shadowBlur = 1.5;
-ctx.shadowOffsetX = 0;
-ctx.shadowOffsetY = 0;
-
+    ctx.strokeStyle = '#0b3dcc';
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     let drawing = false;
     let hasSignature = false;
