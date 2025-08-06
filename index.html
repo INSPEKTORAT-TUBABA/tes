@@ -397,25 +397,16 @@ ctx.shadowBlur = 0.6;
       };
     }
 
-     const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#0A4EF';
-    ctx.lineWidth = 2.8;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    function clearSignature() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSignature = false;
 
-function setupCanvasStyle() {
+  // Setel ulang tinta biru realistis setelah dibersihkan
   ctx.strokeStyle = '#0A4EFF';
   ctx.lineWidth = 2.3;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.globalAlpha = 0.98;
-  ctx.shadowColor = '#0A4EFF';
-  ctx.shadowBlur = 0.6;
-}
-
-setupCanvasStyle();
-
+  
 
     // Kamera dan foto
     const video = document.getElementById('video');
