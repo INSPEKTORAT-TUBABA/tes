@@ -18,8 +18,20 @@
     .error { border: 2px solid red; }
     .success { border: 2px solid green; }
     .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px; }
-
+<!-- Tombol Sticky: Kembali ke Layar Utama -->
 <style>
+<script>
+  window.addEventListener('load', () => {
+    const overlay = document.getElementById('glassOverlay');
+    overlay.style.display = 'block';
+
+    // Opsional: hilangkan overlay setelah 3 detik
+    setTimeout(() => {
+      overlay.style.display = 'none';
+    }, 3000);
+  });
+</script>
+
 #btnHome {
   position: fixed;
   bottom: 20px;
@@ -48,6 +60,12 @@
 </style>
 </head>
 <body>
+<div id="glassOverlay" style="display: none;">
+  <div style="text-align:center; margin-top: 50%; font-size: 24px; color: black;">
+    ⏳ Memuat...
+  </div>
+</div>
+
 <h1>BUKU TAMU INSPEKTORAT DAERAH</h1>
 
 <!-- Tombol untuk toggle antara form dan data -->
