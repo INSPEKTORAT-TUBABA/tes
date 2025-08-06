@@ -328,13 +328,7 @@
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#1a237e'; // Biru mirip tinta pena
-ctx.lineWidth = 2.4;
-ctx.lineCap = 'round';
-ctx.lineJoin = 'round';
-ctx.shadowColor = 'rgba(26,35,126,0.3)';
-ctx.shadowBlur = 1.2;
-
+setSignatureStyle();
 function setSignatureStyle() {
   ctx.strokeStyle = '#1a237e'; // Warna biru tinta
   ctx.lineWidth = 2.4;
@@ -402,9 +396,11 @@ function setSignatureStyle() {
     }
 
     function clearSignature() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      hasSignature = false;
-    }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  setSignatureStyle(); // Terapkan kembali warna dan gaya
+  hasSignature = false;
+}
+
 
     // Kamera dan foto
     const video = document.getElementById('video');
