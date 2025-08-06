@@ -257,6 +257,7 @@
         const originalWidth = 700;
         const newWidth = Math.min(window.innerWidth - 40, originalWidth);
         signatureCanvas.width = newWidth;
+    setupCanvasStyle();
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas(); // Panggil saat halaman pertama kali dimuat
@@ -327,22 +328,28 @@
 
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
-const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0b3dcc';
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-// Tinta biru langit tua realistis
-ctx.strokeStyle = '#1976D2';     // Tinta biru pena realistis
-ctx.lineWidth = 2.3;
-ctx.lineCap = 'round';
-ctx.lineJoin = 'round';
-ctx.globalAlpha = 0.98;
-ctx.shadowColor = '#0A4EFF';
-ctx.shadowBlur = 0.6;
+function setupCanvasStyle() {
+  ctx.strokeStyle = '#0A4EFF';
+  ctx.lineWidth = 2.3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha = 0.98;
+  ctx.shadowColor = '#0A4EFF';
+  ctx.shadowBlur = 0.6;
+}
 
-    ;
+setupCanvasStyle();
 
 
     let drawing = false;
     let hasSignature = false;
+  setupCanvasStyle();
 
     function startDrawing(e) {
       drawing = true;
@@ -398,19 +405,10 @@ ctx.shadowBlur = 0.6;
     }
 
     function clearSignature() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  hasSignature = false;
-
-  // Setel ulang tinta biru realistis setelah dibersihkan
-  ctx.strokeStyle = '#0A4EFF';
-  ctx.lineWidth = 2.3;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.globalAlpha = 0.98;
-  ctx.shadowColor = '#0A4EFF';
-  ctx.shadowBlur = 0.6;
-}
-
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSignature = false;
+  setupCanvasStyle();
+    }
 
     // Kamera dan foto
     const video = document.getElementById('video');
@@ -572,6 +570,7 @@ ctx.shadowBlur = 0.6;
       
       // Reset variabel status
       hasSignature = false;
+  setupCanvasStyle();
       hasPhoto = false;
       
       // Reset tanda tangan
@@ -744,6 +743,7 @@ ctx.shadowBlur = 0.6;
     // Sembunyikan overlay saat halaman dimuat
     window.addEventListener('load', function() {
         overlay.style.display = 'none';
+    setupCanvasStyle();
     });
 
     if ('serviceWorker' in navigator) {
