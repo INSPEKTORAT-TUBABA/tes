@@ -327,19 +327,17 @@
 
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
-const ctx = canvas.getContext('2d');
-
-// Tinta biru langit tua realistis
-ctx.strokeStyle = '#0A4EFF';     // Tinta biru pena realistis
-ctx.lineWidth = 2.3;
+  const ctx = canvas.getContext('2d');
+ctx.strokeStyle = '#0b3dcc'; // Biru tinta
+ctx.lineWidth = 3.2; // Lebih tebal
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
-ctx.globalAlpha = 0.98;
-ctx.shadowColor = '#0A4EFF';
-ctx.shadowBlur = 0.6;
 
-    ;
-
+// Efek bayangan seperti tinta basah
+ctx.shadowColor = '#0b3dcc';
+ctx.shadowBlur = 1.5;
+ctx.shadowOffsetX = 0;
+ctx.shadowOffsetY = 0;
 
     let drawing = false;
     let hasSignature = false;
@@ -398,15 +396,9 @@ ctx.shadowBlur = 0.6;
     }
 
     function clearSignature() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  hasSignature = false;
-
-  // Setel ulang tinta biru realistis setelah dibersihkan
-  ctx.strokeStyle = '#0A4EFF';
-  ctx.lineWidth = 2.3;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSignature = false;
+    }
 
     // Kamera dan foto
     const video = document.getElementById('video');
