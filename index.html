@@ -327,12 +327,15 @@
 
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#1a237e';     // Lebih mirip tinta pena
-    ctx.lineWidth = 2.4;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = 0.9;
+const ctx = canvas.getContext('2d');
+
+// Tinta biru langit tua realistis
+ctx.strokeStyle = '#1976D2';
+ctx.lineWidth = 2.4;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.globalAlpha = 1.0;
+
     ;
 
 
