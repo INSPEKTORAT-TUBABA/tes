@@ -257,7 +257,6 @@
         const originalWidth = 700;
         const newWidth = Math.min(window.innerWidth - 40, originalWidth);
         signatureCanvas.width = newWidth;
-    setupCanvasStyle();
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas(); // Panggil saat halaman pertama kali dimuat
@@ -328,28 +327,22 @@
 
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#0A4EFF';
-    ctx.lineWidth = 2.8;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+const ctx = canvas.getContext('2d');
 
-function setupCanvasStyle() {
-  ctx.strokeStyle = '#0A4EFF';
-  ctx.lineWidth = 2.3;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.globalAlpha = 0.98;
-  ctx.shadowColor = '#0A4EFF';
-  ctx.shadowBlur = 0.6;
-}
+// Tinta biru langit tua realistis
+ctx.strokeStyle = '#0A4EFF';     // Tinta biru pena realistis
+ctx.lineWidth = 2.3;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.globalAlpha = 0.98;
+ctx.shadowColor = '#0A4EFF';
+ctx.shadowBlur = 0.6;
 
-setupCanvasStyle();
+    ;
 
 
     let drawing = false;
     let hasSignature = false;
-  setupCanvasStyle();
 
     function startDrawing(e) {
       drawing = true;
@@ -404,11 +397,25 @@ setupCanvasStyle();
       };
     }
 
-    function clearSignature() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      hasSignature = false;
-  setupCanvasStyle();
-    }
+     const canvas = document.getElementById('signature-pad');
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0A4EF';
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+function setupCanvasStyle() {
+  ctx.strokeStyle = '#0A4EFF';
+  ctx.lineWidth = 2.3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha = 0.98;
+  ctx.shadowColor = '#0A4EFF';
+  ctx.shadowBlur = 0.6;
+}
+
+setupCanvasStyle();
+
 
     // Kamera dan foto
     const video = document.getElementById('video');
@@ -570,7 +577,6 @@ setupCanvasStyle();
       
       // Reset variabel status
       hasSignature = false;
-  setupCanvasStyle();
       hasPhoto = false;
       
       // Reset tanda tangan
@@ -743,7 +749,6 @@ setupCanvasStyle();
     // Sembunyikan overlay saat halaman dimuat
     window.addEventListener('load', function() {
         overlay.style.display = 'none';
-    setupCanvasStyle();
     });
 
     if ('serviceWorker' in navigator) {
