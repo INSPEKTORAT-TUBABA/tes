@@ -19,6 +19,7 @@
       max-width: 700px; 
       margin: auto; 
       padding: 20px 10px; /* Padding samping untuk layar kecil */
+      overflow-x: hidden; /* Mencegah pengguliran horizontal */
     }
     
     label { font-weight: bold; }
@@ -97,6 +98,12 @@
       .data-images {
         flex-direction: row; /* Tampilan horizontal di layar lebih besar */
       }
+    }
+
+    /* Memastikan elemen-elemen ini responsif */
+    #signature-pad, #video, #canvas, #previewFoto {
+      max-width: 100%;
+      height: auto;
     }
 
 </style>
@@ -220,7 +227,7 @@
 <div class="warning" id="signatureWarning" style="display:none;">
 ⚠️ Tanda tangan wajib diisi!
 </div>
-<canvas height="200" id="signature-pad" style="border:1px solid #ccc;" width="700"></canvas><br/>
+<canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
 <button onclick="clearSignature()" type="button">🧹 Bersihkan Tanda Tangan</button><br/><br/>
 
 <label>Foto: <span class="required">*</span></label>
@@ -250,6 +257,16 @@
 </div>
 
 <script>
+    // Penyesuaian lebar canvas saat jendela diubah ukurannya
+    const signatureCanvas = document.getElementById('signature-pad');
+    function resizeCanvas() {
+        const originalWidth = 700;
+        const newWidth = Math.min(window.innerWidth - 40, originalWidth);
+        signatureCanvas.width = newWidth;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Panggil saat halaman pertama kali dimuat
+
     const asal = document.getElementById("asal");
     const daftarInstansi = document.getElementById("daftarInstansi");
     const daftarMasyarakat = document.getElementById("daftarMasyarakat");
