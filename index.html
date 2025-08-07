@@ -213,6 +213,10 @@
 
 <label>URAIAN: <span class="required">*</span></label>
 <textarea id="uraian" required rows="2" style="resize: vertical; overflow-y: hidden;" oninput="autoResize(this)"></textarea>
+function autoResize(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
 
 
 <label>NOMOR HP: <span class="required">*</span></label>
