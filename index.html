@@ -751,20 +751,5 @@
       });
     }
 </script>
-<<script>
-  const uraian = document.getElementById('uraian');
-  uraian.addEventListener('input', function () {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-  });
-
-  // Trigger awal agar textarea menyesuaikan tinggi jika ada teks dari awal
-  window.addEventListener('load', function () {
-    uraian.style.height = 'auto';
-    uraian.style.height = uraian.scrollHeight + 'px';
-  });
-</script>
-
-
 </body>
 </html>
