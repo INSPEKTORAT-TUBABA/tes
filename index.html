@@ -212,11 +212,7 @@
 </select><br/><br/>
 
 <label>URAIAN: <span class="required">*</span></label>
-    function autoResize(textarea) {
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-}
-<textarea id="uraian" required rows="2" style="resize: vertical; overflow-y: hidden;" oninput="autoResize(this)"></textarea>
+<textarea id="uraian" required rows="2" style="resize: vertical; overflow-y: hidden;" oninput="autoResize(this)"></textarea><br/><br/>
 
 <label>NOMOR HP: <span class="required">*</span></label>
 <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text"/><br/><br/>
@@ -464,6 +460,10 @@
         alert('❌ Gagal mengambil foto!\n\nError: ' + error.message);
       }
     }
+function autoResize(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
 
     // Validasi dan simpan data
     function simpanData() {
