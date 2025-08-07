@@ -212,7 +212,7 @@
 </select><br/><br/>
 
 <label>URAIAN: <span class="required">*</span></label>
-<input id="uraian" required rows="2" style="resize: vertical; overflow-y: hidden;" oninput="autoResize(this)"></textarea><br/><br/>
+<textarea id="uraian" required rows="2" style="width: 100%; resize: none; overflow: hidden;"></textarea>
 
 <label>NOMOR HP: <span class="required">*</span></label>
 <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text"/><br/><br/>
@@ -751,6 +751,20 @@
       });
     }
 </script>
+<<script>
+  const uraian = document.getElementById('uraian');
+  uraian.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+  });
+
+  // Trigger awal agar textarea menyesuaikan tinggi jika ada teks dari awal
+  window.addEventListener('load', function () {
+    uraian.style.height = 'auto';
+    uraian.style.height = uraian.scrollHeight + 'px';
+  });
+</script>
+
 
 </body>
 </html>
