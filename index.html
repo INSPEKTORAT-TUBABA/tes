@@ -467,45 +467,21 @@
     let dataBukuTamu = [];
 
     // Akses kamera
-    let kameraAktif = false;
-    function ambilFoto() {
-  if (!kameraAktif) {
-    // Klik pertama: aktifkan kamera
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" }
+      video: {
+        facingMode: "user"
+      }
     }).then(stream => {
       video.srcObject = stream;
-      kameraAktif = true;
-      alert("📷 Kamera aktif. Klik sekali lagi untuk mengambil foto.");
     }).catch(error => {
       console.error("Tidak dapat mengakses kamera:", error);
-      alert("❌ Gagal mengakses kamera:\n" + error.message);
+      alert("Kamera tidak tersedia atau ditolak. Silakan izinkan akses kamera.");
     });
-  } else {
-    // Klik kedua: ambil foto
-    const context = canvasFoto.getContext('2d');
-    canvasFoto.width = video.videoWidth || 300;
-    canvasFoto.height = video.videoHeight || 225;
-    context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
-    previewFoto.src = canvasFoto.toDataURL('image/png');
-    previewFoto.style.display = 'block';
-    canvasFoto.style.display = 'none';
-    hasPhoto = true;
-
-    // Feedback sukses
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '✅ Foto Diambil!';
-    button.style.background = '#28a745';
-
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = '';
-    }, 2000);
-  }
-}
-
+    function ambilFoto() {
+      const now = Date.now();
+      if (now - lastFotoTime < 1000) return;
+      lastFotoTime = now;
 
       // Cek apakah video sedang aktif
       if (!video.srcObject || video.readyState !== 4) {
@@ -523,14 +499,7 @@
         previewFoto.style.display = 'block';
         canvasFoto.style.display = 'none';
         hasPhoto = true;
-        const stream = video.srcObject;
-if (stream) {
-  const tracks = stream.getTracks();
-  tracks.forEach(track => track.stop());
-  video.srcObject = null;
-  kameraAktif = false;
-}
-
+        
         // Feedback sukses
         const button = event.target;
         const originalText = button.innerHTML;
