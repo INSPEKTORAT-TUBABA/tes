@@ -212,7 +212,8 @@
 </select><br/><br/>
 
 <label>URAIAN: <span class="required">*</span></label>
-<textarea id="uraian" required rows="2" style="width:100%; padding:6px; resize:none; overflow:hidden;"></textarea><br/><br/>
+<textarea id="uraian" required rows="2" style="resize: vertical; overflow-y: hidden;" oninput="autoResize(this)"></textarea>
+
 
 <label>NOMOR HP: <span class="required">*</span></label>
 <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text"/><br/><br/>
