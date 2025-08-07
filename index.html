@@ -327,11 +327,12 @@
 
     // Tanda tangan
     const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#0b3dcc';
-    ctx.lineWidth = 2.8;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+        const signaturePad = new SignaturePad(canvas, {
+            penColor: '#0000FF', // Deep blue to mimic real pen
+            minWidth: 1,
+            maxWidth: 2.5 // Natural stroke width
+        });
+
 
 
     let drawing = false;
