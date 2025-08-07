@@ -254,10 +254,24 @@
     // Penyesuaian lebar canvas saat jendela diubah ukurannya
     const signatureCanvas = document.getElementById('signature-pad');
     function resizeCanvas() {
-        const originalWidth = 700;
-        const newWidth = Math.min(window.innerWidth - 40, originalWidth);
-        signatureCanvas.width = newWidth;
-    }
+        function resizeCanvas() {
+  const originalWidth = 700;
+  const newWidth = Math.min(window.innerWidth - 40, originalWidth);
+
+  // Simpan isi kanvas sebelum resize
+  const tempData = signatureCanvas.toDataURL();
+
+  // Atur ulang lebar kanvas (ini akan menghapus isi kanvas)
+  signatureCanvas.width = newWidth;
+
+  // Gambar ulang dari data yang sudah disimpan
+  const img = new Image();
+  img.onload = function () {
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = tempData;
+}
+
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas(); // Panggil saat halaman pertama kali dimuat
 
