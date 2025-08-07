@@ -463,12 +463,13 @@
 
 
     // Validasi dan simpan data
-    function autoResize(textarea) {
+    
+    function simpanData() {
+      function autoResize(textarea) {
   textarea.style.height = 'auto';
   textarea.style.height = textarea.scrollHeight + 'px';
 }
-    function simpanData() {
-      const form = document.getElementById('bukuTamuForm');
+        const form = document.getElementById('bukuTamuForm');
       const signatureWarning = document.getElementById('signatureWarning');
       const photoWarning = document.getElementById('photoWarning');
       
