@@ -101,7 +101,31 @@
       height: auto;
       width: 100%; /* Memastikan elemen mengikuti lebar container */
     }
+header-gambar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
 
+    .foto-kepala {
+      width: 80px;
+      height: auto;
+    }
+
+    .logo {
+      width: 100px;
+      height: auto;
+    }
+
+    @media (max-width: 600px) {
+      .header-gambar {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
 </style>
 </head>
 <body>
