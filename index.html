@@ -273,57 +273,8 @@
 <canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
 <br/>
 <button type="button" onclick="ambilFoto()">📸 Ambil Foto</button>
-<let cameraStreamStarted = false;
-
-function ambilFoto() {
-  // Tampilkan video jika belum tampil
-  video.style.display = 'block';
-
-  // Mulai kamera hanya sekali
-  if (!cameraStreamStarted) {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-      .then(stream => {
-        video.srcObject = stream;
-        cameraStreamStarted = true;
-      })
-      .catch(error => {
-        console.error("Tidak dapat mengakses kamera:", error);
-        alert("Kamera tidak tersedia atau ditolak. Silakan izinkan akses kamera.");
-      });
-    return; // Tunggu kamera siap sebelum ambil foto
-  }
-
-  // Ambil foto dari video
-  const now = Date.now();
-  if (now - lastFotoTime < 1000) return;
-  lastFotoTime = now;
-
-  try {
-    const context = canvasFoto.getContext('2d');
-    canvasFoto.width = video.videoWidth || 300;
-    canvasFoto.height = video.videoHeight || 225;
-    context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-    
-    previewFoto.src = canvasFoto.toDataURL('image/png');
-    previewFoto.style.display = 'block';
-    canvasFoto.style.display = 'none';
-    hasPhoto = true;
-
-    // Feedback
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '✅ Foto Berhasil!';
-    button.style.background = '#28a745';
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = '';
-    }, 2000);
-
-  } catch (error) {
-    console.error('Error mengambil foto:', error);
-    alert('❌ Gagal mengambil foto!\n\nError: ' + error.message);
-  }
-}
+<br/><br/>
+<img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
 
