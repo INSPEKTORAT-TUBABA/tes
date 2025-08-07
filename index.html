@@ -280,12 +280,6 @@
 <img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
-
-</form>
-</div>
-
-<div id="dataSection" style="display: none;">
-<h2>📊 DATA BUKU TAMU</h2>
 <div style="margin-bottom: 20px;">
 <button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px;">🗑️ Hapus Semua Data</button>
 </div>
@@ -293,7 +287,11 @@
 <p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>
 </div>
 </div>
+</form>
+</div>
 
+<div id="dataSection" style="display: none;">
+<h2>📊 DATA BUKU TAMU</h2>
 <script>
     // Penyesuaian lebar canvas saat jendela diubah ukurannya
     const signatureCanvas = document.getElementById('signature-pad');
