@@ -337,13 +337,18 @@
     let drawing = false;
     let hasSignature = false;
 
-    function startDrawing(e) {
-      drawing = true;
-      hasSignature = true;
-      const pos = getCanvasPos(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-    }
+   function startDrawing(e) {
+  drawing = true;
+  hasSignature = true;
+  ctx.strokeStyle = '#0000FF'; // Set ulang warna biru setiap kali mulai menggambar
+  ctx.lineWidth = 2.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const pos = getCanvasPos(e);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
 
     function draw(e) {
       if (!drawing) return;
