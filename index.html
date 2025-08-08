@@ -467,74 +467,53 @@
     let dataBukuTamu = [];
 
     // Akses kamera
-    // Kamera akan diaktifkan saat tombol ditekan
-// navigator.mediaDevices.getUserMedia({
-//   video: {
-//     facingMode: "user"
-//   }
-// }).then(stream => {
-//   video.srcObject = stream;
-// });
-
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user"
+      }
+    }).then(stream => {
+      video.srcObject = stream;
     }).catch(error => {
       console.error("Tidak dapat mengakses kamera:", error);
       alert("Kamera tidak tersedia atau ditolak. Silakan izinkan akses kamera.");
     });
 
     function ambilFoto() {
-let streamKamera = null;
+      const now = Date.now();
+      if (now - lastFotoTime < 1000) return;
+      lastFotoTime = now;
 
-async function ambilFoto(event) {
-  const now = Date.now();
-  if (now - lastFotoTime < 1000) return;
-  lastFotoTime = now;
+      // Cek apakah video sedang aktif
+      if (!video.srcObject || video.readyState !== 4) {
+        alert('❌ Kamera belum siap atau tidak tersedia!\n\nSilakan:\n1. Izinkan akses kamera\n2. Tunggu kamera loading\n3. Atau gunakan opsi upload foto');
+        return;
+      }
 
-  // Jika kamera belum aktif, aktifkan dulu
-  if (!streamKamera) {
-    try {
-      streamKamera = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      video.srcObject = streamKamera;
-
-      const tombol = event.target;
-      tombol.innerHTML = '🎥 Kamera Siap! Klik Lagi untuk Ambil Foto';
-      tombol.style.background = '#ffc107';
-
-      return; // Stop di sini. Pengguna perlu klik lagi untuk ambil foto
-    } catch (error) {
-      console.error("Gagal mengakses kamera:", error);
-      alert("❌ Kamera tidak tersedia atau akses ditolak.");
-      return;
-    }
-  }
-
-  // Kamera sudah aktif, ambil foto
-  try {
-    const context = canvasFoto.getContext('2d');
-    canvasFoto.width = video.videoWidth || 300;
-    canvasFoto.height = video.videoHeight || 225;
-    context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-    
-    previewFoto.src = canvasFoto.toDataURL('image/png');
-    previewFoto.style.display = 'block';
-    canvasFoto.style.display = 'none';
-    hasPhoto = true;
-
-    const tombol = event.target;
-    const originalText = tombol.innerHTML;
-    tombol.innerHTML = '✅ Foto Berhasil!';
-    tombol.style.background = '#28a745';
-
-    setTimeout(() => {
-      tombol.innerHTML = originalText;
-      tombol.style.background = '';
-    }, 2000);
-    
-  } catch (error) {
-    console.error('Error mengambil foto:', error);
-    alert('❌ Gagal mengambil foto!\n\nError: ' + error.message);
-  }
-}
-
+      try {
+        const context = canvasFoto.getContext('2d');
+        canvasFoto.width = video.videoWidth || 300;
+        canvasFoto.height = video.videoHeight || 225;
+        context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+        
+        previewFoto.src = canvasFoto.toDataURL('image/png');
+        previewFoto.style.display = 'block';
+        canvasFoto.style.display = 'none';
+        hasPhoto = true;
+        
+        // Feedback sukses
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '✅ Foto Berhasil!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.background = '';
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Error mengambil foto:', error);
+        alert('❌ Gagal mengambil foto!\n\nError: ' + error.message);
       }
     }
 
