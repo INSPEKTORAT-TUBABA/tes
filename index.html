@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id"> 
+<html lang="id">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
@@ -269,21 +269,16 @@ input:focus, select:focus, textarea:focus {
 <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
 <button onclick="clearSignature()" type="button">🧹 Bersihkan Tanda Tangan</button><br/><br/>
 
-  <!-- Tombol ambil foto tetap di luar dan selalu terlihat -->
+<label>Foto: <span class="required">*</span></label>
+<div class="warning" id="photoWarning" style="display:none;">
+⚠️ Foto wajib diambil!
+</div>
+<video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
+<canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
+<br/>
 <button type="button" onclick="ambilFoto()">📸 Ambil Foto</button>
 <br/><br/>
-
-<!-- Bagian kamera & hasil foto disembunyikan dulu -->
-<div id="fotoSection" style="display: none;">
-  <label>Foto: <span class="required">*</span></label>
-  <div class="warning" id="photoWarning" style="display:none;">
-    ⚠️ Foto wajib diambil!
-  </div>
-  <video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
-  <canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
-  <br/>
-  <img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
-</div>
+<img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
 
