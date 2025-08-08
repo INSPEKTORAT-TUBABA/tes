@@ -273,10 +273,11 @@ input:focus, select:focus, textarea:focus {
 <div class="warning" id="photoWarning" style="display:none;">
 ⚠️ Foto wajib diambil!
 </div>
-<video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
-<canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
-<br/>
-<button type="button" onclick="ambilFoto()">📸 Ambil Foto</button>
+<!-- Awalnya disembunyikan -->
+<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video><br/>
+
+<!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
+<button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
 <br/><br/>
 <img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
