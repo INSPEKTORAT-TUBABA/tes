@@ -275,9 +275,16 @@ input:focus, select:focus, textarea:focus {
 
 <!-- Bagian foto disembunyikan dulu -->
 <div id="fotoSection" style="display: none;">
+ 
+  <!-- Tombol ambil foto tetap di luar dan selalu terlihat -->
+<button type="button" onclick="ambilFoto()">📸 Ambil Foto</button>
+<br/><br/>
+
+<!-- Bagian kamera & hasil foto disembunyikan dulu -->
+<div id="fotoSection" style="display: none;">
   <label>Foto: <span class="required">*</span></label>
   <div class="warning" id="photoWarning" style="display:none;">
-  ⚠️ Foto wajib diambil!
+    ⚠️ Foto wajib diambil!
   </div>
   <video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
   <canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
