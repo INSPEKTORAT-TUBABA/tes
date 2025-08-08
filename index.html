@@ -475,8 +475,7 @@ input:focus, select:focus, textarea:focus {
 
     // Akses kamera
    
-    function ambilFoto() {
-      let streamAktif = false;
+let streamAktif = false;
 
 async function ambilFoto() {
   const button = event.target;
@@ -519,41 +518,6 @@ async function ambilFoto() {
     button.style.background = '';
   }, 2000);
 }
-
-
-      // Cek apakah video sedang aktif
-      if (!video.srcObject || video.readyState !== 4) {
-        alert('❌ Kamera belum siap atau tidak tersedia!\n\nSilakan:\n1. Izinkan akses kamera\n2. Tunggu kamera loading\n3. Atau gunakan opsi upload foto');
-        return;
-      }
-
-      try {
-        const context = canvasFoto.getContext('2d');
-        canvasFoto.width = video.videoWidth || 300;
-        canvasFoto.height = video.videoHeight || 225;
-        context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-        
-        previewFoto.src = canvasFoto.toDataURL('image/png');
-        previewFoto.style.display = 'block';
-        canvasFoto.style.display = 'none';
-        hasPhoto = true;
-        
-        // Feedback sukses
-        const button = event.target;
-        const originalText = button.innerHTML;
-        button.innerHTML = '✅ Foto Berhasil!';
-        button.style.background = '#28a745';
-        
-        setTimeout(() => {
-          button.innerHTML = originalText;
-          button.style.background = '';
-        }, 2000);
-        
-      } catch (error) {
-        console.error('Error mengambil foto:', error);
-        alert('❌ Gagal mengambil foto!\n\nError: ' + error.message);
-      }
-    }
 
     // Validasi dan simpan data
     function simpanData() {
