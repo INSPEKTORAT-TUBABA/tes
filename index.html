@@ -479,24 +479,33 @@ input:focus, select:focus, textarea:focus {
 let streamAktif = false;
 
 async function ambilFoto() {
-  const button = event.target;
+if (!streamAktif) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+    video.srcObject = stream;
 
-  // Jika kamera belum aktif, aktifkan kamera terlebih dahulu
-  if (!streamAktif) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      video.srcObject = stream;
-      streamAktif = true;
+    // Pastikan video muncul di permukaan
+    video.style.setProperty('display', 'block', 'important');
+    video.style.width = '300px';
+    video.style.height = '225px';
+    video.style.background = 'black';
+    video.style.position = 'relative';
+    video.style.zIndex = '10';
 
-      button.innerHTML = '📸 Ambil Foto Sekarang';
-      button.style.background = '#ffc107';
-      return; // Jangan langsung ambil foto di awal
-    } catch (error) {
-      console.error("Tidak dapat mengakses kamera:", error);
-      alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan.");
-      return;
-    }
+    await video.play(); // Mulai memutar video
+
+    streamAktif = true;
+
+    button.innerHTML = '📸 Ambil Foto Sekarang';
+    button.style.background = '#ffc107';
+    return;
+  } catch (error) {
+    console.error("Tidak dapat mengakses kamera:", error);
+    alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan.");
+    return;
   }
+}
+
 
   // Kamera sudah aktif, ambil foto sekarang
   const context = canvasFoto.getContext('2d');
