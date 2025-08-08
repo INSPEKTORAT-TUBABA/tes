@@ -479,34 +479,36 @@ input:focus, select:focus, textarea:focus {
 let streamAktif = false;
 
 async function ambilFoto() {
-if (!streamAktif) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-    video.srcObject = stream;
+async function ambilFoto(event) {
+  const button = event.target;
 
-    // Pastikan video muncul di permukaan
-    video.style.setProperty('display', 'block', 'important');
-    video.style.width = '300px';
-    video.style.height = '225px';
-    video.style.background = 'black';
-    video.style.position = 'relative';
-    video.style.zIndex = '10';
+  // Jika kamera belum aktif, aktifkan kamera terlebih dahulu
+  if (!streamAktif) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" }
+      }).catch(() => {
+        // Fallback ke kamera default jika kamera depan gagal
+        return navigator.mediaDevices.getUserMedia({ video: true });
+      });
 
-    await video.play(); // Mulai memutar video
+      if (!stream) throw new Error("Tidak ada stream kamera");
 
-    streamAktif = true;
+      video.srcObject = stream;
+      video.style.setProperty('display', 'block', 'important');
+      await video.play();
 
-    button.innerHTML = '📸 Ambil Foto Sekarang';
-    button.style.background = '#ffc107';
-    return;
-  } catch (error) {
-    console.error("Tidak dapat mengakses kamera:", error);
-    alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan.");
-    return;
+      streamAktif = true;
+      button.innerHTML = '📸 Ambil Foto Sekarang';
+      button.style.background = '#ffc107';
+      return;
+
+    } catch (error) {
+      console.error("Tidak dapat mengakses kamera:", error);
+      alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+      return; // Jangan set streamAktif supaya tombol tetap bisa diklik lagi
+    }
   }
-}
-
-
   // Kamera sudah aktif, ambil foto sekarang
   const context = canvasFoto.getContext('2d');
   canvasFoto.width = video.videoWidth || 300;
