@@ -474,21 +474,52 @@ input:focus, select:focus, textarea:focus {
     let dataBukuTamu = [];
 
     // Akses kamera
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "user"
-      }
-    }).then(stream => {
-      video.srcObject = stream;
-    }).catch(error => {
-      console.error("Tidak dapat mengakses kamera:", error);
-      alert("Kamera tidak tersedia atau ditolak. Silakan izinkan akses kamera.");
-    });
-
+   
     function ambilFoto() {
-      const now = Date.now();
-      if (now - lastFotoTime < 1000) return;
-      lastFotoTime = now;
+      let streamAktif = false;
+
+async function ambilFoto() {
+  const button = event.target;
+
+  // Jika kamera belum aktif, aktifkan kamera terlebih dahulu
+  if (!streamAktif) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      video.srcObject = stream;
+      streamAktif = true;
+
+      button.innerHTML = '📸 Ambil Foto Sekarang';
+      button.style.background = '#ffc107';
+      return; // Jangan langsung ambil foto di awal
+    } catch (error) {
+      console.error("Tidak dapat mengakses kamera:", error);
+      alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan.");
+      return;
+    }
+  }
+
+  // Kamera sudah aktif, ambil foto sekarang
+  const context = canvasFoto.getContext('2d');
+  canvasFoto.width = video.videoWidth || 300;
+  canvasFoto.height = video.videoHeight || 225;
+  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+
+  previewFoto.src = canvasFoto.toDataURL('image/png');
+  previewFoto.style.display = 'block';
+  canvasFoto.style.display = 'none';
+  hasPhoto = true;
+
+  // Tampilkan feedback sukses
+  const originalText = button.innerHTML;
+  button.innerHTML = '✅ Foto Berhasil!';
+  button.style.background = '#28a745';
+
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.style.background = '';
+  }, 2000);
+}
+
 
       // Cek apakah video sedang aktif
       if (!video.srcObject || video.readyState !== 4) {
