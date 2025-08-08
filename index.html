@@ -269,16 +269,21 @@ input:focus, select:focus, textarea:focus {
 <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
 <button onclick="clearSignature()" type="button">🧹 Bersihkan Tanda Tangan</button><br/><br/>
 
-<label>Foto: <span class="required">*</span></label>
-<div class="warning" id="photoWarning" style="display:none;">
-⚠️ Foto wajib diambil!
-</div>
-<video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
-<canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
-<br/>
+<!-- Tombol tetap terlihat -->
 <button type="button" onclick="ambilFoto()">📸 Ambil Foto</button>
 <br/><br/>
-<img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
+
+<!-- Bagian foto disembunyikan dulu -->
+<div id="fotoSection" style="display: none;">
+  <label>Foto: <span class="required">*</span></label>
+  <div class="warning" id="photoWarning" style="display:none;">
+  ⚠️ Foto wajib diambil!
+  </div>
+  <video id="video" width="300" height="225" autoplay muted playsinline></video><br/>
+  <canvas id="canvas" width="300" height="225" style="display:none;"></canvas>
+  <br/>
+  <img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
+</div>
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
 
