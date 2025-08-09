@@ -290,9 +290,10 @@
 <label>Foto: <span class="required">*</span></label>
 <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
 
-<div id="previewContainer">
-    <img id="previewFoto" style="width: 100%; max-width: 300px; display: none; border: 1px solid #ccc; margin: 10px 0;" alt="Hasil Foto">
+<div id="photo-status">
+    <span id="photoStatusText" style="font-weight: bold;">Foto belum diambil.</span>
 </div>
+<br/>
 
 <button type="button" onclick="bukaKamera()" style="font-size: 16px;">📸 Ambil Foto</button>
 
@@ -353,6 +354,7 @@
     const kecamatan = document.getElementById("kecamatan");
     const desa = document.getElementById("desa");
     const instansi = document.getElementById("instansi");
+    const photoStatusText = document.getElementById('photoStatusText');
 
     const dataDesa = {
       "Lambu Kibang": ["Kibang Budi Jaya", "Lesung Bhakti Jaya", "Mekar Sari Jaya", "Pagar Jaya", "Gunung Sari", "Sumber Rejo", "Kibang Yekti Jaya", "Kibang Tri Jaya", "Gilang Tunggal Makarta", "Kibang Mulya Jaya"],
@@ -461,11 +463,11 @@
     const videoElement = document.getElementById('videoElement');
     const capturedPhoto = document.getElementById('capturedPhoto');
     const canvasFoto = document.getElementById('canvasFoto');
-    const previewFoto = document.getElementById('previewFoto'); // elemen img di form utama
     const btnAmbilFoto = document.getElementById('btnAmbilFoto');
 
     let streamAktif = null;
     let fotoDataURL = null; // Menyimpan data foto sementara
+    let hasPhoto = false;
 
     async function bukaKamera() {
       photoModal.style.display = 'flex';
@@ -498,6 +500,7 @@
       context.drawImage(videoElement, 0, 0, canvasFoto.width, canvasFoto.height);
       
       fotoDataURL = canvasFoto.toDataURL('image/png');
+      hasPhoto = true;
       capturedPhoto.src = fotoDataURL;
       capturedPhoto.style.display = 'block';
       videoElement.style.display = 'none';
@@ -507,18 +510,18 @@
 
       btnAmbilFoto.style.display = 'none';
       const btnSave = document.createElement('button');
-      btnSave.textContent = '✅ Simpan & Kembali';
+      btnSave.textContent = '✅ Simpan & Lihat Data';
       btnSave.className = 'btn-save';
-      btnSave.onclick = simpanFotoDanKembali;
+      btnSave.onclick = simpanFotoDanTutup; // Mengubah fungsi yang dipanggil
       document.getElementById('modalButtons').prepend(btnSave);
     }
 
-    function simpanFotoDanKembali() {
-        if (!fotoDataURL) return;
-        previewFoto.src = fotoDataURL;
-        previewFoto.style.display = 'block';
-        document.getElementById('photoWarning').style.display = 'none';
+    function simpanFotoDanTutup() {
+      if (simpanData()) { // Panggil simpanData() dan cek apakah berhasil
+        alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
         tutupModal();
+        showData(); // Langsung tampilkan data
+      }
     }
 
     function tutupModal() {
@@ -527,12 +530,19 @@
         streamAktif.getTracks().forEach(track => track.stop());
         streamAktif = null;
       }
-      // Hapus tombol simpan dan reset tombol ambil foto
       const btnSave = document.querySelector('.btn-save');
       if (btnSave) btnSave.remove();
       btnAmbilFoto.style.display = 'block';
       btnAmbilFoto.textContent = '📸 Ambil Foto';
       btnAmbilFoto.style.background = '#ffc107';
+      // Perbarui status foto di form utama
+      if(hasPhoto) {
+          photoStatusText.textContent = "Foto telah diambil. Siap disimpan.";
+          photoStatusText.style.color = "green";
+      } else {
+          photoStatusText.textContent = "Foto belum diambil.";
+          photoStatusText.style.color = "red";
+      }
     }
 
     let dataBukuTamu = [];
@@ -560,7 +570,7 @@
         canvas.classList.add('success');
       }
       
-      if (!previewFoto.src) {
+      if (!fotoDataURL) { // Menggunakan variabel global fotoDataURL
         photoWarning.style.display = 'block';
         isValid = false;
       }
@@ -588,26 +598,25 @@
           uraian: document.getElementById('uraian').value,
           nomorHp: nomorHp.value,
           tandaTangan: canvas.toDataURL('image/png'),
-          foto: previewFoto.src,
+          foto: fotoDataURL, // Menggunakan variabel global fotoDataURL
           timestamp: new Date().toLocaleString('id-ID')
         };
         
         dataBukuTamu.push(formData);
         updateDataCounter();
-        alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
-        resetFormComplete();
+        resetFormComplete(); // Reset formulir setelah data disimpan
+        return true; // Berhasil
       } else {
         alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan\n- Ambil foto");
+        return false; // Gagal
       }
     }
 
     function resetFormComplete() {
       document.getElementById('bukuTamuForm').reset();
       hasSignature = false;
-      fotoDataURL = null;
+      fotoDataURL = null; // Reset foto
       clearSignature();
-      previewFoto.style.display = 'none';
-      previewFoto.src = '';
       daftarInstansi.classList.add("hidden");
       daftarMasyarakat.classList.add("hidden");
       desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
@@ -619,6 +628,8 @@
       document.getElementById('signatureWarning').style.display = 'none';
       document.getElementById('photoWarning').style.display = 'none';
       document.getElementById('nama').focus();
+      photoStatusText.textContent = "Foto belum diambil."; // Reset status foto
+      photoStatusText.style.color = "red";
     }
 
     function showForm() {
