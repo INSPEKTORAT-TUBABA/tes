@@ -6,8 +6,7 @@
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#007bff" />
 <link rel="icon" href="icon-192.png" />
-
-<title>Buku Tamu Digital</title>
+<title>Buku Tamu Digital - Fix Validasi Nama</title>
 <style>
     /* Mengatur Box Model untuk Tata Letak Responsif */
     *, *::before, *::after { box-sizing: border-box; }
@@ -24,7 +23,7 @@
       padding: 20px 10px;
       min-height: 100vh;
     }
-    
+
     label { font-weight: bold; }
     select, input, textarea { 
       width: 100%; 
@@ -38,7 +37,7 @@
     .error { border: 2px solid red !important; }
     .success { border: 2px solid green !important; }
     .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px; }
-    
+
     /* Tombol Sticky: Kembali ke Layar Utama */
     #btnHome {
       position: fixed;
@@ -56,7 +55,7 @@
     }
     #btnHome:hover { background: #e0a800; }
     @media (min-width: 768px) { #btnHome { display: none; } }
-    
+
     /* Penyesuaian untuk tampilan data agar responsif */
     .data-card {
       border: 1px solid #ddd;
@@ -79,7 +78,7 @@
       margin-top: 15px;
     }
     @media (min-width: 500px) { .data-images { flex-direction: row; } }
-    
+
     #signature-pad, #capturedPhoto {
       max-width: 100%;
       height: auto;
@@ -102,7 +101,7 @@
       width: 100px;
       height: auto;
     }
-    
+
     /* ---- STYLE UNTUK MODAL FOTO BARU ---- */
     #photoModal {
       display: none; /* Awalnya sembunyi */
@@ -182,14 +181,14 @@
 <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
 
 <div id="formSection">
-    <form id="bukuTamuForm">
+    <form id="bukuTamuForm" autocomplete="off" onsubmit="return false;">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="validateNama();" onblur="checkAndShowNext('nama', 'field-asal')" />
+            <input id="nama" required type="text" oninput="validateNama();" />
             <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak boleh mengandung angka.</div>
             <br/>
         </div>
-        
+
         <div id="field-asal" style="display: none;">
             <label>INSTANSI/ASAL: <span class="required">*</span></label>
             <select id="asal" required onchange="checkAndShowNext('asal', 'field-pihakDitemui')">
@@ -259,7 +258,7 @@
                 <option value="">-- Pilih Desa --</option>
             </select><br/><br/>
         </div>
-        
+
         <div id="field-pihakDitemui" style="display: none;">
             <label>PIHAK YANG DITEMUI: <span class="required">*</span></label>
             <select id="pihakDitemui" required onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan')">
@@ -273,7 +272,7 @@
                 <option>IRBAN 4</option>
             </select><br/><br/>
         </div>
-        
+
         <div id="field-jenisLayanan" style="display: none;">
             <label>JENIS LAYANAN: <span class="required">*</span></label>
             <select id="jenisLayanan" required onchange="checkAndShowNext('jenisLayanan', 'field-uraian')">
@@ -288,24 +287,24 @@
                 <option>Tindak Lanjut Temuan</option>
             </select><br/><br/>
         </div>
-        
+
         <div id="field-uraian" style="display: none;">
             <label>URAIAN: <span class="required">*</span></label>
             <textarea id="uraian" required oninput="autoResize(this); checkAndShowNext('uraian', 'field-nomorHp')" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea><br/><br/>
         </div>
-        
+
         <div id="field-nomorHp" style="display: none;">
             <label>NOMOR HP: <span class="required">*</span></label>
             <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text" oninput="checkAndShowNext('nomorHp', 'field-tandaTangan')"/><br/><br/>
         </div>
-        
+
         <div id="field-tandaTangan" style="display: none;">
             <label>Tanda Tangan: <span class="required">*</span></label>
             <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi!</div>
             <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
             <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
         </div>
-        
+
         <div id="field-aksi" style="display: none;">
             <label>Foto: <span class="required">*</span></label>
             <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
@@ -374,7 +373,7 @@
         img.src = tempData;
     }
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    // panggil segera saat load di DOMContentLoaded
 
     // Konfigurasi gambar tanda tangan
     ctx.strokeStyle = '#0000FF';
@@ -497,42 +496,69 @@
     });
 
 
-    // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
+    // === VALIDASI NAMA: robust unicode + fallback ===
+    function countLetters(str) {
+        if (!str) return 0;
+        if (str.normalize) str = str.normalize('NFC');
+        try {
+            const m = str.match(/\p{L}/gu);
+            return m ? m.length : 0;
+        } catch (e) {
+            const fallback = str.match(/[A-Za-zÀ-ÖØ-öø-ÿĀ-žḀ-ẕǍ-ǰ]+/g) || [];
+            return fallback.reduce((acc, s) => acc + s.length, 0);
+        }
+    }
+
+    let namaComposing = false;
+
     function validateNama() {
+        if (namaComposing) return;
+
         const input = document.getElementById('nama');
         const warning = document.getElementById('namaWarning');
-        
-        // Hapus semua digit
-        input.value = input.value.replace(/\d+/g, '');
 
-        let hurufCount = 0;
-        try {
-            // Hitung huruf Unicode (lebih akurat)
-            hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-        } catch (e) {
-            // fallback: hanya huruf latin
-            hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        // Hapus angka otomatis (jaga posisi kursor)
+        const before = input.value;
+        const cleaned = before.replace(/\d/g, '');
+        if (cleaned !== before) {
+            const oldPos = input.selectionStart || cleaned.length;
+            input.value = cleaned;
+            try {
+                const shift = before.length - cleaned.length;
+                const newPos = Math.max(0, oldPos - shift);
+                input.setSelectionRange(newPos, newPos);
+            } catch (err) {}
         }
-        
-        // Hapus spasi dari input untuk mengecek apakah hanya ada simbol
-        const textWithoutSpaces = input.value.replace(/\s/g, '');
-        // Cek jika validasi terpenuhi
-        // Nama tidak valid jika hanya berisi spasi atau karakter non-huruf
-        const isValid = hurufCount >= 5 && (textWithoutSpaces.length > 0 && textWithoutSpaces.match(/\p{L}/u));
 
-        // Tampilkan/sembunyikan pesan error
+        const hurufCount = countLetters(input.value);
+        const isValid = hurufCount >= 5;
+
         if (isValid) {
             input.classList.remove('error');
             input.classList.add('success');
             warning.style.display = 'none';
+            document.getElementById('field-asal').style.display = 'block';
         } else {
             input.classList.remove('success');
             input.classList.add('error');
             warning.style.display = 'block';
-            // Sembunyikan field setelahnya
             hideFieldsAfter('field-nama');
         }
     }
+
+    // Pasang event composition untuk IME dan input listener
+    document.addEventListener('DOMContentLoaded', function () {
+        const namaEl = document.getElementById('nama');
+        if (namaEl) {
+            namaEl.addEventListener('compositionstart', () => { namaComposing = true; });
+            namaEl.addEventListener('compositionend', () => { namaComposing = false; validateNama(); });
+            namaEl.addEventListener('input', validateNama);
+        }
+        // resize canvas setelah DOM siap
+        resizeCanvas();
+        showForm();
+    });
+
     // Nomor HP: hanya angka
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -568,7 +594,7 @@
             videoElement.play();
         } catch (error) {
             console.error("Gagal mengakses kamera:", error);
-            alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+            alert("❌ Gagal mengakses kamera! Pastikan izin kamera sudah diberikan di pengaturan browser.");
             tutupModal();
         }
     }
@@ -582,7 +608,7 @@
     }
 
     function simpanFotoLangsung() {
-        if (!streamAktif && !videoElement) {
+        if (!streamAktif || !videoElement) {
             alert("Kamera belum aktif!");
             return;
         }
@@ -591,7 +617,7 @@
         canvasFoto.width = videoElement.videoWidth || 480;
         canvasFoto.height = videoElement.videoHeight || Math.round(canvasFoto.width * 3 / 4);
         context.drawImage(videoElement, 0, 0, canvasFoto.width, canvasFoto.height);
-        
+
         fotoDataURL = canvasFoto.toDataURL('image/png');
         hasPhoto = true;
 
@@ -629,14 +655,10 @@
         const currentElement = document.getElementById(currentElementId);
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
-        
-        // Khusus untuk nama, panggil fungsi validasi khusus
+
+        // Khusus untuk nama, validasinya ada di fungsi validateNama()
         if (currentElementId === 'nama') {
-             validateNama();
-             const namaInput = document.getElementById('nama');
-             if (namaInput.classList.contains('error')) {
-                isValid = false;
-             }
+             // Validasi nama sudah ditangani di oninput, tidak perlu lagi di sini
         } else if (currentElementId === 'signature-pad') {
             if (!hasSignature) {
                 signatureWarning.style.display = 'block';
@@ -659,7 +681,7 @@
                         isValid = false;
                     }
                 }
-                
+
                 if (currentElement.checkValidity() && isValid) {
                     currentElement.classList.remove('error');
                     currentElement.classList.add('success');
@@ -684,22 +706,27 @@
     function simpanData() {
         const form = document.getElementById('bukuTamuForm');
         let isValid = true;
-        
+
         // Reset warnings
         namaWarning.style.display = 'none';
         signatureWarning.style.display = 'none';
         photoWarning.style.display = 'none';
-        
+
         // Validasi form standar HTML5
         if (!form.reportValidity()) {
             isValid = false;
         }
 
-        // Validasi nama dengan fungsi custom
+        // Validasi nama dengan fungsi custom menggunakan countLetters()
         const namaInput = document.getElementById('nama');
-        validateNama();
-        if (namaInput.classList.contains('error')) {
+        let hurufCount = countLetters(namaInput.value);
+        if (hurufCount < 5 || namaInput.value.trim() === '') {
+            namaInput.classList.add('error');
+            namaWarning.style.display = 'block';
             isValid = false;
+        } else {
+            namaInput.classList.remove('error');
+            namaInput.classList.add('success');
         }
 
         // Validasi tanda tangan
@@ -733,7 +760,7 @@
                 foto: fotoDataURL,
                 timestamp: new Date().toLocaleString('id-ID')
             };
-            
+
             dataBukuTamu.push(formData);
             updateDataCounter();
             resetFormComplete();
@@ -742,7 +769,7 @@
             return false;
         }
     }
-    
+
     // Fungsi untuk tombol Simpan Data di halaman utama
     function simpanDataDanTutupForm() {
         if(simpanData()) {
@@ -765,7 +792,7 @@
         instansi.removeAttribute('required');
         kecamatan.removeAttribute('required');
         desa.removeAttribute('required');
-        
+
         // Sembunyikan semua bidang kecuali nama
         document.querySelectorAll('#formSection > form > div:not(#field-nama)').forEach(el => el.style.display = 'none');
 
@@ -857,7 +884,7 @@
             ];
             csvContent += row.join(",") + "\n";
         });
-        
+
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -872,14 +899,6 @@
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
-    
-    // Panggil fungsi ini saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', () => {
-        // Panggil fungsi resize canvas awal
-        resizeCanvas();
-        // Atur status awal tombol
-        showForm();
-    });
 
 </script>
 
