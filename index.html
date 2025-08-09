@@ -511,7 +511,7 @@
     }
 
     // Kalau kurang dari 5 huruf, atau tidak ada huruf sama sekali -> invalid
-    if (hurufCount < 5) {
+    { if (hurufCount <= 5) {
         input.classList.add('error');
         input.classList.remove('success');
         namaWarning.style.display = 'block';
