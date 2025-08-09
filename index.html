@@ -141,7 +141,8 @@ input:focus, select:focus, textarea:focus {
 </style>
 </head>
 <body>
- <!-- Gambar kepala daerah -->
+ 
+<!-- Gambar kepala daerah -->
 <div class="header-gambar">
   <img src="bupati.png" alt="Wakil Bupati" class="foto-kepala">
   <img src="logo-tubaba.png" alt="Logo Tubaba" class="logo">
@@ -474,11 +475,10 @@ input:focus, select:focus, textarea:focus {
     // Akses kamera
    
 let streamAktif = false;
-
 async function ambilFoto(evt) {
   const button = evt?.target || event?.target;
 
-  // Jika kamera belum aktif
+  // Aktifkan kamera jika belum aktif
   if (!streamAktif) {
     try {
       let stream = await navigator.mediaDevices.getUserMedia({
@@ -492,8 +492,8 @@ async function ambilFoto(evt) {
       video.srcObject = stream;
       video.style.display = 'block';
       previewFoto.style.display = 'none';
-      await video.play();
 
+      await video.play();
       streamAktif = true;
 
       if (button) {
@@ -501,9 +501,10 @@ async function ambilFoto(evt) {
         button.style.background = '#ffc107';
       }
       return;
+
     } catch (error) {
       console.error("Tidak dapat mengakses kamera:", error);
-      alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+      alert("❌ Gagal mengakses kamera! Pastikan izin kamera sudah diberikan.");
       return;
     }
   }
@@ -514,24 +515,23 @@ async function ambilFoto(evt) {
   canvasFoto.height = video.videoHeight || 225;
   context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
-  // Set foto ke preview
   previewFoto.src = canvasFoto.toDataURL('image/png');
   previewFoto.style.display = 'block';
   video.style.display = 'none';
   hasPhoto = true;
 
-  // Matikan kamera setelah ambil foto
-  let tracks = video.srcObject?.getTracks();
-  if (tracks) {
-    tracks.forEach(track => track.stop());
-  }
-  streamAktif = false;
-
   if (button) {
-    button.innerHTML = '📷 Ambil Ulang Foto';
+    const originalText = button.innerHTML;
+    button.innerHTML = '✅ Foto Berhasil!';
     button.style.background = '#28a745';
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.style.background = '';
+    }, 2000);
   }
 }
+
+ 
 
   // Kamera sudah aktif, ambil foto sekarang
   const context = canvasFoto.getContext('2d');
