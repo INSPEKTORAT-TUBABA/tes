@@ -273,20 +273,12 @@ input:focus, select:focus, textarea:focus {
 <div class="warning" id="photoWarning" style="display:none;">
 ⚠️ Foto wajib diambil!
 </div>
-
-<!-- Bingkai kamera -->
-<div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden;">
-  <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"><<!-- Frame Kamera -->
-<div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden; margin-bottom:10px;">
-  <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"></video>
-  <img id="previewFoto" alt="Hasil Foto" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;">
-</div>
-
-<canvas id="canvasFoto" style="display:none;"></canvas>
-<button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
-<br/><br/>
-
-
+<!-- Awalnya disembunyikan -->
+<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video><br/>
+<!-- Awalnya disembunyikan -->
+<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video>
+<canvas id="canvasFoto" style="display:none;"></canvas> <!-- ✅ tambahkan ini -->
+<br/>
 
 <!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
@@ -492,24 +484,30 @@ input:focus, select:focus, textarea:focus {
 let streamAktif = false;
 
 async function ambilFoto(evt) {
-  const button = evt?.target || event?.target;
+  const button = evt?.target || event?.target; // tetap support event global
 
-  // Aktifkan kamera jika belum aktif
+  // Jika kamera belum aktif, aktifkan kamera terlebih dahulu
   if (!streamAktif) {
     try {
       let stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" }
       }).catch(() => {
+        // Fallback jika kamera depan tidak ada
         return navigator.mediaDevices.getUserMedia({ video: true });
       });
 
       if (!stream) throw new Error("Stream kamera tidak tersedia");
 
       video.srcObject = stream;
-      video.style.display = 'block';
-      previewFoto.style.display = 'none';
+      video.style.setProperty('display', 'block', 'important');
+      video.style.width = '300px';
+      video.style.height = '225px';
+      video.style.background = 'black';
+      video.style.position = 'relative';
+      video.style.zIndex = '10';
 
       await video.play();
+
       streamAktif = true;
 
       if (button) {
@@ -520,32 +518,11 @@ async function ambilFoto(evt) {
 
     } catch (error) {
       console.error("Tidak dapat mengakses kamera:", error);
-      alert("❌ Gagal mengakses kamera! Pastikan izin kamera sudah diberikan.");
-      return;
+      alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+      return; // tidak set streamAktif supaya bisa dicoba lagi
     }
   }
 
-  // Kamera aktif → ambil foto
-  const context = canvasFoto.getContext('2d');
-  canvasFoto.width = video.videoWidth || 300;
-  canvasFoto.height = video.videoHeight || 225;
-  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  video.style.display = 'none';
-  hasPhoto = true;
-
-  if (button) {
-    const originalText = button.innerHTML;
-    button.innerHTML = '✅ Foto Berhasil!';
-    button.style.background = '#28a745';
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = '';
-    }, 2000);
-  }
-}
   // Kamera sudah aktif, ambil foto sekarang
   const context = canvasFoto.getContext('2d');
   canvasFoto.width = video.videoWidth || 300;
