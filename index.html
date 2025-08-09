@@ -551,11 +551,10 @@ async function ambilFoto(evt) {
   context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
   previewFoto.src = canvasFoto.toDataURL('image/png');
-previewFoto.style.display = 'block';
-video.style.display = 'none'; // sembunyikan kamera
-canvasFoto.style.display = 'none';
-hasPhoto = true;
+document.getElementById('frameFoto').style.display = 'flex';
 
+  canvasFoto.style.display = 'none';
+  hasPhoto = true;
 
   if (button) {
     const originalText = button.innerHTML;
