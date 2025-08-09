@@ -594,19 +594,15 @@
         }
         
         // Cek khusus untuk bidang 'nama'
-        if (currentElementId === 'nama') {
-            if (currentElement.value.length < 5) {
-                currentElement.classList.add('error');
-                currentElement.classList.remove('success');
-                namaWarning.style.display = 'block';
-                isValid = false;
-                hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
-            } else {
-                currentElement.classList.remove('error');
-                currentElement.classList.add('success');
-                namaWarning.style.display = 'none';
-            }
-        }
+        // Cek khusus untuk bidang 'nama' — gunakan validateNama() yang lebih kuat
+if (currentElementId === 'nama') {
+    if (!validateNama()) {
+        isValid = false;
+    } else {
+        isValid = true;
+    }
+}
+
         
         // Cek untuk bidang 'signature-pad'
         else if (currentElementId === 'signature-pad') {
