@@ -496,36 +496,34 @@
 
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
     function validateNama() {
-        const input = document.getElementById('nama');
+    const input = document.getElementById('nama');
 
-        // Hapus semua digit
-        input.value = input.value.replace(/\d+/g, '');
+    // Hapus semua digit
+    input.value = input.value.replace(/\d+/g, '');
 
-        // Hitung huruf Unicode (gunakan fallback bila browser lama)
-        let hurufCount;
-        try {
-            hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-        } catch (e) {
-            // fallback: hanya huruf latin
-            hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
-        }
-
-        // Kalau kurang dari 5 huruf, atau tidak ada huruf sama sekali -> invalid
-        if (hurufCount < 5) {
-            input.classList.add('error');
-            input.classList.remove('success');
-            namaWarning.style.display = 'block';
-            namaWarning.textContent = 'Nama minimal 5 huruf (huruf, bukan spasi/tanda baca).';
-            return false;
-        } else {
-            input.classList.remove('error');
-            input.classList.add('success');
-            namaWarning.style.display = 'none';
-            return true;
-        }
+    // Hitung huruf Unicode (gunakan fallback bila browser lama)
+    let hurufCount;
+    try {
+        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
+    } catch (e) {
+        // fallback: hanya huruf latin
+        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
     }
 
-    // Nomor HP: hanya angka
+    // Kalau kurang dari 5 huruf, atau tidak ada huruf sama sekali -> invalid
+    if (hurufCount < 5) {
+        input.classList.add('error');
+        input.classList.remove('success');
+        namaWarning.style.display = 'block';
+        namaWarning.textContent = 'Nama minimal 5 huruf, boleh lebih dari itu. Tidak boleh angka atau hanya karakter non-huruf.';
+        return false;
+    } else {
+        input.classList.remove('error');
+        input.classList.add('success');
+        namaWarning.style.display = 'none';
+        return true;
+    }
+}    // Nomor HP: hanya angka
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.which || e.keyCode);
