@@ -290,6 +290,11 @@
 <label>Foto: <span class="required">*</span></label>
 <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
 
+<div id="photo-status">
+    <span id="photoStatusText" style="font-weight: bold;"></span>
+</div>
+<br/>
+
 <button type="button" onclick="bukaKamera()" style="font-size: 16px;">📸 Ambil Foto</button>
 
 <br/><br/>
@@ -349,7 +354,6 @@
     const kecamatan = document.getElementById("kecamatan");
     const desa = document.getElementById("desa");
     const instansi = document.getElementById("instansi");
-    const photoStatusText = document.getElementById('photoStatusText');
 
     const dataDesa = {
       "Lambu Kibang": ["Kibang Budi Jaya", "Lesung Bhakti Jaya", "Mekar Sari Jaya", "Pagar Jaya", "Gunung Sari", "Sumber Rejo", "Kibang Yekti Jaya", "Kibang Tri Jaya", "Gilang Tunggal Makarta", "Kibang Mulya Jaya"],
@@ -451,6 +455,7 @@
     function clearSignature() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       hasSignature = false;
+      canvas.classList.remove('error', 'success');
     }
     
     // ---- KODE KAMERA MODIFIKASI ----
@@ -479,6 +484,7 @@
       }
     }
 
+    // Fungsi yang dipanggil dari tombol di dalam modal
     function simpanFotoLangsung() {
         if (!streamAktif) {
             alert("Kamera belum aktif!");
@@ -493,15 +499,14 @@
         fotoDataURL = canvasFoto.toDataURL('image/png');
         hasPhoto = true;
         
-        // Coba simpan data, jika berhasil, tutup modal
+        // Coba simpan data. Jika berhasil, tutup modal
         if (simpanData()) {
             alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
             tutupModal();
             showData();
         } else {
-            // Jika gagal, modal tetap terbuka dan reset foto sementara
-            fotoDataURL = null;
-            hasPhoto = false;
+            // Jika validasi gagal, modal tetap terbuka
+            alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan");
         }
     }
 
@@ -511,18 +516,11 @@
         streamAktif.getTracks().forEach(track => track.stop());
         streamAktif = null;
       }
-      
-      // Reset status foto di halaman utama
-      if (hasPhoto) {
-          photoStatusText.textContent = ""; 
-      } else {
-          photoStatusText.textContent = "Foto belum diambil.";
-          photoStatusText.style.color = "red";
-      }
     }
 
     let dataBukuTamu = [];
 
+    // Fungsi utama untuk validasi dan menyimpan data
     function simpanData() {
       const form = document.getElementById('bukuTamuForm');
       const signatureWarning = document.getElementById('signatureWarning');
@@ -532,11 +530,12 @@
       signatureWarning.style.display = 'none';
       photoWarning.style.display = 'none';
       
-      if (!form.checkValidity()) {
-        form.reportValidity();
+      // Validasi form bawaan browser
+      if (!form.reportValidity()) {
         isValid = false;
       }
       
+      // Validasi tanda tangan
       if (!hasSignature) {
         signatureWarning.style.display = 'block';
         canvas.classList.add('error');
@@ -546,19 +545,9 @@
         canvas.classList.add('success');
       }
       
+      // Validasi foto (jika dipanggil dari simpanDataDanTutupForm)
       if (!hasPhoto) {
         photoWarning.style.display = 'block';
-        isValid = false;
-      }
-      
-      if (asal.value === "INSTANSI" && !instansi.value) {
-        alert("Silakan pilih instansi/unit kerja!");
-        instansi.focus();
-        isValid = false;
-      }
-      
-      if (asal.value === "MASYARAKAT" && (!kecamatan.value || !desa.value)) {
-        alert("Silakan pilih kecamatan dan desa/tiyuh!");
         isValid = false;
       }
       
@@ -587,6 +576,7 @@
       }
     }
     
+    // Fungsi untuk tombol Simpan Data di halaman utama
     function simpanDataDanTutupForm() {
         if(simpanData()) {
             alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
@@ -613,8 +603,6 @@
       document.getElementById('signatureWarning').style.display = 'none';
       document.getElementById('photoWarning').style.display = 'none';
       document.getElementById('nama').focus();
-      photoStatusText.textContent = "Foto belum diambil.";
-      photoStatusText.style.color = "red";
     }
 
     function showForm() {
