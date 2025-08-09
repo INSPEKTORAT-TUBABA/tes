@@ -548,8 +548,7 @@ async function ambilFoto(evt) {
   context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
   previewFoto.src = canvasFoto.toDataURL('image/png');
-document.getElementById('frameFoto').style.display = 'flex';
-
+  previewFoto.style.display = 'block';
   canvasFoto.style.display = 'none';
   hasPhoto = true;
 
