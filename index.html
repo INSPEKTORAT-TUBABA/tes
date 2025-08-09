@@ -185,7 +185,7 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="validateNama();" />
+            <input id="nama" required type="text" oninput="validateNama();" onblur="checkAndShowNext('nama', 'field-asal')" />
             <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak boleh mengandung angka.</div>
             <br/>
         </div>
@@ -498,40 +498,41 @@
 
 
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
-function validateNama() {
-    const input = document.getElementById('nama');
-    const warning = document.getElementById('namaWarning');
-    
-    // Hapus semua angka
-    input.value = input.value.replace(/\d+/g, '');
+    function validateNama() {
+        const input = document.getElementById('nama');
+        const warning = document.getElementById('namaWarning');
+        
+        // Hapus semua digit
+        input.value = input.value.replace(/\d+/g, '');
 
-    // Hitung jumlah huruf (unicode)
-    let hurufCount = 0;
-    try {
-        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-    } catch (e) {
-        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        let hurufCount = 0;
+        try {
+            // Hitung huruf Unicode (lebih akurat)
+            hurufCount = (input.value.match(/\p{L}/gu) || []).length;
+        } catch (e) {
+            // fallback: hanya huruf latin
+            hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        }
+        
+        // Hapus spasi dari input untuk mengecek apakah hanya ada simbol
+        const textWithoutSpaces = input.value.replace(/\s/g, '');
+        // Cek jika validasi terpenuhi
+        // Nama tidak valid jika hanya berisi spasi atau karakter non-huruf
+        const isValid = hurufCount >= 5 && (textWithoutSpaces.length > 0 && textWithoutSpaces.match(/\p{L}/u));
+
+        // Tampilkan/sembunyikan pesan error
+        if (isValid) {
+            input.classList.remove('error');
+            input.classList.add('success');
+            warning.style.display = 'none';
+        } else {
+            input.classList.remove('success');
+            input.classList.add('error');
+            warning.style.display = 'block';
+            // Sembunyikan field setelahnya
+            hideFieldsAfter('field-nama');
+        }
     }
-
-    // Cek apakah tidak ada huruf sama sekali
-    const tanpaHuruf = hurufCount === 0;
-
-    // Syarat valid: minimal 5 huruf dan ada huruf di dalamnya
-    const isValid = hurufCount >= 5 && !tanpaHuruf;
-
-    if (isValid) {
-        input.classList.remove('error');
-        input.classList.add('success');
-        warning.style.display = 'none';
-        document.getElementById('field-asal').style.display = 'block';
-    } else {
-        input.classList.remove('success');
-        input.classList.add('error');
-        warning.style.display = 'block';
-        hideFieldsAfter('field-nama');
-    }
-}
-
     // Nomor HP: hanya angka
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -629,9 +630,13 @@ function validateNama() {
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
         
-        // Khusus untuk nama, validasinya ada di fungsi validateNama()
+        // Khusus untuk nama, panggil fungsi validasi khusus
         if (currentElementId === 'nama') {
-             // Validasi nama sudah ditangani di oninput, tidak perlu lagi di sini
+             validateNama();
+             const namaInput = document.getElementById('nama');
+             if (namaInput.classList.contains('error')) {
+                isValid = false;
+             }
         } else if (currentElementId === 'signature-pad') {
             if (!hasSignature) {
                 signatureWarning.style.display = 'block';
@@ -692,19 +697,9 @@ function validateNama() {
 
         // Validasi nama dengan fungsi custom
         const namaInput = document.getElementById('nama');
-        let hurufCount = 0;
-        try {
-            hurufCount = (namaInput.value.match(/\p{L}/gu) || []).length;
-        } catch (e) {
-            hurufCount = (namaInput.value.match(/[A-Za-z]/g) || []).length;
-        }
-        if (hurufCount < 5 || namaInput.value.trim() === '') {
-            namaInput.classList.add('error');
-            namaWarning.style.display = 'block';
+        validateNama();
+        if (namaInput.classList.contains('error')) {
             isValid = false;
-        } else {
-            namaInput.classList.remove('error');
-            namaInput.classList.add('success');
         }
 
         // Validasi tanda tangan
