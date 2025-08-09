@@ -30,6 +30,8 @@
       width: 100%; 
       padding: 6px; 
       margin-top: 5px; 
+      border: 1px solid #ccc; /* Tambahkan border default */
+      border-radius: 4px; /* Tambahkan border-radius default */
     }
     .hidden { display: none; }
     .required { color: red; }
@@ -50,6 +52,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
       font-size: 16px;
       z-index: 9999;
+      cursor: pointer;
     }
     #btnHome:hover { background: #e0a800; }
     @media (min-width: 768px) { #btnHome { display: none; } }
@@ -182,8 +185,8 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="validateNama(); checkAndShowNext('nama', 'field-asal')" />
-            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
+            <input id="nama" required type="text" oninput="validateNama();" />
+            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak boleh mengandung angka.</div>
             <br/>
         </div>
         
@@ -300,28 +303,28 @@
             <label>Tanda Tangan: <span class="required">*</span></label>
             <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi!</div>
             <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
-            <button onclick="clearSignature()" type="button">🧹 Bersihkan Tanda Tangan</button><br/><br/>
+            <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
         </div>
         
         <div id="field-aksi" style="display: none;">
             <label>Foto: <span class="required">*</span></label>
             <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
-            <button type="button" onclick="bukaKamera()" style="font-size: 16px;">📸 Ambil Foto</button>
+            <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
             <br/><br/>
-            <button type="button" onclick="simpanDataDanTutupForm()" style="font-size: 18px;">💾 Simpan Data</button>
+            <button type="button" onclick="simpanDataDanTutupForm()" style="font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">💾 Simpan Data</button>
         </div>
     </form>
 </div>
 <div style="margin-bottom: 20px;">
-<button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px;">📝 Form Input</button>
-<button type="button" onclick="showData()" id="btnData" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-<button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px;">💾 Export Data</button>
+<button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
+<button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+<button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export Data</button>
 </div>
 
 <div id="dataSection" style="display: none;">
 <h2>📊 DATA BUKU TAMU</h2>
 <div style="margin-bottom: 20px;">
-<button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px;">🗑️ Hapus Semua Data</button>
+<button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Hapus Semua Data</button>
 </div>
 <div id="dataContainer">
 <p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>
@@ -496,24 +499,40 @@
 
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
     function validateNama() {
-    const input = document.getElementById('nama');
+        const input = document.getElementById('nama');
+        const warning = document.getElementById('namaWarning');
+        
+        // Hapus semua digit
+        input.value = input.value.replace(/\d+/g, '');
 
-    // Hapus semua digit
-    input.value = input.value.replace(/\d+/g, '');
+        let hurufCount = 0;
+        try {
+            // Hitung huruf Unicode (lebih akurat)
+            hurufCount = (input.value.match(/\p{L}/gu) || []).length;
+        } catch (e) {
+            // fallback: hanya huruf latin
+            hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        }
+        
+        // Cek jika validasi terpenuhi
+        const isValid = hurufCount >= 5;
 
-    // Hitung huruf Unicode (gunakan fallback bila browser lama)
-    let hurufCount;
-    try {
-        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-    } catch (e) {
-        // fallback: hanya huruf latin
-        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        // Tampilkan/sembunyikan pesan error
+        if (isValid) {
+            input.classList.remove('error');
+            input.classList.add('success');
+            warning.style.display = 'none';
+            // Tampilkan field berikutnya
+            document.getElementById('field-asal').style.display = 'block';
+        } else {
+            input.classList.remove('success');
+            input.classList.add('error');
+            warning.style.display = 'block';
+            // Sembunyikan field setelahnya
+            hideFieldsAfter('field-nama');
+        }
     }
-
-    // Kalau kurang dari 5 huruf, atau tidak ada huruf sama sekali -> invalid
-        return true;
-    }
-}    // Nomor HP: hanya angka
+    // Nomor HP: hanya angka
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.which || e.keyCode);
@@ -609,12 +628,10 @@
         const currentElement = document.getElementById(currentElementId);
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
-
+        
+        // Khusus untuk nama, validasinya ada di fungsi validateNama()
         if (currentElementId === 'nama') {
-            if (!validateNama()) {
-                isValid = false;
-                hideFieldsAfter('field-nama');
-            }
+             // Validasi nama sudah ditangani di oninput, tidak perlu lagi di sini
         } else if (currentElementId === 'signature-pad') {
             if (!hasSignature) {
                 signatureWarning.style.display = 'block';
@@ -628,13 +645,23 @@
         } else if (currentElement) {
             // elemen input/select/textarea biasa
             if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
-                if (!currentElement.checkValidity()) {
+                // Periksa apakah field yang bersifat dinamis (Instansi/Kecamatan/Desa) terisi
+                if (currentElementId === 'asal') {
+                    if (asal.value === 'INSTANSI' && instansi.value === '') {
+                        isValid = false;
+                    }
+                    if (asal.value === 'MASYARAKAT' && (kecamatan.value === '' || desa.value === '')) {
+                        isValid = false;
+                    }
+                }
+                
+                if (currentElement.checkValidity() && isValid) {
+                    currentElement.classList.remove('error');
+                    currentElement.classList.add('success');
+                } else {
                     currentElement.classList.add('error');
                     currentElement.classList.remove('success');
                     isValid = false;
-                } else {
-                    currentElement.classList.remove('error');
-                    currentElement.classList.add('success');
                 }
             }
         }
@@ -643,6 +670,8 @@
             nextElement.style.display = 'block';
             const nextInput = nextElement.querySelector('input, select, textarea, canvas');
             if (nextInput) nextInput.focus && nextInput.focus();
+        } else {
+            hideFieldsAfter(currentElementId);
         }
     }
 
@@ -659,6 +688,23 @@
         // Validasi form standar HTML5
         if (!form.reportValidity()) {
             isValid = false;
+        }
+
+        // Validasi nama dengan fungsi custom
+        const namaInput = document.getElementById('nama');
+        let hurufCount = 0;
+        try {
+            hurufCount = (namaInput.value.match(/\p{L}/gu) || []).length;
+        } catch (e) {
+            hurufCount = (namaInput.value.match(/[A-Za-z]/g) || []).length;
+        }
+        if (hurufCount < 5 || namaInput.value.trim() === '') {
+            namaInput.classList.add('error');
+            namaWarning.style.display = 'block';
+            isValid = false;
+        } else {
+            namaInput.classList.remove('error');
+            namaInput.classList.add('success');
         }
 
         // Validasi tanda tangan
@@ -679,11 +725,11 @@
 
         if (isValid) {
             const formData = {
-                nama: document.getElementById('nama').value.trim(),
+                nama: namaInput.value.trim(),
                 asal: asal.value,
-                instansi: instansi.value,
-                kecamatan: kecamatan.value,
-                desa: desa.value,
+                instansi: asal.value === 'INSTANSI' ? instansi.value : '',
+                kecamatan: asal.value === 'MASYARAKAT' ? kecamatan.value : '',
+                desa: asal.value === 'MASYARAKAT' ? desa.value : '',
                 pihakDitemui: document.getElementById('pihakDitemui').value,
                 jenisLayanan: document.getElementById('jenisLayanan').value,
                 uraian: document.getElementById('uraian').value.trim(),
@@ -768,7 +814,7 @@
         }
         let html = '';
         dataBukuTamu.forEach((data, index) => {
-            html += `<div class="data-card"><div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px #ccc; max-width: 200px; height: auto;"></div></div></div>`;
+            html += `<div class="data-card"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px #ccc; max-width: 200px; height: auto;"></div></div></div>`;
         });
         container.innerHTML = html;
     }
@@ -796,18 +842,31 @@
             alert('Tidak ada data untuk di-export!');
             return;
         }
-        let csvContent = "No,Nama,Asal,Instansi,Kecamatan,Desa,Pihak Ditemui,Jenis Layanan,Uraian,Nomor HP,Waktu\n";
+        let csvContent = "data:text/csv;charset=utf-8,";
+        let header = ["No","Nama","Asal","Instansi","Kecamatan","Desa","Pihak Ditemui","Jenis Layanan","Uraian","Nomor HP","Waktu"];
+        csvContent += header.join(",") + "\n";
+
         dataBukuTamu.forEach((data, index) => {
-            csvContent += `${index + 1},"${data.nama}","${data.asal}","${data.instansi || ''}","${data.kecamatan || ''}","${data.desa || ''}","${data.pihakDitemui}","${data.jenisLayanan}","${data.uraian}","${data.nomorHp}","${data.timestamp}"\n`;
+            let row = [
+                index + 1,
+                `"${data.nama}"`,
+                `"${data.asal}"`,
+                `"${data.instansi || ''}"`,
+                `"${data.kecamatan || ''}"`,
+                `"${data.desa || ''}"`,
+                `"${data.pihakDitemui}"`,
+                `"${data.jenisLayanan}"`,
+                `"${data.uraian}"`,
+                `"${data.nomorHp}"`,
+                `"${data.timestamp}"`
+            ];
+            csvContent += row.join(",") + "\n";
         });
-        const blob = new Blob([csvContent], {
-            type: 'text/csv;charset=utf-8;'
-        });
+        
+        const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
+        link.setAttribute("href", encodedUri);
         link.setAttribute("download", `buku_tamu_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -818,6 +877,14 @@
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
+    
+    // Panggil fungsi ini saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+        // Panggil fungsi resize canvas awal
+        resizeCanvas();
+        // Atur status awal tombol
+        showForm();
+    });
 
 </script>
 
