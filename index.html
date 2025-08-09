@@ -182,8 +182,8 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" onkeypress="return noNumbers(event)"/>
-            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
+            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" />
+            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan hanya dengan huruf.</div>
             <br/>
         </div>
         
@@ -379,7 +379,7 @@
       "Way Kenanga": ["Agung Jaya", "Mercubuana", "Balam Jaya", "Pagar Buana", "Indraloka I", "Indraloka II", "Balam Asri", "Indraloka Jaya", "Indraloka Mukti", "Sido Agung"],
       "Batu Putih": ["Toto Katon", "Sakti Jaya", "Margo Mulya", "Margo Dadi", "Marga Sari", "Mulyo Sari", "Toto Makmur", "Panca Marga", "Sido Makmur", "Toto Wonodadi"],
       "Gunung Terang": ["Setia Bumi", "Setia Agung", "Mulya Jadi", "Gunung Agung", "Gunung Terang", "Toto Mulyo", "Kagungan Jaya", "Terang Mulya", "Terang Makmur", "Rerang Bumi Agung"],
-      "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
+      "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gedung Ratu", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
       "Pagar Dewa": ["Bujung Dewa", "Bujungsari Marga", "Marga Jaya Indah", "Pagar Dewa", "Cahyo Randu", "Pagar Dewa Suka Mulya"]
     };
 
@@ -412,13 +412,14 @@
     });
 
     // Menangani agar input nama tidak bisa diisi dengan angka
-    function noNumbers(event) {
-      const charCode = (event.which) ? event.which : event.keyCode;
-      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-        return true;
-      }
-      return false;
-    }
+    // Fungsi ini dihapus karena validasi baru lebih komprehensif
+    // function noNumbers(event) {
+    //   const charCode = (event.which) ? event.which : event.keyCode;
+    //   if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+    //     return true;
+    //   }
+    //   return false;
+    // }
 
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -591,9 +592,11 @@
             });
         }
         
-        // Cek khusus untuk bidang 'nama'
+        // Cek khusus untuk bidang 'nama' (MODIFIKASI DI SINI)
         if (currentElementId === 'nama') {
-            if (currentElement.value.length < 5) {
+            const namaRegex = /^[a-zA-Z\s]{5,}$/; // Regex untuk huruf dan spasi, minimal 5 karakter
+            const trimmedNama = currentElement.value.trim();
+            if (!namaRegex.test(trimmedNama)) {
                 currentElement.classList.add('error');
                 currentElement.classList.remove('success');
                 namaWarning.style.display = 'block';
