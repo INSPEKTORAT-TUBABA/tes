@@ -539,27 +539,7 @@ async function ambilFoto(evt) {
     }, 2000);
   }
 }
-  // Kamera sudah aktif, ambil foto sekarang
-  const context = canvasFoto.getContext('2d');
-  canvasFoto.width = video.videoWidth || 300;
-  canvasFoto.height = video.videoHeight || 225;
-  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  canvasFoto.style.display = 'none';
-  hasPhoto = true;
-
-  // Tampilkan feedback sukses
-  const originalText = button.innerHTML;
-  button.innerHTML = '✅ Foto Berhasil!';
-  button.style.background = '#28a745';
-
-  setTimeout(() => {
-    button.innerHTML = originalText;
-    button.style.background = '';
-  }, 2000);
-}
 
     // Validasi dan simpan data
     function simpanData() {
