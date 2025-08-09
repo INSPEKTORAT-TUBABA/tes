@@ -412,13 +412,21 @@
     });
 
     // Menangani agar input nama tidak bisa diisi dengan angka
-    function noNumbers(event) {
-      const charCode = (event.which) ? event.which : event.keyCode;
-      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-        return true;
-      }
-      return false;
-    }
+    // Menangani agar input nama tidak bisa diisi angka (ketik atau paste)
+function noNumbers(event) {
+  const char = String.fromCharCode(event.which || event.keyCode);
+  if (/[0-9]/.test(char)) {
+    event.preventDefault(); // blok angka
+    return false;
+  }
+  return true;
+}
+
+// Blok angka juga saat paste atau input langsung
+document.getElementById('nama').addEventListener('input', function() {
+  this.value = this.value.replace(/[0-9]/g, '');
+});
+
 
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
