@@ -411,16 +411,17 @@
         });
     });
 
-    // Menangani agar input nama tidak bisa diisi dengan angka
+    // Menangani agar input nama tidak bisa diisi dengan angka dan karakter khusus
     function noNumbers(event) {
-    const char = String.fromCharCode(event.which);
-    if (!/[a-zA-Z\s\u00C0-\u024F]/.test(char)) {
+        const charCode = (event.which) ? event.which : event.keyCode;
+        const char = String.fromCharCode(charCode);
+        // Izinkan huruf (a-z, A-Z), spasi, dan backspace
+        if (/[a-zA-Z\s]/.test(char) || charCode === 8 || charCode === 46) {
+            return true;
+        }
         event.preventDefault();
         return false;
     }
-    return true;
-}
-
 
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -594,23 +595,23 @@
         }
         
         // Cek khusus untuk bidang 'nama'
-           if (currentElementId === 'nama') {
-        const namaValue = currentElement.value.trim();
-        const hanyaKarakterTidakValid = /^[^a-zA-Z\u00C0-\u024F]+$/.test(namaValue);
-        if (namaValue.length < 5 || hanyaKarakterTidakValid) {
-            currentElement.classList.add('error');
-            currentElement.classList.remove('success');
-            namaWarning.textContent = 'Mohon isi nama minimal 5 huruf dan tidak hanya karakter non-huruf.';
-            namaWarning.style.display = 'block';
-            isValid = false;
-            hideFieldsAfter('field-nama');
-        } else {
-            currentElement.classList.remove('error');
-            currentElement.classList.add('success');
-            namaWarning.style.display = 'none';
+        if (currentElementId === 'nama') {
+            const namaValue = currentElement.value.trim();
+            const hasLetters = /[a-zA-Z]/.test(namaValue);
+            
+            if (namaValue.length < 5 || !hasLetters) {
+                currentElement.classList.add('error');
+                currentElement.classList.remove('success');
+                namaWarning.style.display = 'block';
+                namaWarning.textContent = "Mohon isi nama minimal 5 huruf dan hindari hanya diisi dengan karakter atau angka.";
+                isValid = false;
+                hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
+                namaWarning.style.display = 'none';
+            }
         }
-    }
-
         
         // Cek untuk bidang 'signature-pad'
         else if (currentElementId === 'signature-pad') {
