@@ -182,7 +182,7 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="validateNama(); checkAndShowNext('nama', 'field-asal')" />
+            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" onkeypress="return noNumbers(event)"/>
             <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
             <br/>
         </div>
@@ -344,108 +344,26 @@
 </div>
 
 <script>
-    // === Element refs (pastikan id cocok dengan HTML) ===
     const signatureCanvas = document.getElementById('signature-pad');
-    const canvas = signatureCanvas;
-    const ctx = canvas.getContext('2d');
-
+    const namaInput = document.getElementById('nama');
     const namaWarning = document.getElementById('namaWarning');
     const signatureWarning = document.getElementById('signatureWarning');
     const photoWarning = document.getElementById('photoWarning');
 
-    // Inisialisasi canvas ukuran dan style
     function resizeCanvas() {
         const originalWidth = 700;
-        const originalHeight = 200;
         const newWidth = Math.min(window.innerWidth - 40, originalWidth);
-        // Simpan gambar sementara
-        const tempData = canvas.toDataURL();
-        canvas.width = newWidth;
-        // jaga rasio tinggi proporsional
-        canvas.height = Math.round(originalHeight * (newWidth / originalWidth));
+        const tempData = signatureCanvas.toDataURL();
+        signatureCanvas.width = newWidth;
         const img = new Image();
         img.onload = function () {
-            // gambar kembali sesuai ukuran baru
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
         };
         img.src = tempData;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Konfigurasi gambar tanda tangan
-    ctx.strokeStyle = '#0000FF';
-    ctx.lineWidth = 2.8;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    let drawing = false;
-    let hasSignature = false;
-
-    function getCanvasPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        if (e.touches && e.touches[0]) {
-            return {
-                x: e.touches[0].clientX - rect.left,
-                y: e.touches[0].clientY - rect.top
-            };
-        }
-        // fallback untuk mouse
-        return {
-            x: (e.clientX !== undefined ? e.clientX : e.offsetX) - rect.left,
-            y: (e.clientY !== undefined ? e.clientY : e.offsetY) - rect.top
-        };
-    }
-
-    function startDrawing(e) {
-        drawing = true;
-        hasSignature = true;
-        ctx.beginPath();
-        const pos = getCanvasPos(e);
-        ctx.moveTo(pos.x, pos.y);
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-        const pos = getCanvasPos(e);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-    }
-
-    function stopDrawing() {
-        if (!drawing) return;
-        drawing = false;
-        checkAndShowNext('signature-pad', 'field-aksi');
-    }
-
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    // Touch events
-    canvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        startDrawing(e);
-    }, {passive:false});
-    canvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        draw(e);
-    }, {passive:false});
-    canvas.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        stopDrawing(e);
-    }, {passive:false});
-
-    function clearSignature() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        hasSignature = false;
-        canvas.classList.remove('error', 'success');
-        document.getElementById('field-aksi').style.display = 'none';
-    }
-
-    // ---- Daftar & logika asal / desa ----
     const asal = document.getElementById("asal");
     const daftarInstansi = document.getElementById("daftarInstansi");
     const daftarMasyarakat = document.getElementById("daftarMasyarakat");
@@ -493,40 +411,18 @@
         });
     });
 
-
-    // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
-    function validateNama() {
-    const input = document.getElementById('nama');
-
-    // Hapus semua digit
-    input.value = input.value.replace(/\d+/g, '');
-
-    // Hitung huruf Unicode (gunakan fallback bila browser lama)
-    let hurufCount;
-    try {
-        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-    } catch (e) {
-        // fallback: hanya huruf latin
-        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
-    }
-
-    // Kalau kurang dari 5 huruf, atau tidak ada huruf sama sekali -> invalid
-    if (hurufCount <= 5) { 
-        input.classList.add('error');
-        input.classList.remove('success');
-        namaWarning.style.display = 'block';
-        namaWarning.textContent = 'Nama minimal 5 huruf, boleh lebih dari itu. Tidak boleh angka atau hanya karakter non-huruf.';
-        return false;
-    } else {
-        input.classList.remove('error');
-        input.classList.add('success');
-        namaWarning.style.display = 'none';
+    // Menangani agar input nama tidak bisa diisi dengan angka
+    function noNumbers(event) {
+      const charCode = (event.which) ? event.which : event.keyCode;
+      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
         return true;
+      }
+      return false;
     }
-}    // Nomor HP: hanya angka
+
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
-        const char = String.fromCharCode(e.which || e.keyCode);
+        const char = String.fromCharCode(e.which);
         if (!/[0-9]/.test(char)) {
             e.preventDefault();
         }
@@ -536,7 +432,79 @@
         checkAndShowNext('nomorHp', 'field-tandaTangan');
     });
 
-    // ---- KAMERA & FOTO ----
+    const canvas = document.getElementById('signature-pad');
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0000FF';
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    let drawing = false;
+    let hasSignature = false;
+
+    function startDrawing(e) {
+        drawing = true;
+        hasSignature = true;
+        ctx.strokeStyle = '#0000FF';
+        ctx.lineWidth = 2.8;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        const pos = getCanvasPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        const pos = getCanvasPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
+
+    function stopDrawing() {
+        drawing = false;
+        checkAndShowNext('signature-pad', 'field-aksi');
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        startDrawing(e);
+    });
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        draw(e);
+    });
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        stopDrawing();
+    });
+
+    function getCanvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        if (e.touches && e.touches[0]) {
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        }
+        return {
+            x: e.offsetX,
+            y: e.offsetY
+        };
+    }
+
+    function clearSignature() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSignature = false;
+        canvas.classList.remove('error', 'success');
+        document.getElementById('field-aksi').style.display = 'none';
+    }
+    
+    // ---- KODE KAMERA MODIFIKASI ----
     const photoModal = document.getElementById('photoModal');
     const videoElement = document.getElementById('videoElement');
     const capturedPhoto = document.getElementById('capturedPhoto');
@@ -549,9 +517,12 @@
     async function bukaKamera() {
         photoModal.style.display = 'flex';
         capturedPhoto.style.display = 'none';
+
         try {
             streamAktif = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user" }
+                video: {
+                    facingMode: "user"
+                }
             });
             videoElement.srcObject = streamAktif;
             videoElement.style.display = 'block';
@@ -563,29 +534,21 @@
         }
     }
 
-    function tutupModal() {
-        photoModal.style.display = 'none';
-        if (streamAktif) {
-            streamAktif.getTracks().forEach(track => track.stop());
-            streamAktif = null;
-        }
-    }
-
+    // Fungsi yang dipanggil dari tombol di dalam modal
     function simpanFotoLangsung() {
-        if (!streamAktif && !videoElement) {
+        if (!streamAktif) {
             alert("Kamera belum aktif!");
             return;
         }
 
         const context = canvasFoto.getContext('2d');
-        canvasFoto.width = videoElement.videoWidth || 480;
-        canvasFoto.height = videoElement.videoHeight || Math.round(canvasFoto.width * 3 / 4);
+        canvasFoto.width = videoElement.videoWidth || 300;
+        canvasFoto.height = videoElement.videoHeight || 225;
         context.drawImage(videoElement, 0, 0, canvasFoto.width, canvasFoto.height);
         
         fotoDataURL = canvasFoto.toDataURL('image/png');
         hasPhoto = true;
-
-        // Simpan data (akan memeriksa tanda tangan & foto)
+        
         if (simpanData()) {
             alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
             tutupModal();
@@ -595,37 +558,56 @@
         }
     }
 
-    // === Data handling ===
-    let dataBukuTamu = [];
-
-    // Fungsi pembantu untuk menyembunyikan field setelah tertentu
-    function hideFieldsAfter(startFieldId) {
-        let hide = false;
-        document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
-            if (div.id === startFieldId) {
-                hide = true;
-            } else if (hide) {
-                div.style.display = 'none';
-                const input = div.querySelector('input, select, textarea');
-                if (input) {
-                    input.classList.remove('error', 'success');
-                }
-            }
-        });
+    function tutupModal() {
+        photoModal.style.display = 'none';
+        if (streamAktif) {
+            streamAktif.getTracks().forEach(track => track.stop());
+            streamAktif = null;
+        }
     }
+
+    let dataBukuTamu = [];
 
     // Fungsi untuk menampilkan bidang berikutnya
     function checkAndShowNext(currentElementId, nextElementId) {
         const currentElement = document.getElementById(currentElementId);
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
-
+        
+        // Fungsi pembantu untuk menyembunyikan semua field setelah elemen tertentu
+        function hideFieldsAfter(startElementId) {
+            let hide = false;
+            document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
+                if (div.id === startElementId) {
+                    hide = true;
+                } else if (hide) {
+                    div.style.display = 'none';
+                    // Reset kelas validasi untuk field yang disembunyikan
+                    const input = div.querySelector('input, select, textarea');
+                    if (input) {
+                        input.classList.remove('error', 'success');
+                    }
+                }
+            });
+        }
+        
+        // Cek khusus untuk bidang 'nama'
         if (currentElementId === 'nama') {
-            if (!validateNama()) {
+            if (currentElement.value.length < 5) {
+                currentElement.classList.add('error');
+                currentElement.classList.remove('success');
+                namaWarning.style.display = 'block';
                 isValid = false;
-                hideFieldsAfter('field-nama');
+                hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
+                namaWarning.style.display = 'none';
             }
-        } else if (currentElementId === 'signature-pad') {
+        }
+        
+        // Cek untuk bidang 'signature-pad'
+        else if (currentElementId === 'signature-pad') {
             if (!hasSignature) {
                 signatureWarning.style.display = 'block';
                 canvas.classList.add('error');
@@ -635,24 +617,26 @@
                 canvas.classList.remove('error');
                 canvas.classList.add('success');
             }
-        } else if (currentElement) {
-            // elemen input/select/textarea biasa
-            if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
-                if (!currentElement.checkValidity()) {
-                    currentElement.classList.add('error');
-                    currentElement.classList.remove('success');
-                    isValid = false;
-                } else {
-                    currentElement.classList.remove('error');
-                    currentElement.classList.add('success');
-                }
+        } 
+        
+        // Cek untuk bidang input/select/textarea lainnya
+        else if (currentElement.type === 'textarea' || currentElement.type === 'text' || currentElement.type === 'select-one') {
+            if (!currentElement.checkValidity()) {
+                currentElement.classList.add('error');
+                currentElement.classList.remove('success');
+                isValid = false;
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
             }
         }
-
+        
         if (isValid && nextElement) {
             nextElement.style.display = 'block';
-            const nextInput = nextElement.querySelector('input, select, textarea, canvas');
-            if (nextInput) nextInput.focus && nextInput.focus();
+            const nextInput = nextElement.querySelector('input, select, textarea');
+            if (nextInput) {
+                nextInput.focus();
+            }
         }
     }
 
@@ -666,7 +650,7 @@
         signatureWarning.style.display = 'none';
         photoWarning.style.display = 'none';
         
-        // Validasi form standar HTML5
+        // Cek validitas form bawaan browser
         if (!form.reportValidity()) {
             isValid = false;
         }
@@ -681,23 +665,23 @@
             canvas.classList.add('success');
         }
 
-        // Validasi foto (harus ada foto yang diambil)
-        if (!hasPhoto && !fotoDataURL) {
+        // Validasi foto
+        if (!hasPhoto) {
             photoWarning.style.display = 'block';
             isValid = false;
         }
-
+        
         if (isValid) {
             const formData = {
-                nama: document.getElementById('nama').value.trim(),
+                nama: document.getElementById('nama').value,
                 asal: asal.value,
                 instansi: instansi.value,
                 kecamatan: kecamatan.value,
                 desa: desa.value,
                 pihakDitemui: document.getElementById('pihakDitemui').value,
                 jenisLayanan: document.getElementById('jenisLayanan').value,
-                uraian: document.getElementById('uraian').value.trim(),
-                nomorHp: nomorHp.value.trim(),
+                uraian: document.getElementById('uraian').value,
+                nomorHp: nomorHp.value,
                 tandaTangan: canvas.toDataURL('image/png'),
                 foto: fotoDataURL,
                 timestamp: new Date().toLocaleString('id-ID')
@@ -743,7 +727,7 @@
             document.getElementById('pihakDitemui'), document.getElementById('jenisLayanan'), 
             document.getElementById('uraian'), nomorHp
         ];
-        elements.forEach(el => { if(el) el.classList.remove('error', 'success'); });
+        elements.forEach(el => { el.classList.remove('error', 'success'); });
 
         namaWarning.style.display = 'none';
         signatureWarning.style.display = 'none';
@@ -828,7 +812,6 @@
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
-
 </script>
 
 </body>
