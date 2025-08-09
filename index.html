@@ -138,11 +138,25 @@ input:focus, select:focus, textarea:focus {
   width: 100px;
   height: auto;
 }
+#video-container {
+    position: relative;
+    width: 300px; /* atau 100% */
+    height: 225px; /* atau auto */
+    margin: 0 auto;
+}
+#video, #capturedPhoto {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 </style>
 </head>
-<body>
- 
-<!-- Gambar kepala daerah -->
+
+    <body>
+
 <div class="header-gambar">
   <img src="bupati.png" alt="Wakil Bupati" class="foto-kepala">
   <img src="logo-tubaba.png" alt="Logo Tubaba" class="logo">
@@ -268,19 +282,14 @@ input:focus, select:focus, textarea:focus {
 <label>Foto: <span class="required">*</span></label>
 <div class="warning" id="photoWarning" style="display:none;">
 ⚠️ Foto wajib diambil!
-<!-- Frame Kamera -->
-<!-- Frame Kamera -->
-<div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden; margin-bottom:10px;">
-  <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"></video>
-  <img id="previewFoto" alt="Hasil Foto" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;">
 </div>
-
+<div id="video-container">
+  <video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video>
+  <img id="capturedPhoto" alt="Hasil Foto" style="display:none;">
+</div>
 <canvas id="canvasFoto" style="display:none;"></canvas>
-<button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
-<br/><br/>
+<br/>
 
-
-<canvas id="canvasFoto" style="display:none;"></canvas>
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
 <br/><br/>
 
@@ -308,23 +317,16 @@ input:focus, select:focus, textarea:focus {
     // Penyesuaian lebar canvas saat jendela diubah ukurannya
     const signatureCanvas = document.getElementById('signature-pad');
     function resizeCanvas() {
-  const originalWidth = 700;
-  const newWidth = Math.min(window.innerWidth - 40, originalWidth);
-
-  // Simpan isi kanvas sebelum resize
-  const tempData = signatureCanvas.toDataURL();
-
-  // Atur ulang lebar kanvas (ini akan menghapus isi kanvas)
-  signatureCanvas.width = newWidth;
-
-  // Gambar ulang dari data yang sudah disimpan
-  const img = new Image();
-  img.onload = function () {
-    ctx.drawImage(img, 0, 0);
-  };
-  img.src = tempData;
-}
-
+      const originalWidth = 700;
+      const newWidth = Math.min(window.innerWidth - 40, originalWidth);
+      const tempData = signatureCanvas.toDataURL();
+      signatureCanvas.width = newWidth;
+      const img = new Image();
+      img.onload = function () {
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = tempData;
+    }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas(); // Panggil saat halaman pertama kali dimuat
 
@@ -466,125 +468,74 @@ input:focus, select:focus, textarea:focus {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       hasSignature = false;
     }
-
-    // Kamera dan foto
+    
+    // Kamera dan foto - **KODE MODIFIKASI**
     const video = document.getElementById('video');
     const canvasFoto = document.getElementById('canvasFoto');
-
-    const previewFoto = document.getElementById('previewFoto');
+    const capturedPhoto = document.getElementById('capturedPhoto'); // elemen img baru
+    let streamAktif = null;
     let hasPhoto = false;
-    let lastFotoTime = 0;
-    
+
+    async function ambilFoto(evt) {
+      const button = evt?.target || event?.target;
+
+      // Jika kamera belum aktif, aktifkan kamera terlebih dahulu
+      if (!streamAktif) {
+        try {
+          streamAktif = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" }
+          }).catch(() => {
+            return navigator.mediaDevices.getUserMedia({ video: true });
+          });
+
+          if (!streamAktif) throw new Error("Stream kamera tidak tersedia");
+
+          video.srcObject = streamAktif;
+          video.style.display = 'block';
+          capturedPhoto.style.display = 'none'; // Sembunyikan foto saat video aktif
+          await video.play();
+
+          if (button) {
+            button.innerHTML = '📸 Ambil Foto Sekarang';
+            button.style.background = '#ffc107';
+          }
+        } catch (error) {
+          console.error("Tidak dapat mengakses kamera:", error);
+          alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+          streamAktif = null;
+          return;
+        }
+      } else {
+        // Kamera sudah aktif, ambil foto sekarang
+        const context = canvasFoto.getContext('2d');
+        canvasFoto.width = video.videoWidth || 300;
+        canvasFoto.height = video.videoHeight || 225;
+        context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+
+        capturedPhoto.src = canvasFoto.toDataURL('image/png');
+        capturedPhoto.style.display = 'block';
+        video.style.display = 'none';
+        hasPhoto = true;
+
+        // **TAMBAHAN:** Hentikan stream kamera setelah foto diambil
+        streamAktif.getTracks().forEach(track => track.stop());
+        streamAktif = null;
+
+        if (button) {
+          const originalText = button.innerHTML;
+          button.innerHTML = '✅ Foto Berhasil!';
+          button.style.background = '#28a745';
+          setTimeout(() => {
+            button.innerHTML = '📸 Ambil Foto';
+            button.style.background = '';
+          }, 2000);
+        }
+      }
+    }
+
+
     // Array untuk menyimpan data buku tamu
     let dataBukuTamu = [];
-
-    // Akses kamera
-   
-let streamAktif = false;
-aasync function ambilFoto(evt) {
-  const button = evt?.target || event?.target;
-
-  // Aktifkan kamera jika belum aktif
-  if (!streamAktif) {
-    try {
-      let stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" }
-      }).catch(() => {
-        return navigator.mediaDevices.getUserMedia({ video: true });
-      });
-
-      if (!stream) throw new Error("Stream kamera tidak tersedia");
-
-      video.srcObject = stream;
-      video.style.display = 'block';
-      previewFoto.style.display = 'none';
-
-      await video.play();
-      streamAktif = true;
-
-      if (button) {
-        button.innerHTML = '📸 Ambil Foto Sekarang';
-        button.style.background = '#ffc107';
-      }
-      return;
-
-    } catch (error) {
-      console.error("Tidak dapat mengakses kamera:", error);
-      alert("❌ Gagal mengakses kamera! Pastikan izin kamera sudah diberikan.");
-      return;
-    }
-  }
-
-  // Kamera aktif → ambil foto
-  const context = canvasFoto.getContext('2d');
-  canvasFoto.width = video.videoWidth || 300;
-  canvasFoto.height = video.videoHeight || 225;
-  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  video.style.display = 'none';
-  hasPhoto = true;
-
-  if (button) {
-    const originalText = button.innerHTML;
-    button.innerHTML = '✅ Foto Berhasil!';
-    button.style.background = '#28a745';
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = '';
-    }, 2000);
-  }
-}
-
-
-  // Kamera aktif → ambil foto
-  const context = canvasFoto.getContext('2d');
-  canvasFoto.width = video.videoWidth || 300;
-  canvasFoto.height = video.videoHeight || 225;
-  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-
-  // Set foto ke preview
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  video.style.display = 'none';
-  hasPhoto = true;
-
-  // Matikan kamera setelah ambil foto
-  let tracks = video.srcObject?.getTracks();
-  if (tracks) {
-    tracks.forEach(track => track.stop());
-  }
-  streamAktif = false;
-
-  if (button) {
-    button.innerHTML = '📷 Ambil Ulang Foto';
-    button.style.background = '#28a745';
-  }
-}
-
-  // Kamera sudah aktif, ambil foto sekarang
-  const context = canvasFoto.getContext('2d');
-  canvasFoto.width = video.videoWidth || 300;
-  canvasFoto.height = video.videoHeight || 225;
-  context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  canvasFoto.style.display = 'none';
-  hasPhoto = true;
-
-  if (button) {
-    const originalText = button.innerHTML;
-    button.innerHTML = '✅ Foto Berhasil!';
-    button.style.background = '#28a745';
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = '';
-    }, 2000);
-  }
-}
-
 
     // Validasi dan simpan data
     function simpanData() {
@@ -617,11 +568,11 @@ aasync function ambilFoto(evt) {
       // Validasi foto
       if (!hasPhoto) {
         photoWarning.style.display = 'block';
-        video.classList.add('error');
+        // video.classList.add('error'); // tidak perlu karena video sudah diganti
         isValid = false;
       } else {
-        video.classList.remove('error');
-        video.classList.add('success');
+        // video.classList.remove('error'); // tidak perlu
+        // video.classList.add('success'); // tidak perlu
       }
       
       // Validasi khusus untuk instansi/masyarakat
@@ -656,7 +607,7 @@ aasync function ambilFoto(evt) {
           uraian: document.getElementById('uraian').value,
           nomorHp: nomorHp.value,
           tandaTangan: canvas.toDataURL('image/png'),
-          foto: canvasFoto.toDataURL('image/png'),
+          foto: capturedPhoto.src, // Ambil dari elemen img baru
           timestamp: new Date().toLocaleString('id-ID')
         };
         
@@ -690,10 +641,15 @@ aasync function ambilFoto(evt) {
       // Reset tanda tangan
       clearSignature();
       
-      // Reset foto
-      previewFoto.style.display = 'none';
-      previewFoto.src = '';
-      
+      // Reset foto - **KODE MODIFIKASI**
+      capturedPhoto.style.display = 'none';
+      capturedPhoto.src = '';
+      video.style.display = 'none';
+      if (streamAktif) {
+        streamAktif.getTracks().forEach(track => track.stop());
+        streamAktif = null;
+      }
+
       // Reset dropdown dinamis
       daftarInstansi.classList.add("hidden");
       daftarMasyarakat.classList.add("hidden");
@@ -707,7 +663,7 @@ aasync function ambilFoto(evt) {
       desa.removeAttribute('required');
       
       // Reset visual styling (hapus border error/success)
-      const elements = [canvas, video, document.getElementById('nama'), asal, 
+      const elements = [canvas, document.getElementById('nama'), asal, 
                        document.getElementById('pihakDitemui'), document.getElementById('jenisLayanan'),
                        document.getElementById('uraian'), nomorHp];
       elements.forEach(el => {
