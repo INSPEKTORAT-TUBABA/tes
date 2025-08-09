@@ -274,12 +274,11 @@ input:focus, select:focus, textarea:focus {
 ⚠️ Foto wajib diambil!
 </div>
 <!-- Awalnya disembunyikan -->
+<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video><br/>
+<!-- Awalnya disembunyikan -->
 <video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video>
 <canvas id="canvasFoto" style="display:none;"></canvas> <!-- ✅ tambahkan ini -->
 <br/>
-
-<!-- Awalnya disembunyikan -->
-<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video><br/>
 
 <!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
@@ -471,7 +470,8 @@ input:focus, select:focus, textarea:focus {
 
     // Kamera dan foto
     const video = document.getElementById('video');
-    const canvasFoto = document.getElementById('canvas');
+    const canvasFoto = document.getElementById('canvasFoto');
+
     const previewFoto = document.getElementById('previewFoto');
     let hasPhoto = false;
     let lastFotoTime = 0;
