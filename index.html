@@ -299,7 +299,7 @@
 
 <br/><br/>
 
-<button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
+<button type="button" onclick="simpanDataDanTutupForm()" style="font-size: 18px;">💾 Simpan Data</button>
 
 </form>
 </div>
@@ -323,12 +323,12 @@
     <div id="modalContent">
         <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
         <div id="cameraFrame">
-            <video id="videoElement" autoplay muted playsinline style="display:none;"></video>
+            <video id="videoElement" autoplay muted playsinline style="display:block;"></video>
             <img id="capturedPhoto" alt="Hasil Foto" style="display:none;">
         </div>
         <canvas id="canvasFoto" style="display:none;"></canvas>
         <div id="modalButtons">
-            <button type="button" id="btnAmbilFoto" class="btn-camera" onclick="ambilFotoSekarang()">📸 Ambil Foto</button>
+            <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
             <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
         </div>
     </div>
@@ -463,15 +463,13 @@
     const videoElement = document.getElementById('videoElement');
     const capturedPhoto = document.getElementById('capturedPhoto');
     const canvasFoto = document.getElementById('canvasFoto');
-    const btnAmbilFoto = document.getElementById('btnAmbilFoto');
 
     let streamAktif = null;
-    let fotoDataURL = null; // Menyimpan data foto sementara
+    let fotoDataURL = null; 
     let hasPhoto = false;
 
     async function bukaKamera() {
       photoModal.style.display = 'flex';
-      btnAmbilFoto.style.display = 'block';
       capturedPhoto.style.display = 'none';
 
       try {
@@ -479,49 +477,37 @@
         videoElement.srcObject = streamAktif;
         videoElement.style.display = 'block';
         videoElement.play();
-        btnAmbilFoto.textContent = '📸 Ambil Foto';
-        btnAmbilFoto.style.background = '#ffc107';
       } catch (error) {
         console.error("Gagal mengakses kamera:", error);
         alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
         tutupModal();
       }
     }
-    
-    function ambilFotoSekarang() {
-      if (!streamAktif) {
-        alert("Kamera belum aktif!");
-        return;
-      }
 
-      const context = canvasFoto.getContext('2d');
-      canvasFoto.width = videoElement.videoWidth || 300;
-      canvasFoto.height = videoElement.videoHeight || 225;
-      context.drawImage(videoElement, 0, 0, canvasFoto.width, canvasFoto.height);
-      
-      fotoDataURL = canvasFoto.toDataURL('image/png');
-      hasPhoto = true;
-      capturedPhoto.src = fotoDataURL;
-      capturedPhoto.style.display = 'block';
-      videoElement.style.display = 'none';
-      
-      streamAktif.getTracks().forEach(track => track.stop());
-      streamAktif = null;
+    function simpanFotoLangsung() {
+        if (!streamAktif) {
+            alert("Kamera belum aktif!");
+            return;
+        }
 
-      btnAmbilFoto.style.display = 'none';
-      const btnSave = document.createElement('button');
-      btnSave.textContent = '✅ Simpan & Lihat Data';
-      btnSave.className = 'btn-save';
-      btnSave.onclick = simpanFotoDanTutup;
-      document.getElementById('modalButtons').prepend(btnSave);
-    }
-
-    function simpanFotoDanTutup() {
-      if (simpanData()) {
-        alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
-        tutupModal();
-        showData();
-      }
+        const context = canvasFoto.getContext('2d');
+        canvasFoto.width = videoElement.videoWidth || 300;
+        canvasFoto.height = videoElement.videoHeight || 225;
+        context.drawImage(videoElement, 0, 0, canvasFoto.width, canvasFoto.height);
+        
+        fotoDataURL = canvasFoto.toDataURL('image/png');
+        hasPhoto = true;
+        
+        // Coba simpan data, jika berhasil, tutup modal
+        if (simpanData()) {
+            alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+            tutupModal();
+            showData();
+        } else {
+            // Jika gagal, modal tetap terbuka dan reset foto sementara
+            fotoDataURL = null;
+            hasPhoto = false;
+        }
     }
 
     function tutupModal() {
@@ -530,22 +516,14 @@
         streamAktif.getTracks().forEach(track => track.stop());
         streamAktif = null;
       }
-      const btnSave = document.querySelector('.btn-save');
-      if (btnSave) btnSave.remove();
-      btnAmbilFoto.style.display = 'block';
-      btnAmbilFoto.textContent = '📸 Ambil Foto';
-      btnAmbilFoto.style.background = '#ffc107';
-
-      // --- Perubahan di sini ---
-      // Jika sudah ada foto, sembunyikan teks status.
-      // Jika belum ada foto, tampilkan teks status awal.
+      
+      // Reset status foto di halaman utama
       if (hasPhoto) {
           photoStatusText.textContent = ""; 
       } else {
           photoStatusText.textContent = "Foto belum diambil.";
           photoStatusText.style.color = "red";
       }
-      // --- Akhir perubahan ---
     }
 
     let dataBukuTamu = [];
@@ -573,7 +551,7 @@
         canvas.classList.add('success');
       }
       
-      if (!fotoDataURL) {
+      if (!hasPhoto) {
         photoWarning.style.display = 'block';
         isValid = false;
       }
@@ -610,14 +588,23 @@
         resetFormComplete();
         return true;
       } else {
-        alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan\n- Ambil foto");
         return false;
       }
+    }
+    
+    function simpanDataDanTutupForm() {
+        if(simpanData()) {
+            alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+            showData();
+        } else {
+            alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan\n- Ambil foto");
+        }
     }
 
     function resetFormComplete() {
       document.getElementById('bukuTamuForm').reset();
       hasSignature = false;
+      hasPhoto = false;
       fotoDataURL = null;
       clearSignature();
       daftarInstansi.classList.add("hidden");
@@ -662,7 +649,7 @@
       }
       let html = '';
       dataBukuTamu.forEach((data, index) => {
-        html += `<div class="data-card"><div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div></div></div>`;
+        html += `<div class="data-card"><div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px #ccc; max-width: 200px; height: auto;"></div></div></div>`;
       });
       container.innerHTML = html;
     }
