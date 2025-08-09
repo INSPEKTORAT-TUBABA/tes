@@ -524,14 +524,19 @@ async function ambilFoto(evt) {
   }
 
   // Kamera sudah aktif, ambil foto sekarang
+ if (streamAktif) {
   const context = canvasFoto.getContext('2d');
   canvasFoto.width = video.videoWidth || 300;
   canvasFoto.height = video.videoHeight || 225;
   context.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
 
-  previewFoto.src = canvasFoto.toDataURL('image/png');
-  previewFoto.style.display = 'block';
-  canvasFoto.style.display = 'none';
+  // Ganti tampilan video dengan hasil foto
+  const fotoData = canvasFoto.toDataURL('image/png');
+  video.style.display = 'none'; // sembunyikan video
+  canvasFoto.style.display = 'block'; // tampilkan foto di tempat video
+  canvasFoto.style.width = video.style.width;
+  canvasFoto.style.height = video.style.height;
+
   hasPhoto = true;
 
   if (button) {
@@ -544,7 +549,6 @@ async function ambilFoto(evt) {
     }, 2000);
   }
 }
-
 
     // Validasi dan simpan data
     function simpanData() {
