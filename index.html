@@ -182,8 +182,8 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" />
-            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan hanya dengan huruf.</div>
+            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" onkeypress="return noNumbers(event)"/>
+            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
             <br/>
         </div>
         
@@ -379,7 +379,7 @@
       "Way Kenanga": ["Agung Jaya", "Mercubuana", "Balam Jaya", "Pagar Buana", "Indraloka I", "Indraloka II", "Balam Asri", "Indraloka Jaya", "Indraloka Mukti", "Sido Agung"],
       "Batu Putih": ["Toto Katon", "Sakti Jaya", "Margo Mulya", "Margo Dadi", "Marga Sari", "Mulyo Sari", "Toto Makmur", "Panca Marga", "Sido Makmur", "Toto Wonodadi"],
       "Gunung Terang": ["Setia Bumi", "Setia Agung", "Mulya Jadi", "Gunung Agung", "Gunung Terang", "Toto Mulyo", "Kagungan Jaya", "Terang Mulya", "Terang Makmur", "Rerang Bumi Agung"],
-      "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gedung Ratu", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
+      "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
       "Pagar Dewa": ["Bujung Dewa", "Bujungsari Marga", "Marga Jaya Indah", "Pagar Dewa", "Cahyo Randu", "Pagar Dewa Suka Mulya"]
     };
 
@@ -410,6 +410,15 @@
             desa.appendChild(opt);
         });
     });
+
+    // Menangani agar input nama tidak bisa diisi dengan angka
+    function noNumbers(event) {
+      const charCode = (event.which) ? event.which : event.keyCode;
+      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        return true;
+      }
+      return false;
+    }
 
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -525,6 +534,7 @@
         }
     }
 
+    // Fungsi yang dipanggil dari tombol di dalam modal
     function simpanFotoLangsung() {
         if (!streamAktif) {
             alert("Kamera belum aktif!");
@@ -558,11 +568,13 @@
 
     let dataBukuTamu = [];
 
+    // Fungsi untuk menampilkan bidang berikutnya
     function checkAndShowNext(currentElementId, nextElementId) {
         const currentElement = document.getElementById(currentElementId);
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
         
+        // Fungsi pembantu untuk menyembunyikan semua field setelah elemen tertentu
         function hideFieldsAfter(startElementId) {
             let hide = false;
             document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
@@ -570,6 +582,7 @@
                     hide = true;
                 } else if (hide) {
                     div.style.display = 'none';
+                    // Reset kelas validasi untuk field yang disembunyikan
                     const input = div.querySelector('input, select, textarea');
                     if (input) {
                         input.classList.remove('error', 'success');
@@ -578,31 +591,22 @@
             });
         }
         
-        // --- LOGIKA VALIDASI NAMA YANG DIPERBAIKI ---
+        // Cek khusus untuk bidang 'nama'
         if (currentElementId === 'nama') {
-            const inputValue = currentElement.value;
-            const trimmedValue = inputValue.trim();
-            
-            // Regex untuk memastikan hanya ada huruf dan spasi
-            const containsOnlyLettersAndSpaces = /^[a-zA-Z\s]+$/.test(inputValue);
-            
-            // Validasi: panjang setelah di-trim >= 5 DAN hanya berisi huruf dan spasi
-            const isValidInput = trimmedValue.length >= 5 && containsOnlyLettersAndSpaces;
-
-            if (isValidInput) {
-                currentElement.classList.remove('error');
-                currentElement.classList.add('success');
-                namaWarning.style.display = 'none';
-            } else {
+            if (currentElement.value.length < 5) {
                 currentElement.classList.add('error');
                 currentElement.classList.remove('success');
                 namaWarning.style.display = 'block';
                 isValid = false;
-                hideFieldsAfter('field-nama');
+                hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
+                namaWarning.style.display = 'none';
             }
         }
-        // --- AKHIR PERBAAIKAN LOGIKA NAMA ---
         
+        // Cek untuk bidang 'signature-pad'
         else if (currentElementId === 'signature-pad') {
             if (!hasSignature) {
                 signatureWarning.style.display = 'block';
@@ -615,6 +619,7 @@
             }
         } 
         
+        // Cek untuk bidang input/select/textarea lainnya
         else if (currentElement.type === 'textarea' || currentElement.type === 'text' || currentElement.type === 'select-one') {
             if (!currentElement.checkValidity()) {
                 currentElement.classList.add('error');
@@ -635,18 +640,22 @@
         }
     }
 
+    // Fungsi utama untuk validasi dan menyimpan data
     function simpanData() {
         const form = document.getElementById('bukuTamuForm');
         let isValid = true;
         
+        // Reset warnings
         namaWarning.style.display = 'none';
         signatureWarning.style.display = 'none';
         photoWarning.style.display = 'none';
         
+        // Cek validitas form bawaan browser
         if (!form.reportValidity()) {
             isValid = false;
         }
 
+        // Validasi tanda tangan
         if (!hasSignature) {
             signatureWarning.style.display = 'block';
             canvas.classList.add('error');
@@ -656,6 +665,7 @@
             canvas.classList.add('success');
         }
 
+        // Validasi foto
         if (!hasPhoto) {
             photoWarning.style.display = 'block';
             isValid = false;
@@ -686,6 +696,7 @@
         }
     }
     
+    // Fungsi untuk tombol Simpan Data di halaman utama
     function simpanDataDanTutupForm() {
         if(simpanData()) {
             alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
@@ -708,6 +719,7 @@
         kecamatan.removeAttribute('required');
         desa.removeAttribute('required');
         
+        // Sembunyikan semua bidang kecuali nama
         document.querySelectorAll('#formSection > form > div:not(#field-nama)').forEach(el => el.style.display = 'none');
 
         const elements = [
@@ -750,7 +762,7 @@
         }
         let html = '';
         dataBukuTamu.forEach((data, index) => {
-            html += `<div class="data-card"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px #ccc; max-width: 200px; height: auto;"></div></div></div>`;
+            html += `<div class="data-card"><div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3><button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button></div><div class="data-grid"><div><strong>Nama:</strong> ${data.nama}</div><div><strong>Asal:</strong> ${data.asal}</div>${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}<div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div><div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div><div><strong>Nomor HP:</strong> ${data.nomorHp}</div><div><strong>Waktu:</strong> ${data.timestamp}</div></div><div><strong>Uraian:</strong> ${data.uraian}</div><div class="data-images"><div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div><div><strong>Foto:</strong><br><img src="${data.foto}" style="border: 1px #ccc; max-width: 200px; height: auto;"></div></div></div>`;
         });
         container.innerHTML = html;
     }
