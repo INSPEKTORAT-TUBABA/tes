@@ -276,14 +276,16 @@ input:focus, select:focus, textarea:focus {
 
 <!-- Bingkai kamera -->
 <div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden;">
+  <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"><<!-- Frame Kamera -->
+<div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden; margin-bottom:10px;">
   <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"></video>
   <img id="previewFoto" alt="Hasil Foto" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;">
 </div>
 
 <canvas id="canvasFoto" style="display:none;"></canvas>
-<br/>
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
 <br/><br/>
+
 
 
 <!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
@@ -492,7 +494,7 @@ let streamAktif = false;
 async function ambilFoto(evt) {
   const button = evt?.target || event?.target;
 
-  // Aktifkan kamera jika belum
+  // Aktifkan kamera jika belum aktif
   if (!streamAktif) {
     try {
       let stream = await navigator.mediaDevices.getUserMedia({
@@ -505,7 +507,7 @@ async function ambilFoto(evt) {
 
       video.srcObject = stream;
       video.style.display = 'block';
-      previewFoto.style.display = 'none'; // pastikan foto belum muncul
+      previewFoto.style.display = 'none';
 
       await video.play();
       streamAktif = true;
@@ -531,7 +533,7 @@ async function ambilFoto(evt) {
 
   previewFoto.src = canvasFoto.toDataURL('image/png');
   previewFoto.style.display = 'block';
-  video.style.display = 'none'; // sembunyikan video, ganti dengan foto
+  video.style.display = 'none';
   hasPhoto = true;
 
   if (button) {
