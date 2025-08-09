@@ -267,18 +267,15 @@ input:focus, select:focus, textarea:focus {
 <label>Foto: <span class="required">*</span></label>
 <div class="warning" id="photoWarning" style="display:none;">
 ⚠️ Foto wajib diambil!
+<!-- Frame Kamera -->
+<div id="frameFoto" style="position:relative; width:300px; height:225px; border:2px solid #ccc; overflow:hidden; margin-bottom:10px;">
+  <video id="video" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover; display:none;"></video>
+  <img id="previewFoto" alt="Hasil Foto" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;">
 </div>
-<!-- Awalnya disembunyikan -->
-<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video><br/>
-<!-- Awalnya disembunyikan -->
-<video id="video" width="300" height="225" autoplay muted playsinline style="display:none;"></video>
-<canvas id="canvasFoto" style="display:none;"></canvas> <!-- ✅ tambahkan ini -->
-<br/>
 
-<!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
+<canvas id="canvasFoto" style="display:none;"></canvas>
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
 <br/><br/>
-<img id="previewFoto" style="width:300px;display:none;border:1px solid #ccc;margin-bottom:10px;" alt="Hasil Foto">
 
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
 
