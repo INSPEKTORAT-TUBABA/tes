@@ -182,8 +182,8 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" onkeypress="return noNumbers(event)"/>
-            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
+            <input id="nama" required type="text" pattern="[A-Za-z\s]{5,}" oninput="checkAndShowNext('nama', 'field-asal')"/>
+            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak mengandung angka.</div>
             <br/>
         </div>
         
@@ -347,8 +347,6 @@
     const signatureCanvas = document.getElementById('signature-pad');
     const namaInput = document.getElementById('nama');
     const namaWarning = document.getElementById('namaWarning');
-    const signatureWarning = document.getElementById('signatureWarning');
-    const photoWarning = document.getElementById('photoWarning');
 
     function resizeCanvas() {
         const originalWidth = 700;
@@ -410,15 +408,6 @@
             desa.appendChild(opt);
         });
     });
-
-    // Menangani agar input nama tidak bisa diisi dengan angka
-    function noNumbers(event) {
-      const charCode = (event.which) ? event.which : event.keyCode;
-      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-        return true;
-      }
-      return false;
-    }
 
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
@@ -509,6 +498,8 @@
     const videoElement = document.getElementById('videoElement');
     const capturedPhoto = document.getElementById('capturedPhoto');
     const canvasFoto = document.getElementById('canvasFoto');
+    const signatureWarning = document.getElementById('signatureWarning');
+    const photoWarning = document.getElementById('photoWarning');
 
     let streamAktif = null;
     let fotoDataURL = null;
@@ -574,31 +565,16 @@
         const nextElement = document.getElementById(nextElementId);
         let isValid = true;
         
-        // Fungsi pembantu untuk menyembunyikan semua field setelah elemen tertentu
-        function hideFieldsAfter(startElementId) {
-            let hide = false;
-            document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
-                if (div.id === startElementId) {
-                    hide = true;
-                } else if (hide) {
-                    div.style.display = 'none';
-                    // Reset kelas validasi untuk field yang disembunyikan
-                    const input = div.querySelector('input, select, textarea');
-                    if (input) {
-                        input.classList.remove('error', 'success');
-                    }
-                }
-            });
-        }
-        
         // Cek khusus untuk bidang 'nama'
         if (currentElementId === 'nama') {
-            if (currentElement.value.length < 5) {
+            const isNameValid = currentElement.checkValidity();
+            const hasNumbers = /\d/.test(currentElement.value);
+
+            if (!isNameValid || hasNumbers) {
                 currentElement.classList.add('error');
                 currentElement.classList.remove('success');
                 namaWarning.style.display = 'block';
                 isValid = false;
-                hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
             } else {
                 currentElement.classList.remove('error');
                 currentElement.classList.add('success');
@@ -646,7 +622,6 @@
         let isValid = true;
         
         // Reset warnings
-        namaWarning.style.display = 'none';
         signatureWarning.style.display = 'none';
         photoWarning.style.display = 'none';
         
