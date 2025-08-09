@@ -182,7 +182,13 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')" onkeypress="return noNumbers(event)"/>
+            function noNumbers(event) {
+  const charCode = (event.which) ? event.which : event.keyCode;
+  if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+    return true;
+  }
+  return false;
+} onkeypress="return noNumbers(event)"/>
             <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf.</div>
             <br/>
         </div>
