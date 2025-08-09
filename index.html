@@ -182,7 +182,9 @@
     <form id="bukuTamuForm">
         <div id="field-nama">
             <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="checkAndShowNext('nama', 'field-asal')"/><br/><br/>
+            <input id="nama" required type="text" pattern="[A-Za-z\s]{5,}" oninput="checkAndShowNext('nama', 'field-asal')"/>
+            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak mengandung angka.</div>
+            <br/>
         </div>
         
         <div id="field-asal" style="display: none;">
@@ -343,8 +345,8 @@
 
 <script>
     const signatureCanvas = document.getElementById('signature-pad');
-    const signatureWarning = document.getElementById('signatureWarning');
-    const photoWarning = document.getElementById('photoWarning');
+    const namaInput = document.getElementById('nama');
+    const namaWarning = document.getElementById('namaWarning');
 
     function resizeCanvas() {
         const originalWidth = 700;
@@ -488,7 +490,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         hasSignature = false;
         canvas.classList.remove('error', 'success');
-        document.getElementById('field-aksi').style.display = 'none'; // Sembunyikan lagi tombol aksi
+        document.getElementById('field-aksi').style.display = 'none';
     }
     
     // ---- KODE KAMERA MODIFIKASI ----
@@ -496,6 +498,8 @@
     const videoElement = document.getElementById('videoElement');
     const capturedPhoto = document.getElementById('capturedPhoto');
     const canvasFoto = document.getElementById('canvasFoto');
+    const signatureWarning = document.getElementById('signatureWarning');
+    const photoWarning = document.getElementById('photoWarning');
 
     let streamAktif = null;
     let fotoDataURL = null;
@@ -557,34 +561,59 @@
 
     // Fungsi untuk menampilkan bidang berikutnya
     function checkAndShowNext(currentElementId, nextElementId) {
-      const currentElement = document.getElementById(currentElementId);
-      const nextElement = document.getElementById(nextElementId);
-      let isValid = true;
-      
-      if (currentElementId === 'signature-pad') {
-          if (!hasSignature) {
-              signatureWarning.style.display = 'block';
-              canvas.classList.add('error');
-              isValid = false;
-          } else {
-              signatureWarning.style.display = 'none';
-              canvas.classList.remove('error');
-              canvas.classList.add('success');
-          }
-      } else if (currentElement.type === 'textarea' || currentElement.type === 'text' || currentElement.type === 'select-one') {
-          if (!currentElement.checkValidity()) {
-              currentElement.classList.add('error');
-              currentElement.classList.remove('success');
-              isValid = false;
-          } else {
-              currentElement.classList.remove('error');
-              currentElement.classList.add('success');
-          }
-      }
-      
-      if (isValid && nextElement) {
-          nextElement.style.display = 'block';
-      }
+        const currentElement = document.getElementById(currentElementId);
+        const nextElement = document.getElementById(nextElementId);
+        let isValid = true;
+        
+        // Cek khusus untuk bidang 'nama'
+        if (currentElementId === 'nama') {
+            const isNameValid = currentElement.checkValidity();
+            const hasNumbers = /\d/.test(currentElement.value);
+
+            if (!isNameValid || hasNumbers) {
+                currentElement.classList.add('error');
+                currentElement.classList.remove('success');
+                namaWarning.style.display = 'block';
+                isValid = false;
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
+                namaWarning.style.display = 'none';
+            }
+        }
+        
+        // Cek untuk bidang 'signature-pad'
+        else if (currentElementId === 'signature-pad') {
+            if (!hasSignature) {
+                signatureWarning.style.display = 'block';
+                canvas.classList.add('error');
+                isValid = false;
+            } else {
+                signatureWarning.style.display = 'none';
+                canvas.classList.remove('error');
+                canvas.classList.add('success');
+            }
+        } 
+        
+        // Cek untuk bidang input/select/textarea lainnya
+        else if (currentElement.type === 'textarea' || currentElement.type === 'text' || currentElement.type === 'select-one') {
+            if (!currentElement.checkValidity()) {
+                currentElement.classList.add('error');
+                currentElement.classList.remove('success');
+                isValid = false;
+            } else {
+                currentElement.classList.remove('error');
+                currentElement.classList.add('success');
+            }
+        }
+        
+        if (isValid && nextElement) {
+            nextElement.style.display = 'block';
+            const nextInput = nextElement.querySelector('input, select, textarea');
+            if (nextInput) {
+                nextInput.focus();
+            }
+        }
     }
 
     // Fungsi utama untuk validasi dan menyimpan data
@@ -675,6 +704,7 @@
         ];
         elements.forEach(el => { el.classList.remove('error', 'success'); });
 
+        namaWarning.style.display = 'none';
         signatureWarning.style.display = 'none';
         photoWarning.style.display = 'none';
         document.getElementById('nama').focus();
