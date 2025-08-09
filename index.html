@@ -128,6 +128,16 @@ input:focus, select:focus, textarea:focus {
   height: auto;
 }
 
+
+.foto-kepala {
+  width: 80px;
+  height: auto;
+}
+
+.logo {
+  width: 100px;
+  height: auto;
+}
 .foto-frame {
   width: 300px;
   height: 225px;
@@ -145,15 +155,6 @@ input:focus, select:focus, textarea:focus {
   object-fit: cover; /* agar foto tetap proporsional */
 }
 
-.foto-kepala {
-  width: 80px;
-  height: auto;
-}
-
-.logo {
-  width: 100px;
-  height: auto;
-}
 </style>
 </head>
 <body>
@@ -299,7 +300,9 @@ input:focus, select:focus, textarea:focus {
 <!-- Kirim event ke fungsi agar mendapatkan referensi tombol -->
 <button type="button" onclick="ambilFoto(event)">📸 Ambil Foto</button>
 <br/><br/>
-<img id="previewFoto" style="w
+<div class="foto-frame" style="display:none;" id="frameFoto">
+  <img id="previewFoto" alt="Hasil Foto">
+</div>
 <button type="button" onclick="simpanData()" style="font-size: 18px;">💾 Simpan Data</button>
 
 </form>
@@ -546,6 +549,7 @@ async function ambilFoto(evt) {
 
   previewFoto.src = canvasFoto.toDataURL('image/png');
 document.getElementById('frameFoto').style.display = 'flex';
+
   canvasFoto.style.display = 'none';
   hasPhoto = true;
 
