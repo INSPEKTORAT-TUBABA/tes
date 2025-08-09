@@ -411,16 +411,13 @@
         });
     });
 
-    // Menangani agar input nama tidak bisa diisi dengan angka dan karakter khusus
+    // Menangani agar input nama tidak bisa diisi dengan angka
     function noNumbers(event) {
-        const charCode = (event.which) ? event.which : event.keyCode;
-        const char = String.fromCharCode(charCode);
-        // Izinkan huruf (a-z, A-Z), spasi, dan backspace
-        if (/[a-zA-Z\s]/.test(char) || charCode === 8 || charCode === 46) {
-            return true;
-        }
-        event.preventDefault();
-        return false;
+      const charCode = (event.which) ? event.which : event.keyCode;
+      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        return true;
+      }
+      return false;
     }
 
     const nomorHp = document.getElementById('nomorHp');
@@ -596,14 +593,10 @@
         
         // Cek khusus untuk bidang 'nama'
         if (currentElementId === 'nama') {
-            const namaValue = currentElement.value.trim();
-            const hasLetters = /[a-zA-Z]/.test(namaValue);
-            
-            if (namaValue.length < 5 || !hasLetters) {
+            if (currentElement.value.length < 5) {
                 currentElement.classList.add('error');
                 currentElement.classList.remove('success');
                 namaWarning.style.display = 'block';
-                namaWarning.textContent = "Mohon isi nama minimal 5 huruf dan hindari hanya diisi dengan karakter atau angka.";
                 isValid = false;
                 hideFieldsAfter('field-nama'); // Sembunyikan semua field berikutnya
             } else {
