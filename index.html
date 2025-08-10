@@ -383,8 +383,8 @@
 
             <div id="field-tandaTangan" style="display: none;">
                 <label>Tanda Tangan: <span class="required">*</span></label>
-                <div class="warning" id="signatureWarning" style="display:none;"></div>
-                <canvas height="500" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
+                <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!</div>
+                <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
                 <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
             </div>
 
@@ -565,7 +565,7 @@
             if (strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                 hasSignature = false;
                 signatureWarning.style.display = 'block';
-                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(5)} cm).;
+                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 2 cm diperlukan!`;
                 signatureCanvas.classList.add('error');
                 signatureCanvas.classList.remove('success');
                 document.getElementById('field-aksi').style.display = 'none';
