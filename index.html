@@ -851,7 +851,7 @@
                 const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
                 if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                     signatureWarning.style.display = 'block';
-                    signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 5 cm diperlukan!`;
+                    signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek);
                     signatureCanvas.classList.add('error');
                     signatureCanvas.classList.remove('success');
                     isValid = false;
