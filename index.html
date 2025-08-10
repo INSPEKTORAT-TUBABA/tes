@@ -129,46 +129,10 @@
       text-align: center;
       border-radius: 8px;
     }
-    #cameraFrame {
-      position: relative;
-      width: 100%;
-      max-width: 480px; /* Lebar maksimal bingkai */
-      height: auto;
-      aspect-ratio: 4/3; /* Rasio standar 4:3 */
-      border: 5px solid #007bff; /* Bingkai biru */
-      margin: 10px auto;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #videoElement, #capturedPhoto {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    #modalButtons {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-    #modalButtons button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .btn-camera { background: #ffc107; color: black; }
-    .btn-save { background: #28a745; color: white; }
-    .btn-cancel { background: #dc3545; color: white; }
-    .btn-camera:hover { background: #e0a800; }
-    .btn-save:hover { background: #218838; }
-    .btn-cancel:hover { background: #c82333; }
+    #cameraFrame {<div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+    <img id="capturedPhotoFront" alt="Hasil Selfie" style="display:none; border:3px solid #007bff;">
+    <img id="capturedPhotoBack" alt="Hasil Kamera Belakang" style="display:none; border:3px solid #28a745;">
+</div>
 </style>
 </head>
 <body>
@@ -340,7 +304,7 @@ function validateNama() {
     // Hapus semua digit
     input.value = input.value.replace(/\d+/g, '');
 
-    // Hitung jumlah huruf (unicode friendly)
+    // Hitung huruf
     let hurufCount = 0;
     try {
         hurufCount = (input.value.match(/\p{L}/gu) || []).length;
@@ -348,20 +312,30 @@ function validateNama() {
         hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
     }
 
-    const isValid = hurufCount >= 5;
+    // Jika kosong → sembunyikan semua field setelah nama
+    if (input.value.trim() === '') {
+        input.classList.remove('error', 'success');
+        warning.style.display = 'none';
+        if (typeof hideFieldsAfter === 'function') hideFieldsAfter('field-nama');
+        return;
+    }
 
-    if (isValid) {
+    // valid kalau minimal 5 huruf
+    if (hurufCount >= 5) {
         input.classList.remove('error');
         input.classList.add('success');
         warning.style.display = 'none';
-        checkAndShowNext('nama', 'field-asal'); // logika dropdown berantai
+        if (typeof checkAndShowNext === 'function') {
+            checkAndShowNext('nama', 'field-asal');
+        } else {
+            const fa = document.getElementById('field-asal');
+            if (fa) fa.style.display = 'block';
+        }
     } else {
         input.classList.remove('success');
         input.classList.add('error');
         warning.style.display = 'block';
-        if (input.value.trim() === '') {
-            hideFieldsAfter('field-nama');
-        }
+        if (typeof hideFieldsAfter === 'function') hideFieldsAfter('field-nama');
     }
 }
     // === Element refs (pastikan id cocok dengan HTML) ===
@@ -694,6 +668,17 @@ function validateNama() {
             }
             if (hurufCount < 10) isValid = false;
         }
+            // KHUSUS: uraian minimal 15 huruf
+else if (currentElementId === 'uraian') {
+    let hurufCount = 0;
+    try {
+        hurufCount = (currentElement.value.match(/\p{L}/gu) || []).length;
+    } catch (e) {
+        hurufCount = (currentElement.value.match(/[A-Za-z]/g) || []).length;
+    }
+    if (hurufCount < 10) isValid = false;
+}
+
 // Generic untuk input/select/textarea lainnya
         else if (currentElement) {
             if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
@@ -968,25 +953,23 @@ async function bukaKamera() {
     document.getElementById('capturedPhotoBack').style.display = 'none';
 
     try {
-        // Buka kamera depan dulu
+        // kamera depan
         const streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-        const video = document.createElement('video');
-        video.autoplay = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.srcObject = streamFront;
-        await new Promise(res => video.onloadedmetadata = res);
-
-        // Ambil foto depan
-        const canvasFront = document.createElement('canvas');
-        canvasFront.width = video.videoWidth;
-        canvasFront.height = video.videoHeight;
-        canvasFront.getContext('2d').drawImage(video, 0, 0);
-        document.getElementById('capturedPhotoFront').src = canvasFront.toDataURL('image/png');
+        const videoF = document.createElement('video');
+        videoF.autoplay = true;
+        videoF.muted = true;
+        videoF.playsInline = true;
+        videoF.srcObject = streamFront;
+        await new Promise(res => videoF.onloadedmetadata = res);
+        const canvasF = document.createElement('canvas');
+        canvasF.width = videoF.videoWidth;
+        canvasF.height = videoF.videoHeight;
+        canvasF.getContext('2d').drawImage(videoF, 0, 0);
+        document.getElementById('capturedPhotoFront').src = canvasF.toDataURL('image/png');
         document.getElementById('capturedPhotoFront').style.display = 'block';
         streamFront.getTracks().forEach(track => track.stop());
 
-        // Lanjut buka kamera belakang
+        // kamera belakang
         const streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
         const videoB = document.createElement('video');
         videoB.autoplay = true;
@@ -994,13 +977,11 @@ async function bukaKamera() {
         videoB.playsInline = true;
         videoB.srcObject = streamBack;
         await new Promise(res => videoB.onloadedmetadata = res);
-
-        // Ambil foto belakang
-        const canvasBack = document.createElement('canvas');
-        canvasBack.width = videoB.videoWidth;
-        canvasBack.height = videoB.videoHeight;
-        canvasBack.getContext('2d').drawImage(videoB, 0, 0);
-        document.getElementById('capturedPhotoBack').src = canvasBack.toDataURL('image/png');
+        const canvasB = document.createElement('canvas');
+        canvasB.width = videoB.videoWidth;
+        canvasB.height = videoB.videoHeight;
+        canvasB.getContext('2d').drawImage(videoB, 0, 0);
+        document.getElementById('capturedPhotoBack').src = canvasB.toDataURL('image/png');
         document.getElementById('capturedPhotoBack').style.display = 'block';
         streamBack.getTracks().forEach(track => track.stop());
 
@@ -1010,11 +991,12 @@ async function bukaKamera() {
         };
         hasPhoto = true;
     } catch (err) {
-        console.error("Gagal membuka kamera:", err);
+        console.error("Kamera error:", err);
         alert("Tidak dapat mengakses kamera.");
         tutupModal();
     }
 }
+
 </script>
 </body>
 </html>
