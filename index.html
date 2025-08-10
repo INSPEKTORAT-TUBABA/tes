@@ -469,6 +469,8 @@
         let drawing = false;
         let hasSignature = false;
         let dataBukuTamu = [];
+        let lastX = 0;
+        let lastY = 0;
 
         // === Canvas Signature Setup ===
         function resizeCanvas() {
@@ -481,21 +483,29 @@
             const img = new Image();
             img.onload = () => ctx.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
             img.src = tempData;
+            // Atur ulang properti canvas untuk memastikan warna biru
+            ctx.strokeStyle = '#0000FF';
+            ctx.globalAlpha = 0.85;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalCompositeOperation = 'source-over';
         }
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        ctx.strokeStyle = '#0000FF'; // Warna biru cerah untuk tanda tangan
+        // Pengaturan tanda tangan dengan warna biru cerah dan efek pena realistis
+        ctx.strokeStyle = '#0000FF'; // Warna biru cerah
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.85; // Transparansi untuk efek tinta pena
+        ctx.globalCompositeOperation = 'source-over'; // Pastikan warna tidak ditimpa
         let lastVelocity = 0;
-        let lastTime = 0;
+        let lastTime = Date.now();
 
         function getCanvasPos(e) {
-            const rect = signatureCanvas.getBoundingClientRect();
+            const rect = signatureCanvas.getBoundingClientRect(); // Perbaikan: Gunakan getBoundingClientRect
             if (e.touches && e.touches[0]) {
                 return {
                     x: e.touches[0].clientX - rect.left,
@@ -503,38 +513,47 @@
                 };
             }
             return {
-                x: (e.clientX !== undefined ? e.clientX : e.offsetX) - rect.left,
-                y: (e.clientY !== undefined ? e.clientY : e.offsetY) - rect.top
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
             };
         }
 
         function startDrawing(e) {
+            e.preventDefault();
             drawing = true;
             hasSignature = true;
             ctx.beginPath();
+            ctx.strokeStyle = '#0000FF'; // Pastikan warna biru saat mulai menggambar
             const pos = getCanvasPos(e);
-            ctx.moveTo(pos.x, pos.y);
+            lastX = pos.x;
+            lastY = pos.y;
+            ctx.moveTo(lastX, lastY);
             lastTime = Date.now();
         }
 
         function draw(e) {
             if (!drawing) return;
+            e.preventDefault();
             const pos = getCanvasPos(e);
             const currentTime = Date.now();
             const deltaTime = (currentTime - lastTime) / 1000;
-            const prevPos = getCanvasPos(e);
-            const distance = Math.sqrt((pos.x - prevPos.x) ** 2 + (pos.y - prevPos.y) ** 2);
+            const distance = Math.sqrt((pos.x - lastX) ** 2 + (pos.y - lastY) ** 2);
             const velocity = distance / (deltaTime || 1);
             const smoothedVelocity = lastVelocity * 0.7 + velocity * 0.3;
-            ctx.lineWidth = Math.max(1, Math.min(3, 2 - smoothedVelocity / 100));
+            ctx.lineWidth = Math.max(1.5, Math.min(3.5, 2 - smoothedVelocity / 100)); // Variasi ketebalan
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
             lastVelocity = smoothedVelocity;
             lastTime = currentTime;
         }
 
-        function stopDrawing() {
+        function stopDrawing(e) {
             if (!drawing) return;
+            e.preventDefault();
             drawing = false;
             checkAndShowNext('signature-pad', 'field-aksi');
         }
@@ -543,14 +562,20 @@
         signatureCanvas.addEventListener('mousemove', draw);
         signatureCanvas.addEventListener('mouseup', stopDrawing);
         signatureCanvas.addEventListener('mouseout', stopDrawing);
-        signatureCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
-        signatureCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
-        signatureCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(e); }, { passive: false });
+        signatureCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        signatureCanvas.addEventListener('touchmove', draw, { passive: false });
+        signatureCanvas.addEventListener('touchend', stopDrawing, { passive: false });
 
         function clearSignature() {
             ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
             hasSignature = false;
             signatureCanvas.classList.remove('error', 'success');
+            // Atur ulang properti canvas untuk memastikan warna biru
+            ctx.strokeStyle = '#0000FF';
+            ctx.globalAlpha = 0.85;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalCompositeOperation = 'source-over';
             document.getElementById('field-aksi').style.display = 'none';
         }
 
@@ -608,7 +633,7 @@
         function validateNama() {
             const input = document.getElementById('nama');
             const warning = namaWarning;
-            input.value = input.value.replace(/\d+/g, '');
+            input.value = input.value.replace(/\d+/g, ''); // Hapus angka
             let hurufCount = 0;
             try {
                 hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
@@ -632,17 +657,30 @@
                 input.classList.remove('success');
                 input.classList.add('error');
                 warning.style.display = 'block';
-                // Sembunyikan semua field setelah field-nama hingga field-aksi
+                // Sembunyikan dan reset semua field setelah field-nama hingga field-tandaTangan
                 document.querySelectorAll('#formSection > form > div[id^="field-"]:not(#field-nama)').forEach(div => {
                     div.style.display = 'none';
                     const input = div.querySelector('input, select, textarea');
                     if (input) {
+                        input.value = ''; // Reset input ke kosong
                         input.classList.remove('error', 'success');
                     }
                 });
+                // Reset tanda tangan
+                clearSignature();
+                // Reset dropdown dan sub-field
                 daftarInstansi.classList.add("hidden");
                 daftarMasyarakat.classList.add("hidden");
                 fieldDesa.classList.add("hidden");
+                instansi.value = '';
+                kecamatan.value = '';
+                desa.value = '';
+                desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+                // Reset field lain
+                document.getElementById('pihakDitemui').value = '';
+                document.getElementById('jenisLayanan').value = '';
+                document.getElementById('uraian').value = '';
+                document.getElementById('nomorHp').value = '';
             }
         }
 
