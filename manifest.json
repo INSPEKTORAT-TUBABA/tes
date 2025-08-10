@@ -498,41 +498,32 @@
 
 
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
-    function validateNama() {
-    const input = document.getElementById('nama');
-    const warning = document.getElementById('namaWarning');
     
-    // Hapus semua angka
-    input.value = input.value.replace(/\d+/g, '');
+    // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
+    function validateNama() {
+        const input = document.getElementById('nama');
+        const warning = document.getElementById('namaWarning');
 
-    // Hitung jumlah huruf (unicode)
-    let hurufCount = 0;
-    try {
-        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
-    } catch (e) {
-        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
-    }
+        // Hapus semua digit
+        input.value = input.value.replace(/\d+/g, '');
 
-    // Minimal 5 huruf
-    const isValid = hurufCount >= 5;
+        // Hitung huruf Unicode (lebih akurat)
+        let hurufCount = 0;
+        try {
+            try {
+                // gunakan RegExp constructor agar tidak menyebabkan SyntaxError di engine yang tidak mendukung escape \p
+                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
+            } catch(e2) {
+                hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+            }
+        } catch (e) {
+            // fallback: hanya huruf latin
+            hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+        }
 
-    if (isValid) {
-        input.classList.remove('error');
-        input.classList.add('success');
-        warning.style.display = 'none';
-        document.getElementById('field-asal').style.display = 'block';
-    } else {
-        input.classList.remove('success');
-        input.classList.add('error');
-        warning.style.display = 'block';
-        hideFieldsAfter('field-nama');
-    }
-}
-        
-        // Cek jika validasi terpenuhi
+        // Valid jika memiliki minimal 5 huruf
         const isValid = hurufCount >= 5;
 
-        // Tampilkan/sembunyikan pesan error
         if (isValid) {
             input.classList.remove('error');
             input.classList.add('success');
@@ -542,12 +533,16 @@
         } else {
             input.classList.remove('success');
             input.classList.add('error');
-            warning.style.display = 'block';
-            // Sembunyikan field setelahnya
+            // jika kosong atau kurang, sembunyikan semua field setelah nama
+            if (input.value.trim() === '') {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'block';
+            }
             hideFieldsAfter('field-nama');
         }
     }
-    // Nomor HP: hanya angka
+// Nomor HP: hanya angka
     const nomorHp = document.getElementById('nomorHp');
     nomorHp.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.which || e.keyCode);
@@ -639,80 +634,72 @@
     }
 
     // Fungsi untuk menampilkan bidang berikutnya
+    
+    // Fungsi untuk menampilkan bidang berikutnya (berantai ketat)
     function checkAndShowNext(currentElementId, nextElementId) {
-    const currentElement = document.getElementById(currentElementId);
-    const nextElement = document.getElementById(nextElementId);
-    let isValid = true;
+        const currentElement = document.getElementById(currentElementId);
+        const nextElement = document.getElementById(nextElementId);
+        let isValid = true;
 
-    // Khusus tanda tangan
-    if (currentElementId === 'signature-pad') {
-        if (!hasSignature) {
-            signatureWarning.style.display = 'block';
-            canvas.classList.add('error');
-            isValid = false;
-        } else {
-            signatureWarning.style.display = 'none';
-            canvas.classList.remove('error');
-            canvas.classList.add('success');
-        }
-    }
-    // Validasi elemen input/select/textarea biasa
-    else if (currentElement) {
-        if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
-            if (!currentElement.checkValidity() || currentElement.value.trim() === '') {
-                currentElement.classList.add('error');
-                currentElement.classList.remove('success');
+        // Khusus tanda tangan
+        if (currentElementId === 'signature-pad') {
+            if (!hasSignature) {
+                signatureWarning.style.display = 'block';
+                canvas.classList.add('error');
                 isValid = false;
             } else {
-                currentElement.classList.remove('error');
-                currentElement.classList.add('success');
+                signatureWarning.style.display = 'none';
+                canvas.classList.remove('error');
+                canvas.classList.add('success');
             }
-        }
-    }
-
-    // Jika valid → tampilkan field berikutnya
-    if (isValid && nextElement) {
-        nextElement.style.display = 'block';
-    } 
-    // Jika tidak valid → sembunyikan semua field setelahnya
-    else {
-        hideFieldsAfter(currentElementId);
-    }
-}
         } else if (currentElement) {
             // elemen input/select/textarea biasa
-            if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
-                // Periksa apakah field yang bersifat dinamis (Instansi/Kecamatan/Desa) terisi
-                if (currentElementId === 'asal') {
-                    if (asal.value === 'INSTANSI' && instansi.value === '') {
+            const tag = currentElement.tagName;
+            // Special handling for fields that wrap inputs: when called, currentElement may be a wrapper div id like 'field-asal' etc.
+            // If the element has input/select/textarea inside, get that
+            let inputEl = null;
+            if (tag === 'DIV') {
+                inputEl = currentElement.querySelector('input, select, textarea, canvas');
+            } else {
+                inputEl = currentElement;
+            }
+
+            if (inputEl) {
+                // handle dynamic 'asal' case: require instansi OR kecamatan+desa depending on selection
+                if (inputEl.id === 'asal') {
+                    if (asal.value === 'INSTANSI') {
+                        if (instansi.value.trim() === '') isValid = false;
+                    } else if (asal.value === 'MASYARAKAT') {
+                        if (kecamatan.value.trim() === '' || desa.value.trim() === '') isValid = false;
+                    } else {
                         isValid = false;
                     }
-                    if (asal.value === 'MASYARAKAT' && (kecamatan.value === '' || desa.value === '')) {
+                } else if (inputEl.tagName === 'SELECT' || inputEl.tagName === 'INPUT' || inputEl.tagName === 'TEXTAREA') {
+                    if (!inputEl.checkValidity() || inputEl.value.trim() === '') {
                         isValid = false;
                     }
                 }
-                
-                if (currentElement.checkValidity() && isValid) {
-                    currentElement.classList.remove('error');
-                    currentElement.classList.add('success');
+                if (!isValid) {
+                    // beri kelas error pada elemen input jika ada
+                    if (inputEl.classList) inputEl.classList.add('error');
+                    // sembunyikan semua setelah current
+                    hideFieldsAfter(currentElementId);
                 } else {
-                    currentElement.classList.add('error');
-                    currentElement.classList.remove('success');
-                    isValid = false;
+                    if (inputEl.classList) {
+                        inputEl.classList.remove('error');
+                        inputEl.classList.add('success');
+                    }
+                    // tampilkan next jika ada
+                    if (nextElement) nextElement.style.display = 'block';
                 }
+            } else {
+                // jika tidak ada input langsung (unexpected), sembunyikan setelahnya
+                hideFieldsAfter(currentElementId);
             }
         }
 
-        if (isValid && nextElement) {
-            nextElement.style.display = 'block';
-            const nextInput = nextElement.querySelector('input, select, textarea, canvas');
-            if (nextInput) nextInput.focus && nextInput.focus();
-        } else {
-            hideFieldsAfter(currentElementId);
-        }
     }
-
-    // Fungsi utama untuk validasi dan menyimpan data
+// Fungsi utama untuk validasi dan menyimpan data
     function simpanData() {
         const form = document.getElementById('bukuTamuForm');
         let isValid = true;
