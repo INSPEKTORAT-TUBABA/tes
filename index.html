@@ -565,7 +565,7 @@
             if (strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                 hasSignature = false;
                 signatureWarning.style.display = 'block';
-                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 2 cm diperlukan!`;
+                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(5)} cm).;
                 signatureCanvas.classList.add('error');
                 signatureCanvas.classList.remove('success');
                 document.getElementById('field-aksi').style.display = 'none';
