@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8"/>
@@ -263,9 +302,7 @@
         <form id="bukuTamuForm">
             <div id="field-nama">
                 <label>Nama: <span class="required">*</span></label>
-                <input id="nama" required type="text" oninput="validateNama();"/>
-                
-                </div>
+                <input id="nama" required type="text" placeholder="Isi Minimal 5 Huruf" oninput="validateNama();"/>
                 <br/>
             </div>
 
@@ -382,7 +419,7 @@
 
             <div id="field-tandaTangan" style="display: none;">
                 <label>Tanda Tangan: <span class="required">*</span></label>
-                <div class="warning" id="signatureWarning" style="display:none;"⚠️ Tanda tangan wajib diisi!</div>
+                <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!</div>
                 <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
                 <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
             </div>
@@ -415,7 +452,7 @@
 
     <div id="photoModal">
         <div id="modalContent">
-            <h3 style="color: black;">BERIKAN SENYUMAN TERBAIK ANDA</h3>
+            <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
             <div id="dualCameraFrame">
                 <div class="camera-view">
                     <h4 style="margin: 0; text-align: center;">Kamera Depan (Selfie)</h4>
@@ -442,7 +479,6 @@
         // === Element References ===
         const signatureCanvas = document.getElementById('signature-pad');
         const ctx = signatureCanvas.getContext('2d');
-        const namaWarning = document.getElementById('namaWarning');
         const signatureWarning = document.getElementById('signatureWarning');
         const photoWarning = document.getElementById('photoWarning');
         const asal = document.getElementById("asal");
@@ -470,6 +506,9 @@
         let dataBukuTamu = [];
         let lastX = 0;
         let lastY = 0;
+        let totalStrokeLength = 0; // Total panjang goresan dalam piksel
+        const MIN_STROKE_LENGTH_CM = 2; // Panjang minimal goresan dalam cm
+        const PIXELS_PER_CM = 37.8; // Asumsi 96 DPI (1 cm ≈ 37.8 piksel)
 
         // === Canvas Signature Setup ===
         function resizeCanvas() {
@@ -504,7 +543,7 @@
         let lastTime = Date.now();
 
         function getCanvasPos(e) {
-            const rect = signatureCanvas.getBoundingClientRect(); // Perbaikan: Gunakan getBoundingClientRect
+            const rect = signatureCanvas.getBoundingClientRect();
             if (e.touches && e.touches[0]) {
                 return {
                     x: e.touches[0].clientX - rect.left,
@@ -521,8 +560,9 @@
             e.preventDefault();
             drawing = true;
             hasSignature = true;
+            totalStrokeLength = 0; // Reset panjang goresan
             ctx.beginPath();
-            ctx.strokeStyle = '#0000FF'; // Pastikan warna biru saat mulai menggambar
+            ctx.strokeStyle = '#0000FF'; // Pastikan warna biru
             const pos = getCanvasPos(e);
             lastX = pos.x;
             lastY = pos.y;
@@ -537,6 +577,7 @@
             const currentTime = Date.now();
             const deltaTime = (currentTime - lastTime) / 1000;
             const distance = Math.sqrt((pos.x - lastX) ** 2 + (pos.y - lastY) ** 2);
+            totalStrokeLength += distance; // Tambahkan panjang goresan
             const velocity = distance / (deltaTime || 1);
             const smoothedVelocity = lastVelocity * 0.7 + velocity * 0.3;
             ctx.lineWidth = Math.max(1.5, Math.min(3.5, 2 - smoothedVelocity / 100)); // Variasi ketebalan
@@ -554,7 +595,21 @@
             if (!drawing) return;
             e.preventDefault();
             drawing = false;
-            checkAndShowNext('signature-pad', 'field-aksi');
+            // Validasi panjang goresan (2 cm ≈ 75.6 piksel)
+            const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+            if (strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                hasSignature = false;
+                signatureWarning.style.display = 'block';
+                signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                signatureCanvas.classList.add('error');
+                signatureCanvas.classList.remove('success');
+                document.getElementById('field-aksi').style.display = 'none';
+            } else {
+                signatureWarning.style.display = 'none';
+                signatureCanvas.classList.remove('error');
+                signatureCanvas.classList.add('success');
+                checkAndShowNext('signature-pad', 'field-aksi');
+            }
         }
 
         signatureCanvas.addEventListener('mousedown', startDrawing);
@@ -568,8 +623,11 @@
         function clearSignature() {
             ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
             hasSignature = false;
+            totalStrokeLength = 0; // Reset panjang goresan
             signatureCanvas.classList.remove('error', 'success');
-            // Atur ulang properti canvas untuk memastikan warna biru
+            signatureWarning.style.display = 'none';
+            signatureWarning.textContent = '⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!';
+            // Atur ulang properti canvas
             ctx.strokeStyle = '#0000FF';
             ctx.globalAlpha = 0.85;
             ctx.lineCap = 'round';
@@ -631,7 +689,6 @@
         // === Validation Functions ===
         function validateNama() {
             const input = document.getElementById('nama');
-            const warning = namaWarning;
             input.value = input.value.replace(/\d+/g, ''); // Hapus angka
             let hurufCount = 0;
             try {
@@ -644,7 +701,6 @@
             if (isValid) {
                 input.classList.remove('error');
                 input.classList.add('success');
-                warning.style.display = 'none';
                 document.getElementById('field-asal').style.display = 'block';
                 // Tampilkan kembali dropdown yang telah dipilih
                 document.querySelectorAll('select:not(#nama)').forEach(select => {
@@ -655,7 +711,6 @@
             } else {
                 input.classList.remove('success');
                 input.classList.add('error');
-                warning.style.display = 'block';
                 // Sembunyikan dan reset semua field setelah field-nama hingga field-tandaTangan
                 document.querySelectorAll('#formSection > form > div[id^="field-"]:not(#field-nama)').forEach(div => {
                     div.style.display = 'none';
@@ -799,7 +854,7 @@
                 tutupModal();
                 showData();
             } else {
-                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan\n- Ambil foto");
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
             }
         }
 
@@ -825,9 +880,12 @@
             let isValid = true;
 
             if (currentElementId === 'signature-pad') {
-                if (!hasSignature) {
+                const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+                if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                     signatureWarning.style.display = 'block';
+                    signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
                     signatureCanvas.classList.add('error');
+                    signatureCanvas.classList.remove('success');
                     isValid = false;
                 } else {
                     signatureWarning.style.display = 'none';
@@ -896,7 +954,6 @@
             const form = document.getElementById('bukuTamuForm');
             let isValid = true;
 
-            namaWarning.style.display = 'none';
             signatureWarning.style.display = 'none';
             photoWarning.style.display = 'none';
 
@@ -913,15 +970,16 @@
             }
             if (hurufCount < 5 || namaInput.value.trim() === '') {
                 namaInput.classList.add('error');
-                namaWarning.style.display = 'block';
                 isValid = false;
             } else {
                 namaInput.classList.remove('error');
                 namaInput.classList.add('success');
             }
 
-            if (!hasSignature) {
+            const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+            if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                 signatureWarning.style.display = 'block';
+                signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
                 signatureCanvas.classList.add('error');
                 isValid = false;
             } else {
@@ -963,7 +1021,7 @@
                 alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
                 showData();
             } else {
-                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan\n- Ambil foto");
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
             }
         }
 
@@ -984,7 +1042,6 @@
             document.querySelectorAll('#formSection > form > div:not(#field-nama)').forEach(el => el.style.display = 'none');
             const elements = [signatureCanvas, document.getElementById('nama'), asal, document.getElementById('pihakDitemui'), document.getElementById('jenisLayanan'), document.getElementById('uraian'), document.getElementById('nomorHp')];
             elements.forEach(el => { if (el) el.classList.remove('error', 'success'); });
-            namaWarning.style.display = 'none';
             signatureWarning.style.display = 'none';
             photoWarning.style.display = 'none';
             document.getElementById('nama').focus();
