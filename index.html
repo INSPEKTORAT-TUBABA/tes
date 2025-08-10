@@ -1,12 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="id">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#007bff" />
-<link rel="icon" href="icon-192.png" />
-
+<link href="manifest.json" rel="manifest"/>
+<meta content="#007bff" name="theme-color"/>
+<link href="icon-192.png" rel="icon"/>
 <title>Buku Tamu Digital</title>
 <style>
     /* Mengatur Box Model untuk Tata Letak Responsif */
@@ -172,180 +172,168 @@
 </style>
 </head>
 <body>
-
 <div class="header-gambar">
-  <img src="bupati.png" alt="Wakil Bupati" class="foto-kepala">
-  <img src="logo-tubaba.png" alt="Logo Tubaba" class="logo">
-  <img src="wakil-bupati.png" alt="Bupati" class="foto-kepala">
+<img alt="Wakil Bupati" class="foto-kepala" src="bupati.png"/>
+<img alt="Logo Tubaba" class="logo" src="logo-tubaba.png"/>
+<img alt="Bupati" class="foto-kepala" src="wakil-bupati.png"/>
 </div>
-
 <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
-
 <div id="formSection">
-    <form id="bukuTamuForm">
-        <div id="field-nama">
-            <label>Nama: <span class="required">*</span></label>
-            <input id="nama" required type="text" oninput="validateNama();" />
-            <div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak boleh mengandung angka.</div>
-            <br/>
-        </div>
-        
-        <div id="field-asal" style="display: none;">
-            <label>INSTANSI/ASAL: <span class="required">*</span></label>
-            <select id="asal" required onchange="checkAndShowNext('asal', 'field-pihakDitemui')">
-                <option value="">-- Pilih Asal --</option>
-                <option value="INSTANSI">INSTANSI/UNIT KERJA</option>
-                <option value="MASYARAKAT">MASYARAKAT</option>
-            </select><br/><br/>
-        </div>
-
-        <div class="hidden" id="daftarInstansi">
-            <label>DAFTAR INSTANSI/UNIT KERJA: <span class="required">*</span></label>
-            <select id="instansi" onchange="checkAndShowNext('instansi', 'field-pihakDitemui')">
-                <option value="">-- Pilih Instansi --</option>
-                <option>SEKRETARIAT DAERAH</option>
-                <option>SEKRETARIAT DPRD</option>
-                <option>BADAN PERENCANAAN PEMBANGUNAN DAERAH</option>
-                <option>BADAN PENGELOLAAN KEUANGAN DAN ASET DAERAH</option>
-                <option>BADAN PENGELOLAAN PAJAK DAN RETRIBUSI DAERAH</option>
-                <option>BADAN KEPEGAWAIAN DAN PENGEMBANGAN SUMBER DAYA MANUSIA</option>
-                <option>BADAN KESATUAN BANGSA DAN POLITIK DAERAH</option>
-                <option>BADAN PENANGGULANGAN BENCANA DAERAH</option>
-                <option>DINAS LINGKUNGAN HIDUP</option>
-                <option>DINAS KESEHATAN</option>
-                <option>DINAS KEPENDUDUKAN DAN PENCATATAN SIPIL</option>
-                <option>DINAS KOPERASI, UMKM, PERINDUSTRIAN DAN PERDAGANGAN</option>
-                <option>DINAS SOSIAL</option>
-                <option>DINAS PEMUDA, OLAHRAGA DAN PARIWISATA</option>
-                <option>DINAS KOMUNIKASI DAN INFORMATIKA</option>
-                <option>DINAS PERUMAHAN, KAWASAN PERMUKIMAN DAN PERTANAHAN</option>
-                <option>DINAS PENANAMAN MODAL DAN PELAYANAN PERIZINAN TERPADU SATU PINTU</option>
-                <option>DINAS PENDIDIKAN DAN KEBUDAYAAN</option>
-                <option>DINAS KETAHANAN PANGAN</option>
-                <option>DINAS PEMBERDAYAAN MASYARAKAT DAN TIYUH</option>
-                <option>DINAS PEMBERDAYAAN PEREMPUAN DAN PERLINDUNGAN ANAK</option>
-                <option>DINAS PENGENDALIAN PENDUDUK DAN KELUARGA BERENCANA</option>
-                <option>DINAS PERHUBUNGAN</option>
-                <option>DINAS PERTANIAN</option>
-                <option>DINAS PETERNAKAN DAN KESEHATAN HEWAN</option>
-                <option>DINAS PEKERJAAN UMUM DAN PENATAAN RUANG</option>
-                <option>DINAS TENAGA KERJA DAN TRANSMIGRASI</option>
-                <option>DINAS PERIKANAN</option>
-                <option>DINAS PERPUSTAKAAN DAN KEARSIPAN</option>
-                <option>DINAS PEMADAM KEBAKARAN DAN PENYELAMATAN</option>
-                <option>SATUAN POLISI PAMONG PRAJA</option>
-                <option>BADAN PENGAWASAN KEUANGAN DAN PEMBANGUNAN (BPKP)</option>
-                <option>LAINNYA</option>
-            </select><br/><br/>
-        </div>
-
-        <div class="hidden" id="daftarMasyarakat">
-            <label>Kecamatan: <span class="required">*</span></label>
-            <select id="kecamatan">
-                <option value="">-- Pilih Kecamatan --</option>
-                <option value="Tulang Bawang Tengah">Tulang Bawang Tengah</option>
-                <option value="Tulang Bawang Udik">Tulang Bawang Udik</option>
-                <option value="Gunung Terang">Gunung Terang</option>
-                <option value="Gunung Agung">Gunung Agung</option>
-                <option value="Lambu Kibang">Lambu Kibang</option>
-                <option value="Way Kenanga">Way Kenanga</option>
-                <option value="Tumijajar">Tumijajar</option>
-                <option value="Pagar Dewa">Pagar Dewa</option>
-                <option value="Batu Putih">Batu Putih</option>
-            </select><br/><br/>
-
-            <label>Desa/Tiyuh: <span class="required">*</span></label>
-            <select id="desa" onchange="checkAndShowNext('desa', 'field-pihakDitemui')">
-                <option value="">-- Pilih Desa --</option>
-            </select><br/><br/>
-        </div>
-        
-        <div id="field-pihakDitemui" style="display: none;">
-            <label>PIHAK YANG DITEMUI: <span class="required">*</span></label>
-            <select id="pihakDitemui" required onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan')">
-                <option value="">-- Pilih Pihak yang Ditemui --</option>
-                <option>INSPEKTUR</option>
-                <option>SEKRETARIS</option>
-                <option>IRBANSUS</option>
-                <option>IRBAN 1</option>
-                <option>IRBAN 2</option>
-                <option>IRBAN 3</option>
-                <option>IRBAN 4</option>
-            </select><br/><br/>
-        </div>
-        
-        <div id="field-jenisLayanan" style="display: none;">
-            <label>JENIS LAYANAN: <span class="required">*</span></label>
-            <select id="jenisLayanan" required onchange="checkAndShowNext('jenisLayanan', 'field-uraian')">
-                <option value="">-- Pilih Jenis Layanan --</option>
-                <option>Permintaan Audit/Klarifikasi Khusus</option>
-                <option>Penanganan Pengaduan</option>
-                <option>Layanan Informasi Publik</option>
-                <option>Pembinaan & Konsultasi</option>
-                <option>Audit</option>
-                <option>Review</option>
-                <option>Evaluasi/Monitoring</option>
-                <option>Tindak Lanjut Temuan</option>
-            </select><br/><br/>
-        </div>
-        
-        <div id="field-uraian" style="display: none;">
-            <label>URAIAN: <span class="required">*</span></label>
-            <textarea id="uraian" required oninput="autoResize(this); checkAndShowNext('uraian', 'field-nomorHp')" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea><br/><br/>
-        </div>
-        
-        <div id="field-nomorHp" style="display: none;">
-            <label>NOMOR HP: <span class="required">*</span></label>
-            <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text" oninput="checkAndShowNext('nomorHp', 'field-tandaTangan')"/><br/><br/>
-        </div>
-        
-        <div id="field-tandaTangan" style="display: none;">
-            <label>Tanda Tangan: <span class="required">*</span></label>
-            <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi!</div>
-            <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
-            <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
-        </div>
-        
-        <div id="field-aksi" style="display: none;">
-            <label>Foto: <span class="required">*</span></label>
-            <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
-            <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
-            <br/><br/>
-            <button type="button" onclick="simpanDataDanTutupForm()" style="font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">💾 Simpan Data</button>
-        </div>
-    </form>
+<form id="bukuTamuForm">
+<div id="field-nama">
+<label>Nama: <span class="required">*</span></label>
+<input id="nama" oninput="validateNama();" required="" type="text"/>
+<div id="namaWarning" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">Mohon isi nama minimal 5 huruf dan tidak boleh mengandung angka.</div>
+<br/>
+</div>
+<div id="field-asal" style="display: none;">
+<label>INSTANSI/ASAL: <span class="required">*</span></label>
+<select id="asal" onchange="checkAndShowNext('asal', 'field-pihakDitemui')" required="">
+<option value="">-- Pilih Asal --</option>
+<option value="INSTANSI">INSTANSI/UNIT KERJA</option>
+<option value="MASYARAKAT">MASYARAKAT</option>
+</select><br/><br/>
+</div>
+<div class="hidden" id="daftarInstansi">
+<label>DAFTAR INSTANSI/UNIT KERJA: <span class="required">*</span></label>
+<select id="instansi" onchange="checkAndShowNext('instansi', 'field-pihakDitemui')">
+<option value="">-- Pilih Instansi --</option>
+<option>SEKRETARIAT DAERAH</option>
+<option>SEKRETARIAT DPRD</option>
+<option>BADAN PERENCANAAN PEMBANGUNAN DAERAH</option>
+<option>BADAN PENGELOLAAN KEUANGAN DAN ASET DAERAH</option>
+<option>BADAN PENGELOLAAN PAJAK DAN RETRIBUSI DAERAH</option>
+<option>BADAN KEPEGAWAIAN DAN PENGEMBANGAN SUMBER DAYA MANUSIA</option>
+<option>BADAN KESATUAN BANGSA DAN POLITIK DAERAH</option>
+<option>BADAN PENANGGULANGAN BENCANA DAERAH</option>
+<option>DINAS LINGKUNGAN HIDUP</option>
+<option>DINAS KESEHATAN</option>
+<option>DINAS KEPENDUDUKAN DAN PENCATATAN SIPIL</option>
+<option>DINAS KOPERASI, UMKM, PERINDUSTRIAN DAN PERDAGANGAN</option>
+<option>DINAS SOSIAL</option>
+<option>DINAS PEMUDA, OLAHRAGA DAN PARIWISATA</option>
+<option>DINAS KOMUNIKASI DAN INFORMATIKA</option>
+<option>DINAS PERUMAHAN, KAWASAN PERMUKIMAN DAN PERTANAHAN</option>
+<option>DINAS PENANAMAN MODAL DAN PELAYANAN PERIZINAN TERPADU SATU PINTU</option>
+<option>DINAS PENDIDIKAN DAN KEBUDAYAAN</option>
+<option>DINAS KETAHANAN PANGAN</option>
+<option>DINAS PEMBERDAYAAN MASYARAKAT DAN TIYUH</option>
+<option>DINAS PEMBERDAYAAN PEREMPUAN DAN PERLINDUNGAN ANAK</option>
+<option>DINAS PENGENDALIAN PENDUDUK DAN KELUARGA BERENCANA</option>
+<option>DINAS PERHUBUNGAN</option>
+<option>DINAS PERTANIAN</option>
+<option>DINAS PETERNAKAN DAN KESEHATAN HEWAN</option>
+<option>DINAS PEKERJAAN UMUM DAN PENATAAN RUANG</option>
+<option>DINAS TENAGA KERJA DAN TRANSMIGRASI</option>
+<option>DINAS PERIKANAN</option>
+<option>DINAS PERPUSTAKAAN DAN KEARSIPAN</option>
+<option>DINAS PEMADAM KEBAKARAN DAN PENYELAMATAN</option>
+<option>SATUAN POLISI PAMONG PRAJA</option>
+<option>BADAN PENGAWASAN KEUANGAN DAN PEMBANGUNAN (BPKP)</option>
+<option>LAINNYA</option>
+</select><br/><br/>
+</div>
+<div class="hidden" id="daftarMasyarakat">
+<label>Kecamatan: <span class="required">*</span></label>
+<select id="kecamatan">
+<option value="">-- Pilih Kecamatan --</option>
+<option value="Tulang Bawang Tengah">Tulang Bawang Tengah</option>
+<option value="Tulang Bawang Udik">Tulang Bawang Udik</option>
+<option value="Gunung Terang">Gunung Terang</option>
+<option value="Gunung Agung">Gunung Agung</option>
+<option value="Lambu Kibang">Lambu Kibang</option>
+<option value="Way Kenanga">Way Kenanga</option>
+<option value="Tumijajar">Tumijajar</option>
+<option value="Pagar Dewa">Pagar Dewa</option>
+<option value="Batu Putih">Batu Putih</option>
+</select><br/><br/>
+<label>Desa/Tiyuh: <span class="required">*</span></label>
+<select id="desa" onchange="checkAndShowNext('desa', 'field-pihakDitemui')">
+<option value="">-- Pilih Desa --</option>
+</select><br/><br/>
+</div>
+<div id="field-pihakDitemui" style="display: none;">
+<label>PIHAK YANG DITEMUI: <span class="required">*</span></label>
+<select id="pihakDitemui" onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan')" required="">
+<option value="">-- Pilih Pihak yang Ditemui --</option>
+<option>INSPEKTUR</option>
+<option>SEKRETARIS</option>
+<option>IRBANSUS</option>
+<option>IRBAN 1</option>
+<option>IRBAN 2</option>
+<option>IRBAN 3</option>
+<option>IRBAN 4</option>
+</select><br/><br/>
+</div>
+<div id="field-jenisLayanan" style="display: none;">
+<label>JENIS LAYANAN: <span class="required">*</span></label>
+<select id="jenisLayanan" onchange="checkAndShowNext('jenisLayanan', 'field-uraian')" required="">
+<option value="">-- Pilih Jenis Layanan --</option>
+<option>Permintaan Audit/Klarifikasi Khusus</option>
+<option>Penanganan Pengaduan</option>
+<option>Layanan Informasi Publik</option>
+<option>Pembinaan &amp; Konsultasi</option>
+<option>Audit</option>
+<option>Review</option>
+<option>Evaluasi/Monitoring</option>
+<option>Tindak Lanjut Temuan</option>
+</select><br/><br/>
+</div>
+<div id="field-uraian" style="display: none;">
+<label>URAIAN: <span class="required">*</span></label>
+<textarea id="uraian" oninput="autoResize(this); checkAndShowNext('uraian', 'field-nomorHp')" required="" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea><br/><br/>
+</div>
+<div id="field-nomorHp" style="display: none;">
+<label>NOMOR HP: <span class="required">*</span></label>
+<input id="nomorHp" inputmode="numeric" oninput="checkAndShowNext('nomorHp', 'field-tandaTangan')" pattern="\d*" required="" type="text"/><br/><br/>
+</div>
+<div id="field-tandaTangan" style="display: none;">
+<label>Tanda Tangan: <span class="required">*</span></label>
+<div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi!</div>
+<canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
+<button onclick="clearSignature()" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;" type="button">🧹 Bersihkan Tanda Tangan</button><br/><br/>
+</div>
+<div id="field-aksi" style="display: none;">
+<label>Foto: <span class="required">*</span></label>
+<div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
+<button onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;" type="button">📸 Ambil Foto</button>
+<br/><br/>
+<button onclick="simpanDataDanTutupForm()" style="font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;" type="button">💾 Simpan Data</button>
+</div>
+</form>
 </div>
 <div style="margin-bottom: 20px;">
-<button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
-<button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-<button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export Data</button>
+<button id="btnForm" onclick="showForm()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;" type="button">📝 Form Input</button>
+<button id="btnData" onclick="showData()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;" type="button">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+<button onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;" type="button">💾 Export Data</button>
 </div>
-
 <div id="dataSection" style="display: none;">
 <h2>📊 DATA BUKU TAMU</h2>
 <div style="margin-bottom: 20px;">
-<button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Hapus Semua Data</button>
+<button onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;" type="button">🗑️ Hapus Semua Data</button>
 </div>
 <div id="dataContainer">
 <p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>
 </div>
 </div>
-
 <div id="photoModal">
-    <div id="modalContent">
-        <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
-        <div id="cameraFrame">
-            <video id="videoElement" autoplay muted playsinline style="display:block;"></video>
-            <img id="capturedPhoto" alt="Hasil Foto" style="display:none;">
-        </div>
-        <canvas id="canvasFoto" style="display:none;"></canvas>
-        <div id="modalButtons">
-            <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
-            <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
-        </div>
-    </div>
+<div id="modalContent">
+<h3 style="color: black;">Bingkai Pengambilan Foto</h3>
+<div id="cameraFrame">
+<div style="display: flex; flex-direction: column; width: 100%; height: 100%; gap: 10px;">
+<video autoplay="" id="videoFront" muted="" playsinline="" style="flex: 1; border-bottom: 3px solid #007bff;"></video>
+<video autoplay="" id="videoBack" muted="" playsinline="" style="flex: 1; border-top: 3px solid #007bff;"></video>
+<img alt="Hasil Selfie" id="capturedPhotoFront" style="display:none; margin-top:10px;"/>
+<img alt="Hasil Kamera Belakang" id="capturedPhotoBack" style="display:none; margin-top:10px;"/>
 </div>
-
+</div>
+<canvas id="canvasFoto" style="display:none;"></canvas>
+<div id="modalButtons">
+<button class="btn-save" id="btnSimpanLihatData" onclick="simpanFotoLangsung()" type="button">✅ Simpan &amp; Lihat Data</button>
+<button class="btn-cancel" id="btnTutupModal" onclick="tutupModal()" type="button">❌ Tutup</button>
+</div>
+</div>
+</div>
 <script>
     // === Element refs (pastikan id cocok dengan HTML) ===
     const signatureCanvas = document.getElementById('signature-pad');
@@ -513,22 +501,41 @@
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
     
     // === Validasi Nama: hapus angka, minimal 5 huruf, tidak boleh hanya karakter non-huruf ===
-    function validateNama() {
-        const input = document.getElementById('nama');
-        const warning = document.getElementById('namaWarning');
+    
+function validateNama() {
+    const input = document.getElementById('nama');
+    const warning = document.getElementById('namaWarning');
 
-        // Hapus semua digit
-        input.value = input.value.replace(/\d+/g, '');
+    // Hapus semua digit
+    input.value = input.value.replace(/\d+/g, '');
 
-        // Hitung huruf Unicode (lebih akurat)
-        let hurufCount = 0;
-        try {
-            try {
-                // gunakan RegExp constructor agar tidak menyebabkan SyntaxError di engine yang tidak mendukung escape \p
-                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
-            } catch(e2) {
-                hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
-            }
+    // Hitung jumlah huruf (Unicode friendly)
+    let hurufCount = 0;
+    try {
+        hurufCount = (input.value.match(/\p{L}/gu) || []).length;
+    } catch (e) {
+        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+    }
+
+    // Valid jika minimal 5 huruf
+    const isValid = hurufCount >= 5;
+
+    if (isValid) {
+        input.classList.remove('error');
+        input.classList.add('success');
+        warning.style.display = 'none';
+        document.getElementById('field-asal').style.display = 'block';
+    } else {
+        input.classList.remove('success');
+        input.classList.add('error');
+        warning.style.display = 'block';
+        // Kalau kosong semua → sembunyikan semua field setelah nama
+        if (input.value.trim() === '') {
+            hideFieldsAfter('field-nama');
+        }
+    }
+}
+
         } catch (e) {
             // fallback: hanya huruf latin
             hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
@@ -579,35 +586,64 @@
     let hasPhoto = false;
 
     async function bukaKamera() {
-        photoModal.style.display = 'flex';
-        capturedPhoto.style.display = 'none';
-        try {
-            streamAktif = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user" }
-            });
-            videoElement.srcObject = streamAktif;
-            videoElement.style.display = 'block';
-            videoElement.play();
-        } catch (error) {
-            console.error("Gagal mengakses kamera:", error);
-            alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
-            tutupModal();
-        }
+    photoModal.style.display = 'flex';
+    document.getElementById('capturedPhotoFront').style.display = 'none';
+    document.getElementById('capturedPhotoBack').style.display = 'none';
+    try {
+        const streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        document.getElementById('videoFront').srcObject = streamFront;
+        const streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+        document.getElementById('videoBack').srcObject = streamBack;
+        streamAktif = [streamFront, streamBack];
+    } catch (error) {
+        console.error("Gagal mengakses kamera:", error);
+        alert("❌ Gagal mengakses kamera! Pastikan izin kamera sudah diberikan.");
+        tutupModal();
     }
+}
 
     function tutupModal() {
-        photoModal.style.display = 'none';
-        if (streamAktif) {
-            streamAktif.getTracks().forEach(track => track.stop());
-            streamAktif = null;
-        }
+    photoModal.style.display = 'none';
+    if (streamAktif) {
+        streamAktif.forEach(str => str.getTracks().forEach(track => track.stop()));
+        streamAktif = null;
+    }
+}
     }
 
     function simpanFotoLangsung() {
-        if (!streamAktif && !videoElement) {
-            alert("Kamera belum aktif!");
-            return;
-        }
+    const canvasFront = document.createElement('canvas');
+    const ctxFront = canvasFront.getContext('2d');
+    const vFront = document.getElementById('videoFront');
+    canvasFront.width = vFront.videoWidth || 480;
+    canvasFront.height = vFront.videoHeight || Math.round(canvasFront.width * 3 / 4);
+    ctxFront.drawImage(vFront, 0, 0, canvasFront.width, canvasFront.height);
+    document.getElementById('capturedPhotoFront').src = canvasFront.toDataURL('image/png');
+    document.getElementById('capturedPhotoFront').style.display = 'block';
+
+    const canvasBack = document.createElement('canvas');
+    const ctxBack = canvasBack.getContext('2d');
+    const vBack = document.getElementById('videoBack');
+    canvasBack.width = vBack.videoWidth || 480;
+    canvasBack.height = vBack.videoHeight || Math.round(canvasBack.width * 3 / 4);
+    ctxBack.drawImage(vBack, 0, 0, canvasBack.width, canvasBack.height);
+    document.getElementById('capturedPhotoBack').src = canvasBack.toDataURL('image/png');
+    document.getElementById('capturedPhotoBack').style.display = 'block';
+
+    fotoDataURL = {
+        front: document.getElementById('capturedPhotoFront').src,
+        back: document.getElementById('capturedPhotoBack').src
+    };
+    hasPhoto = true;
+
+    if (simpanData()) {
+        alert("✅ Data berhasil disimpan! Total data: " + dataBukuTamu.length);
+        tutupModal();
+        showData();
+    } else {
+        alert("❌ Mohon lengkapi semua data yang diperlukan.");
+    }
+}
 
         const context = canvasFoto.getContext('2d');
         canvasFoto.width = videoElement.videoWidth || 480;
@@ -688,7 +724,18 @@
         else if (currentElementId === 'instansi') {
             if (!instansi.value || instansi.value.trim() === '') isValid = false;
         }
-        // Generic untuk input/select/textarea lainnya
+        
+        // KHUSUS: uraian minimal 10 huruf
+        else if (currentElementId === 'uraian') {
+            let hurufCount = 0;
+            try {
+                hurufCount = (currentElement.value.match(/\\p{L}/gu) || []).length;
+            } catch (e) {
+                hurufCount = (currentElement.value.match(/[A-Za-z]/g) || []).length;
+            }
+            if (hurufCount < 10) isValid = false;
+        }
+// Generic untuk input/select/textarea lainnya
         else if (currentElement) {
             if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
                 if (currentElement.value === undefined || currentElement.value.trim() === '') {
@@ -956,6 +1003,5 @@
 
 
 </script>
-
 </body>
 </html>
