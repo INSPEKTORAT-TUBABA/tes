@@ -383,7 +383,7 @@
 
             <div id="field-tandaTangan" style="display: none;">
                 <label>Tanda Tangan: <span class="required">*</span></label>
-                <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!</div>
+                <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 5 cm!</div>
                 <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
                 <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
             </div>
@@ -560,12 +560,12 @@
             if (!drawing) return;
             e.preventDefault();
             drawing = false;
-            // Validasi panjang goresan (2 cm ≈ 75.6 piksel)
+            // Validasi panjang goresan (5 cm ≈ 189 piksel)
             const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
             if (strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                 hasSignature = false;
                 signatureWarning.style.display = 'block';
-                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 2 cm diperlukan!`;
+                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(5)} cm). Minimal 5 cm diperlukan!`;
                 signatureCanvas.classList.add('error');
                 signatureCanvas.classList.remove('success');
                 document.getElementById('field-aksi').style.display = 'none';
@@ -591,7 +591,7 @@
             totalStrokeLength = 0; // Reset panjang goresan
             signatureCanvas.classList.remove('error', 'success');
             signatureWarning.style.display = 'none';
-            signatureWarning.textContent = '⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!';
+            signatureWarning.textContent = '⚠️ Tanda tangan wajib diisi dengan goresan minimal 5 cm!';
             // Atur ulang properti canvas
             ctx.strokeStyle = '#0000FF';
             ctx.globalAlpha = 0.85;
@@ -822,7 +822,7 @@
                 tutupModal();
                 showData();
             } else {
-                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 5 cm\n- Ambil foto");
             }
         }
 
@@ -851,7 +851,7 @@
                 const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
                 if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                     signatureWarning.style.display = 'block';
-                    signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 2 cm diperlukan!`;
+                    signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 5 cm diperlukan!`;
                     signatureCanvas.classList.add('error');
                     signatureCanvas.classList.remove('success');
                     isValid = false;
@@ -949,7 +949,7 @@
             const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
             if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
                 signatureWarning.style.display = 'block';
-                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 2 cm diperlukan!`;
+                signatureWarning.textContent = `⚠️ Tanda tangan terlalu pendek (${strokeLengthCm.toFixed(2)} cm). Minimal 5 cm diperlukan!`;
                 signatureCanvas.classList.add('error');
                 isValid = false;
             } else {
@@ -991,7 +991,7 @@
                 alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
                 showData();
             } else {
-                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 5 cm\n- Ambil foto");
             }
         }
 
