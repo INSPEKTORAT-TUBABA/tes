@@ -1010,6 +1010,18 @@
         showForm();
     });
 
+
+    // Tambahan: jika belum ada listener inline, pastikan event listener dipasang
+    try {
+        if (typeof instansi !== 'undefined' && instansi && !instansi.getAttribute('onchange')) {
+            instansi.addEventListener('change', function(){ checkAndShowNext('instansi', 'field-pihakDitemui'); });
+        }
+        if (typeof desa !== 'undefined' && desa && !desa.getAttribute('onchange')) {
+            desa.addEventListener('change', function(){ checkAndShowNext('desa', 'field-pihakDitemui'); });
+        }
+    } catch(e) { console.warn('Error memasang listener tambahan:', e); }
+
+
 </script>
 
 </body>
