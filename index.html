@@ -348,26 +348,22 @@ function validateNama() {
         hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
     }
 
-    // Valid jika minimal 5 huruf
     const isValid = hurufCount >= 5;
 
     if (isValid) {
         input.classList.remove('error');
         input.classList.add('success');
         warning.style.display = 'none';
-        document.getElementById('field-asal').style.display = 'block';
+        checkAndShowNext('nama', 'field-asal'); // logika dropdown berantai
     } else {
         input.classList.remove('success');
         input.classList.add('error');
         warning.style.display = 'block';
-        // Kalau kosong semua → sembunyikan semua field setelah nama
         if (input.value.trim() === '') {
             hideFieldsAfter('field-nama');
         }
     }
 }
-
-
     // === Element refs (pastikan id cocok dengan HTML) ===
     const signatureCanvas = document.getElementById('signature-pad');
     const canvas = signatureCanvas;
