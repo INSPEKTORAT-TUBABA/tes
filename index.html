@@ -351,6 +351,10 @@
     const signatureCanvas = document.getElementById('signature-pad');
     const canvas = signatureCanvas;
     const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0000FF'; // biru
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     const namaWarning = document.getElementById('namaWarning');
     const signatureWarning = document.getElementById('signatureWarning');
@@ -446,6 +450,12 @@
         hasSignature = false;
         canvas.classList.remove('error', 'success');
         document.getElementById('field-aksi').style.display = 'none';
+
+        // Pastikan warna dan ketebalan garis tetap biru
+        ctx.strokeStyle = '#0000FF'; // biru
+        ctx.lineWidth = 2.8;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
     }
 
     // ---- Daftar & logika asal / desa ----
