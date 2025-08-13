@@ -394,7 +394,9 @@
     </div>
 
     <div style="margin-bottom: 20px;">
+        <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export Data</button>
     </div>
 
     <div id="dataSection" style="display: none;">
@@ -620,7 +622,6 @@
             instansi.removeAttribute('required');
             kecamatan.removeAttribute('required');
             desa.removeAttribute('required');
-
             if (this.value === "INSTANSI") {
                 daftarInstansi.classList.remove("hidden");
                 instansi.setAttribute('required', '');
@@ -628,7 +629,6 @@
                 daftarMasyarakat.classList.remove("hidden");
                 kecamatan.setAttribute('required', '');
             }
-
             checkAndShowNext('asal', 'field-pihakDitemui');
         });
 
@@ -641,7 +641,6 @@
                 opt.textContent = nama;
                 desa.appendChild(opt);
             });
-
             if (kecamatan.value) {
                 fieldDesa.classList.remove("hidden");
                 desa.setAttribute('required', '');
@@ -649,7 +648,6 @@
                 fieldDesa.classList.add("hidden");
                 desa.removeAttribute('required');
             }
-
             checkAndShowNext('kecamatan', 'field-pihakDitemui');
         }
 
@@ -663,7 +661,6 @@
             } catch (e) {
                 hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
             }
-
             const isValid = hurufCount >= 5;
 
             if (isValid) {
@@ -712,8 +709,7 @@
             if (isValid) {
                 uraian.classList.remove('error');
                 uraian.classList.add('success');
-                // Panggil fungsi untuk menampilkan field berikutnya secara konsisten
-                checkAndShowNext('uraian', 'field-nomorHp');
+                document.getElementById('field-nomorHp').style.display = 'block';
             } else {
                 uraian.classList.remove('success');
                 uraian.classList.add('error');
@@ -728,8 +724,7 @@
             if (isValid) {
                 nomorHp.classList.remove('error');
                 nomorHp.classList.add('success');
-                // Panggil fungsi untuk menampilkan field berikutnya secara konsisten
-                checkAndShowNext('nomorHp', 'field-tandaTangan');
+                document.getElementById('field-tandaTangan').style.display = 'block';
             } else {
                 nomorHp.classList.remove('success');
                 nomorHp.classList.add('error');
@@ -737,145 +732,100 @@
             }
         }
 
-        function checkAndShowNext(currentFieldId, nextFieldId) {
-            const currentField = document.getElementById(currentFieldId);
-            const nextField = document.getElementById(nextFieldId);
-            if (currentField && nextField) {
-                if (currentField.value) {
-                    nextField.style.display = 'block';
-                } else {
-                    hideFieldsAfter(currentFieldId);
-                }
+        // Fungsi untuk menggulirkan elemen ke tampilan
+        function scrollIntoView(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
-        function hideFieldsAfter(currentFieldId) {
-            const formDivs = document.querySelectorAll('#formSection > form > div[id^="field-"]');
-            let found = false;
-            formDivs.forEach(div => {
-                if (found) {
-                    div.style.display = 'none';
-                    const input = div.querySelector('input, select, textarea');
-                    if (input) {
-                        input.value = '';
-                        input.classList.remove('error', 'success');
-                    }
-                }
-                if (div.id === currentFieldId) {
-                    found = true;
-                }
-            });
-            // Reset tanda tangan dan foto
-            if (currentFieldId === 'field-tandaTangan') {
-                clearSignature();
-                document.getElementById('field-aksi').style.display = 'none';
-            } else if (currentFieldId === 'field-aksi') {
-                hasPhoto = false;
-                photoWarning.style.display = 'none';
-                photoWarning.textContent = '⚠️ Foto wajib diambil!';
-            }
-        }
-
-        // === Camera Logic ===
+        // === Camera Functions ===
         async function bukaKamera() {
             photoModal.style.display = 'flex';
-            btnSimpanLihatData.style.display = 'none';
-            btnAmbilFoto.style.display = 'inline-block';
             isFrontPhotoTaken = false;
-            fotoDataURLFront = null;
-            fotoDataURLBack = null;
             capturedFrontPhoto.style.display = 'none';
             capturedBackPhoto.style.display = 'none';
             videoFront.style.display = 'block';
             videoBack.style.display = 'block';
+            backCameraView.style.display = 'none';
+            btnAmbilFoto.textContent = '📸 Ambil Foto Depan';
+            btnSimpanLihatData.style.display = 'none';
+            fotoDataURLFront = null;
+            fotoDataURLBack = null;
+            hasPhoto = false;
 
             try {
-                // Minta izin kamera
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-                // Dapatkan kamera depan (selfie)
-                const frontConstraints = {
-                    video: {
-                        facingMode: 'user',
-                        width: { ideal: 480 },
-                        height: { ideal: 640 }
-                    }
-                };
-                streamFront = await navigator.mediaDevices.getUserMedia(frontConstraints);
+                streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 videoFront.srcObject = streamFront;
                 videoFront.play();
-                frontCameraTitle.textContent = "Kamera Depan (Selfie)";
-
-                // Dapatkan kamera belakang jika ada
-                if (videoDevices.some(device => device.label.includes('back') || device.label.includes('belakang'))) {
-                    const backConstraints = {
-                        video: {
-                            facingMode: 'environment',
-                            width: { ideal: 480 },
-                            height: { ideal: 640 }
-                        }
-                    };
-                    streamBack = await navigator.mediaDevices.getUserMedia(backConstraints);
-                    videoBack.srcObject = streamBack;
-                    backCameraView.style.display = 'block';
-                    videoBack.play();
-                    backCameraTitle.textContent = "Kamera Belakang";
-                } else {
-                    backCameraView.style.display = 'none';
-                }
-
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-                alert("Gagal mengakses kamera. Pastikan Anda memberikan izin.");
-                tutupModal();
+            } catch (error) {
+                console.error("Gagal mengakses kamera depan:", error);
+                videoFront.style.display = 'none';
+                frontCameraTitle.textContent = 'Kamera Depan (Tidak Tersedia)';
             }
         }
 
-        function ambilFoto() {
+        async function ambilFoto() {
             if (!isFrontPhotoTaken) {
-                ambilFotoDepan();
+                if (!streamFront) {
+                    alert("Kamera depan belum aktif!");
+                    return;
+                }
+                const contextFront = canvasFront.getContext('2d');
+                canvasFront.width = videoFront.videoWidth || 480;
+                canvasFront.height = videoFront.videoHeight || Math.round(canvasFront.width * 3 / 4);
+                contextFront.drawImage(videoFront, 0, 0, canvasFront.width, canvasFront.height);
+                fotoDataURLFront = canvasFront.toDataURL('image/png');
+                capturedFrontPhoto.src = fotoDataURLFront;
+                capturedFrontPhoto.style.display = 'block';
+                videoFront.style.display = 'none';
+
+                // Hentikan kamera depan
+                if (streamFront) {
+                    streamFront.getTracks().forEach(track => track.stop());
+                    streamFront = null;
+                }
+                isFrontPhotoTaken = true;
+                btnAmbilFoto.textContent = '📸 Ambil Foto Belakang';
+                backCameraView.style.display = 'flex';
+
+                // Aktifkan kamera belakang
+                try {
+                    streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    videoBack.srcObject = streamBack;
+                    videoBack.play();
+                } catch (error) {
+                    console.error("Gagal mengakses kamera belakang:", error);
+                    videoBack.style.display = 'none';
+                    backCameraTitle.textContent = 'Kamera Belakang (Tidak Tersedia)';
+                    // Jika kamera belakang gagal, set hasPhoto jika kamera depan berhasil
+                    hasPhoto = !!fotoDataURLFront;
+                    if (hasPhoto) {
+                        btnAmbilFoto.style.display = 'none';
+                        btnSimpanLihatData.style.display = 'block';
+                    } else {
+                        alert("Gagal mengambil foto dari kedua kamera!");
+                        tutupModal();
+                    }
+                }
             } else {
-                ambilFotoBelakang();
-            }
-        }
-
-        function ambilFotoDepan() {
-            canvasFront.width = videoFront.videoWidth;
-            canvasFront.height = videoFront.videoHeight;
-            const context = canvasFront.getContext('2d');
-            context.drawImage(videoFront, 0, 0, canvasFront.width, canvasFront.height);
-            fotoDataURLFront = canvasFront.toDataURL('image/jpeg');
-            capturedFrontPhoto.src = fotoDataURLFront;
-            capturedFrontPhoto.style.display = 'block';
-            videoFront.style.display = 'none';
-            isFrontPhotoTaken = true;
-            btnAmbilFoto.textContent = '📸 Ambil Foto Belakang';
-            btnAmbilFoto.onclick = ambilFoto;
-            if (backCameraView.style.display === 'none') {
-                btnAmbilFoto.style.display = 'none';
-                btnSimpanLihatData.style.display = 'inline-block';
-                hasPhoto = true;
-                photoWarning.style.display = 'none';
-            }
-        }
-
-        function ambilFotoBelakang() {
-            if (streamBack) {
-                canvasBack.width = videoBack.videoWidth;
-                canvasBack.height = videoBack.videoHeight;
-                const context = canvasBack.getContext('2d');
-                context.drawImage(videoBack, 0, 0, canvasBack.width, canvasBack.height);
-                fotoDataURLBack = canvasBack.toDataURL('image/jpeg');
+                if (!streamBack) {
+                    alert("Kamera belakang belum aktif!");
+                    return;
+                }
+                const contextBack = canvasBack.getContext('2d');
+                canvasBack.width = videoBack.videoWidth || 480;
+                canvasBack.height = videoBack.videoHeight || Math.round(canvasBack.width * 3 / 4);
+                contextBack.drawImage(videoBack, 0, 0, canvasBack.width, canvasBack.height);
+                fotoDataURLBack = canvasBack.toDataURL('image/png');
                 capturedBackPhoto.src = fotoDataURLBack;
                 capturedBackPhoto.style.display = 'block';
                 videoBack.style.display = 'none';
-                btnAmbilFoto.style.display = 'none';
-                btnSimpanLihatData.style.display = 'inline-block';
+
                 hasPhoto = true;
-                photoWarning.style.display = 'none';
-            } else {
-                alert("Kamera belakang tidak tersedia.");
+                btnAmbilFoto.style.display = 'none';
+                btnSimpanLihatData.style.display = 'block';
             }
         }
 
@@ -883,35 +833,213 @@
             photoModal.style.display = 'none';
             if (streamFront) {
                 streamFront.getTracks().forEach(track => track.stop());
+                streamFront = null;
             }
             if (streamBack) {
                 streamBack.getTracks().forEach(track => track.stop());
+                streamBack = null;
             }
+            capturedFrontPhoto.style.display = 'none';
+            capturedBackPhoto.style.display = 'none';
+            videoFront.style.display = 'block';
+            videoBack.style.display = 'block';
+            fotoDataURLFront = null;
+            fotoDataURLBack = null;
+            hasPhoto = false;
         }
 
         function simpanFotoLangsung() {
-            tutupModal();
-            // Lanjutkan dengan proses penyimpanan data buku tamu
-            simpanData();
-            showData(); // Langsung tampilkan data setelah simpan
+            if (!hasPhoto) {
+                alert("❌ Harap ambil foto terlebih dahulu!");
+                return;
+            }
+            if (simpanData()) {
+                alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+                tutupModal();
+                showData();
+            } else {
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
+            }
         }
 
-        // === Data Storage & Display Logic ===
-        window.addEventListener('load', () => {
-            const storedData = localStorage.getItem('dataBukuTamu');
-            if (storedData) {
-                dataBukuTamu = JSON.parse(storedData);
-            }
-            updateDataCount();
-        });
+        // === Data Handling ===
+        function hideFieldsAfter(startFieldId) {
+            let hide = false;
+            document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
+                if (div.id === startFieldId) {
+                    hide = true;
+                } else if (hide) {
+                    div.style.display = 'none';
+                    const input = div.querySelector('input, select, textarea');
+                    if (input) {
+                        input.classList.remove('error', 'success');
+                    }
+                }
+            });
+        }
 
-        function updateDataCount() {
-            const dataCountSpan = document.getElementById('dataCount');
-            dataCountSpan.textContent = dataBukuTamu.length;
+        function checkAndShowNext(currentElementId, nextElementId) {
+            const currentElement = document.getElementById(currentElementId);
+            const nextElement = document.getElementById(nextElementId);
+            let isValid = true;
+
+            if (currentElementId === 'signature-pad') {
+                const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+                if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                    signatureWarning.style.display = 'block';
+                    signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                    signatureCanvas.classList.add('error');
+                    signatureCanvas.classList.remove('success');
+                    isValid = false;
+                } else {
+                    signatureWarning.style.display = 'none';
+                    signatureCanvas.classList.remove('error');
+                    signatureCanvas.classList.add('success');
+                }
+            } else if (currentElementId === 'asal') {
+                if (asal.value === 'INSTANSI') {
+                    if (!instansi.value || instansi.value.trim() === '') isValid = false;
+                } else if (asal.value === 'MASYARAKAT') {
+                    if (!kecamatan.value || kecamatan.value.trim() === '' || !desa.value || desa.value.trim() === '') isValid = false;
+                } else {
+                    isValid = false;
+                }
+            } else if (currentElementId === 'kecamatan') {
+                if (!kecamatan.value || kecamatan.value.trim() === '' || !desa.value || desa.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'desa') {
+                if (!desa.value || desa.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'instansi') {
+                if (!instansi.value || instansi.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'uraian') {
+                isValid = currentElement.value.trim().length >= 15;
+            } else if (currentElementId === 'nomorHp') {
+                isValid = currentElement.value.length >= 11;
+            } else if (currentElement) {
+                if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
+                    if (currentElement.value === undefined || currentElement.value.trim() === '') {
+                        isValid = false;
+                    }
+                }
+            }
+
+            if (currentElement && (currentElement.tagName === 'INPUT' || currentElement.tagName === 'SELECT' || currentElement.tagName === 'TEXTAREA')) {
+                if (isValid) {
+                    currentElement.classList.remove('error');
+                    currentElement.classList.add('success');
+                } else {
+                    currentElement.classList.add('error');
+                    currentElement.classList.remove('success');
+                }
+            }
+
+            if (isValid && nextElement) {
+                nextElement.style.display = 'block';
+                const nextInput = nextElement.querySelector('input, select, textarea, canvas');
+                if (nextInput && typeof nextInput.focus === 'function') nextInput.focus();
+            } else {
+                const mapToFieldStart = {
+                    'nama': 'field-nama',
+                    'asal': 'field-asal',
+                    'instansi': 'field-asal',
+                    'kecamatan': 'field-asal',
+                    'desa': 'field-asal',
+                    'pihakDitemui': 'field-pihakDitemui',
+                    'jenisLayanan': 'field-jenisLayanan',
+                    'uraian': 'field-uraian',
+                    'nomorHp': 'field-nomorHp',
+                    'signature-pad': 'field-tandaTangan'
+                };
+                const startId = mapToFieldStart[currentElementId] || currentElementId;
+                hideFieldsAfter(startId);
+            }
         }
 
         function simpanData() {
-            // ... (Kode untuk menyimpan data, tidak berubah) ...
+            const form = document.getElementById('bukuTamuForm');
+            let isValid = true;
+
+            signatureWarning.style.display = 'none';
+            photoWarning.style.display = 'none';
+
+            if (!form.reportValidity()) {
+                isValid = false;
+            }
+
+            const namaInput = document.getElementById('nama');
+            let hurufCount = 0;
+            try {
+                hurufCount = (namaInput.value.match(/\p{L}/gu) || []).length;
+            } catch (e) {
+                hurufCount = (namaInput.value.match(/[A-Za-z]/g) || []).length;
+            }
+            if (hurufCount < 5 || namaInput.value.trim() === '') {
+                namaInput.classList.add('error');
+                isValid = false;
+            } else {
+                namaInput.classList.remove('error');
+                namaInput.classList.add('success');
+            }
+
+            const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+            if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                signatureWarning.style.display = 'block';
+                signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                signatureCanvas.classList.add('error');
+                isValid = false;
+            } else {
+                signatureCanvas.classList.remove('error');
+                signatureCanvas.classList.add('success');
+            }
+
+            if (!fotoDataURLFront || !fotoDataURLBack) {
+                photoWarning.style.display = 'block';
+                isValid = false;
+            }
+
+            if (isValid) {
+                const formData = {
+                    nama: namaInput.value.trim(),
+                    asal: asal.value,
+                    instansi: asal.value === 'INSTANSI' ? instansi.value : '',
+                    kecamatan: asal.value === 'MASYARAKAT' ? kecamatan.value : '',
+                    desa: asal.value === 'MASYARAKAT' ? desa.value : '',
+                    pihakDitemui: document.getElementById('pihakDitemui').value,
+                    jenisLayanan: document.getElementById('jenisLayanan').value,
+                    uraian: document.getElementById('uraian').value.trim(),
+                    nomorHp: document.getElementById('nomorHp').value.trim(),
+                    tandaTangan: signatureCanvas.toDataURL('image/png'),
+                    fotoFront: fotoDataURLFront,
+                    fotoBack: fotoDataURLBack,
+                    timestamp: new Date().toLocaleString('id-ID')
+                };
+                dataBukuTamu.push(formData);
+                updateDataCounter();
+                resetFormComplete();
+                return true;
+            }
+            return false;
+        }
+
+        function resetFormComplete() {
+            document.getElementById('bukuTamuForm').reset();
+            hasSignature = false;
+            hasPhoto = false;
+            fotoDataURLFront = null;
+            fotoDataURLBack = null;
+            clearSignature();
+            daftarInstansi.classList.add("hidden");
+            daftarMasyarakat.classList.add("hidden");
+            fieldDesa.classList.add("hidden");
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            instansi.removeAttribute('required');
+            kecamatan.removeAttribute('required');
+            desa.removeAttribute('required');
+            document.querySelectorAll('#formSection > form > div:not(#field-nama)').forEach(el => el.style.display = 'none');
+            const elements = [signatureCanvas, document.getElementById('nama'), asal, document.getElementById('pihakDitemui'), document.getElementById('jenisLayanan'), document.getElementById('uraian'), document.getElementById('nomorHp')];
+            elements.forEach(el => { if (el) el.classList.remove('error', 'success'); });
+            signatureWarning.style.display = 'none';
+            photoWarning.style.display = 'none';
+            document.getElementById('nama').focus();
         }
 
         function showForm() {
@@ -925,36 +1053,120 @@
             document.getElementById('formSection').style.display = 'none';
             document.getElementById('dataSection').style.display = 'block';
             document.getElementById('btnForm').style.background = '#6c757d';
-            document.getElementById('btnData').style.background = '#007bff';
-            renderData();
+            document.getElementById('btnData').style.background = '#28a745';
+            displayData();
         }
 
-        function renderData() {
+        function updateDataCounter() {
+            document.getElementById('dataCount').textContent = dataBukuTamu.length;
+        }
+
+        function displayData() {
             const container = document.getElementById('dataContainer');
-            container.innerHTML = '';
             if (dataBukuTamu.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>';
                 return;
             }
-
+            let html = '';
             dataBukuTamu.forEach((data, index) => {
-                // ... (Kode untuk menampilkan data, tidak berubah) ...
+                html += `<div class="data-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3>
+                        <button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button>
+                    </div>
+                    <div class="data-grid">
+                        <div><strong>Nama:</strong> ${data.nama}</div>
+                        <div><strong>Asal:</strong> ${data.asal}</div>
+                        ${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}
+                        ${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}
+                        ${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}
+                        <div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div>
+                        <div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div>
+                        <div><strong>Nomor HP:</strong> ${data.nomorHp}</div>
+                        <div><strong>Waktu:</strong> ${data.timestamp}</div>
+                    </div>
+                    <div><strong>Uraian:</strong> ${data.uraian}</div>
+                    <div class="data-images">
+                        <div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                        <div><strong>Foto Depan:</strong><br><img src="${data.fotoFront || ''}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                        <div><strong>Foto Belakang:</strong><br><img src="${data.fotoBack || ''}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                    </div>
+                </div>`;
             });
+            container.innerHTML = html;
         }
 
-        function exportData() {
-            // ... (Kode untuk mengekspor data, tidak berubah) ...
-        }
-
-        function clearAllData() {
-            if (confirm("Apakah Anda yakin ingin menghapus semua data buku tamu?")) {
-                localStorage.removeItem('dataBukuTamu');
-                dataBukuTamu = [];
-                renderData();
-                updateDataCount();
+        function deleteData(index) {
+            if (confirm('Yakin ingin menghapus data tamu #' + (index + 1) + '?')) {
+                dataBukuTamu.splice(index, 1);
+                updateDataCounter();
+                displayData();
+                alert('Data berhasil dihapus!');
             }
         }
 
+        function clearAllData() {
+            if (confirm('Yakin ingin menghapus SEMUA data buku tamu?')) {
+                dataBukuTamu = [];
+                updateDataCounter();
+                displayData();
+                alert('Semua data berhasil dihapus!');
+            }
+        }
+
+        function exportData() {
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!');
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,";
+            let header = ["No", "Nama", "Asal", "Instansi", "Kecamatan", "Desa", "Pihak Ditemui", "Jenis Layanan", "Uraian", "Nomor HP", "Waktu"];
+            csvContent += header.join(",") + "\n";
+            dataBukuTamu.forEach((data, index) => {
+                let row = [
+                    index + 1,
+                    `"${data.nama}"`,
+                    `"${data.asal}"`,
+                    `"${data.instansi || ''}"`,
+                    `"${data.kecamatan || ''}"`,
+                    `"${data.desa || ''}"`,
+                    `"${data.pihakDitemui}"`,
+                    `"${data.jenisLayanan}"`,
+                    `"${data.uraian}"`,
+                    `"${data.nomorHp}"`,
+                    `"${data.timestamp}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `buku_tamu_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert('Data berhasil di-export ke file CSV!');
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            showForm();
+            try {
+                if (instansi && !instansi.getAttribute('onchange')) {
+                    instansi.addEventListener('change', () => checkAndShowNext('instansi', 'field-pihakDitemui'));
+                }
+                if (desa && !desa.getAttribute('onchange')) {
+                    desa.addEventListener('change', () => checkAndShowNext('desa', 'field-pihakDitemui'));
+                }
+            } catch (e) {
+                console.warn('Error memasang listener tambahan:', e);
+            }
+        });
     </script>
 </body>
 </html>
