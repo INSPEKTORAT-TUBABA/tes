@@ -712,7 +712,8 @@
             if (isValid) {
                 uraian.classList.remove('error');
                 uraian.classList.add('success');
-                document.getElementById('field-nomorHp').style.display = 'block';
+                // Panggil fungsi untuk menampilkan field berikutnya secara konsisten
+                checkAndShowNext('uraian', 'field-nomorHp');
             } else {
                 uraian.classList.remove('success');
                 uraian.classList.add('error');
@@ -727,7 +728,8 @@
             if (isValid) {
                 nomorHp.classList.remove('error');
                 nomorHp.classList.add('success');
-                document.getElementById('field-tandaTangan').style.display = 'block';
+                // Panggil fungsi untuk menampilkan field berikutnya secara konsisten
+                checkAndShowNext('nomorHp', 'field-tandaTangan');
             } else {
                 nomorHp.classList.remove('success');
                 nomorHp.classList.add('error');
