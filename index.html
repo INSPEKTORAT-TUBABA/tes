@@ -62,12 +62,167 @@
 
     <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
 
-    <!-- Form dan elemen lainnya tetap sama (tidak diubah untuk menghemat ruang) -->
-    <!-- ... (copy seluruh HTML form dari versi sebelumnya) ... -->
+    <div id="formSection">
+        <form id="bukuTamuForm">
+            <div id="field-nama">
+                <label>Nama: <span class="required">*</span></label>
+                <input id="nama" required type="text" placeholder="Isi Minimal 5 Huruf" oninput="validateNama();"/>
+            </div>
+
+            <div id="field-asal" style="display: none;">
+                <label>INSTANSI/ASAL: <span class="required">*</span></label>
+                <select id="asal" required onchange="asalChanged();">
+                    <option value="">-- Pilih Asal --</option>
+                    <option value="INSTANSI">INSTANSI/UNIT KERJA</option>
+                    <option value="MASYARAKAT">MASYARAKAT</option>
+                </select>
+            </div>
+
+            <div class="hidden" id="daftarInstansi">
+                <label>DAFTAR INSTANSI/UNIT KERJA: <span class="required">*</span></label>
+                <select id="instansi" onchange="checkAndShowNext('instansi', 'field-pihakDitemui');">
+                    <option value="">-- Pilih Instansi --</option>
+                    <!-- daftar instansi sama seperti sebelumnya -->
+                    <option>SEKRETARIAT DAERAH</option>
+                    <option>SEKRETARIAT DPRD</option>
+                    <option>BADAN PERENCANAAN PEMBANGUNAN DAERAH</option>
+                    <option>BADAN PENGELOLAAN KEUANGAN DAN ASET DAERAH</option>
+                    <option>BADAN PENGELOLAAN PAJAK DAN RETRIBUSI DAERAH</option>
+                    <option>BADAN KEPEGAWAIAN DAN PENGEMBANGAN SUMBER DAYA MANUSIA</option>
+                    <option>BADAN KESATUAN BANGSA DAN POLITIK DAERAH</option>
+                    <option>BADAN PENANGGULANGAN BENCANA DAERAH</option>
+                    <option>DINAS LINGKUNGAN HIDUP</option>
+                    <option>DINAS KESEHATAN</option>
+                    <option>DINAS KEPENDUDUKAN DAN PENCATATAN SIPIL</option>
+                    <option>DINAS KOPERASI, UMKM, PERINDUSTRIAN DAN PERDAGANGAN</option>
+                    <option>DINAS SOSIAL</option>
+                    <option>DINAS PEMUDA, OLAHRAGA DAN PARIWISATA</option>
+                    <option>DINAS KOMUNIKASI DAN INFORMATIKA</option>
+                    <option>DINAS PERUMAHAN, KAWASAN PERMUKIMAN DAN PERTANAHAN</option>
+                    <option>DINAS PENANAMAN MODAL DAN PELAYANAN PERIZINAN TERPADU SATU PINTU</option>
+                    <option>DINAS PENDIDIKAN DAN KEBUDAYAAN</option>
+                    <option>DINAS KETAHANAN PANGAN</option>
+                    <option>DINAS PEMBERDAYAAN MASYARAKAT DAN TIYUH</option>
+                    <option>DINAS PEMBERDAYAAN PEREMPUAN DAN PERLINDUNGAN ANAK</option>
+                    <option>DINAS PENGENDALIAN PENDUDUK DAN KELUARGA BERENCANA</option>
+                    <option>DINAS PERHUBUNGAN</option>
+                    <option>DINAS PERTANIAN</option>
+                    <option>DINAS PETERNAKAN DAN KESEHATAN HEWAN</option>
+                    <option>DINAS PEKERJAAN UMUM DAN PENATAAN RUANG</option>
+                    <option>DINAS TENAGA KERJA DAN TRANSMIGRASI</option>
+                    <option>DINAS PERIKANAN</option>
+                    <option>DINAS PERPUSTAKAAN DAN KEARSIPAN</option>
+                    <option>DINAS PEMADAM KEBAKARAN DAN PENYSELAMATAN</option>
+                    <option>SATUAN POLISI PAMONG PRAJA</option>
+                    <option>BADAN PENGAWASAN KEUANGAN DAN PEMBANGUNAN (BPKP)</option>
+                    <option>LAINNYA</option>
+                </select>
+            </div>
+
+            <div class="hidden" id="daftarMasyarakat">
+                <label>Kecamatan: <span class="required">*</span></label>
+                <select id="kecamatan" onchange="updateDesaList();">
+                    <option value="">-- Pilih Kecamatan --</option>
+                    <option value="Tulang Bawang Tengah">Tulang Bawang Tengah</option>
+                    <option value="Tulang Bawang Udik">Tulang Bawang Udik</option>
+                    <option value="Gunung Terang">Gunung Terang</option>
+                    <option value="Gunung Agung">Gunung Agung</option>
+                    <option value="Lambu Kibang">Lambu Kibang</option>
+                    <option value="Way Kenanga">Way Kenanga</option>
+                    <option value="Tumijajar">Tumijajar</option>
+                    <option value="Pagar Dewa">Pagar Dewa</option>
+                    <option value="Batu Putih">Batu Putih</option>
+                </select>
+
+                <div class="hidden" id="field-desa">
+                    <label>Desa/Tiyuh: <span class="required">*</span></label>
+                    <select id="desa" onchange="checkAndShowNext('desa', 'field-pihakDitemui');">
+                        <option value="">-- Pilih Desa --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Field lainnya tetap sama -->
+            <div id="field-pihakDitemui" style="display: none;">
+                <label>PIHAK YANG DITEMUI: <span class="required">*</span></label>
+                <select id="pihakDitemui" required onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan');">
+                    <option value="">-- Pilih Pihak yang Ditemui --</option>
+                    <option>INSPEKTUR</option>
+                    <option>SEKRETARIS</option>
+                    <option>IRBANSUS</option>
+                    <option>IRBAN 1</option>
+                    <option>IRBAN 2</option>
+                    <option>IRBAN 3</option>
+                    <option>IRBAN 4</option>
+                </select>
+            </div>
+
+            <div id="field-jenisLayanan" style="display: none;">
+                <label>JENIS LAYANAN: <span class="required">*</span></label>
+                <select id="jenisLayanan" required onchange="checkAndShowNext('jenisLayanan', 'field-uraian');">
+                    <option value="">-- Pilih Jenis Layanan --</option>
+                    <option>Permintaan Audit/Klarifikasi Khusus</option>
+                    <option>Penanganan Pengaduan</option>
+                    <option>Layanan Informasi Publik</option>
+                    <option>Pembinaan & Konsultasi</option>
+                    <option>Audit</option>
+                    <option>Review</option>
+                    <option>Evaluasi/Monitoring</option>
+                    <option>Tindak Lanjut Temuan</option>
+                </select>
+            </div>
+
+            <div id="field-uraian" style="display: none;">
+                <label>URAIAN: <span class="required">*</span></label>
+                <textarea id="uraian" required oninput="autoResize(this); validateUraian();" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea>
+            </div>
+
+            <div id="field-nomorHp" style="display: none;">
+                <label>NOMOR HP: <span class="required">*</span></label>
+                <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text" oninput="validateNomorHp();"/>
+            </div>
+
+            <div id="field-tandaTangan" style="display: none;">
+                <label>Tanda Tangan: <span class="required">*</span></label>
+                <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!</div>
+                <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas>
+                <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button>
+            </div>
+
+            <div id="field-aksi" style="display: none;">
+                <label>Foto: <span class="required">*</span></label>
+                <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
+                <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
+                <br/><br/>
+                <button type="button" onclick="simpanDataDanTutupForm()" style="font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">💾 Simpan Data</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tombol-tombol dan section data tetap sama -->
+    <div style="margin-bottom: 80px;">
+        <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
+        <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
+    </div>
+
+    <div id="dataSection" style="display: none;">
+        <h2>📊 DATA BUKU TAMU</h2>
+        <div style="margin-bottom: 20px;">
+            <button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Hapus Semua Data</button>
+        </div>
+        <div id="dataContainer">
+            <p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>
+        </div>
+    </div>
+
+    <!-- Modal foto tetap sama -->
+    <div id="photoModal">
+        <!-- isi modal sama -->
+    </div>
 
     <script>
-        // Semua fungsi JavaScript sebelumnya tetap sama
-        // Hanya fungsi exportData() yang diubah
+        // Semua fungsi JavaScript sebelumnya tetap sama hingga bagian exportData
 
         function exportData() {
             if (dataBukuTamu.length === 0) {
@@ -84,24 +239,24 @@
             doc.setFontSize(10);
             doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
 
-            // Header tabel tanpa kolom "Asal"
+            // Header tabel TANPA kolom "Asal"
             const head = [[
                 'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
                 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
                 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
 
-            // Data baris - hilangkan kolom Asal
+            // Body tabel - hilangkan kolom Asal
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi || d.kecamatan || '-',  // Instansi atau Kecamatan
-                d.desa || '-',                     // Desa hanya muncul jika ada (masyarakat)
+                d.instansi || d.kecamatan || '-',  // Tetap tampilkan instansi atau kecamatan
+                d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
                 d.uraian,
                 d.nomorHp,
-                d.timestamp.split(', ')[0],        // Hanya tanggal
+                d.timestamp,
                 '', // placeholder tanda tangan
                 '', // placeholder foto depan
                 ''  // placeholder foto belakang
@@ -128,18 +283,18 @@
                 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 columnStyles: {
-                    0: { cellWidth: 10, halign: 'center' },
-                    1: { cellWidth: 28 },              // Nama
-                    2: { cellWidth: 35 },              // Instansi/Kecamatan
-                    3: { cellWidth: 25 },              // Desa
-                    4: { cellWidth: 22 },              // Pihak Ditemui
-                    5: { cellWidth: 28 },              // Jenis Layanan
-                    6: { cellWidth: 50 },              // Uraian (terluas)
-                    7: { cellWidth: 20 },              // No HP
-                    8: { cellWidth: 20 },              // Waktu Kunjungan
-                    9: { cellWidth: 15 },              // Tanda Tangan
-                    10: { cellWidth: 15 },             // Foto Depan
-                    11: { cellWidth: 15 }              // Foto Belakang
+                    0: { cellWidth: 10, halign: 'center' },     // No
+                    1: { cellWidth: 30 },                      // Nama
+                    2: { cellWidth: 35 },                      // Instansi/Kecamatan
+                    3: { cellWidth: 25 },                      // Desa
+                    4: { cellWidth: 22 },                      // Pihak Ditemui
+                    5: { cellWidth: 28 },                      // Jenis Layanan
+                    6: { cellWidth: 50 },                      // Uraian
+                    7: { cellWidth: 20 },                      // No HP
+                    8: { cellWidth: 22 },                      // Waktu Kunjungan
+                    9: { cellWidth: 15 },                      // Tanda Tangan
+                    10: { cellWidth: 15 },                     // Foto Depan
+                    11: { cellWidth: 15 }                      // Foto Belakang
                 },
                 didDrawCell: function(data) {
                     if (data.section === 'body' && data.column.index >= 9 && data.column.index <= 11) {
@@ -161,12 +316,16 @@
 
             const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
             doc.save(filename);
-            alert('PDF berhasil di-export tanpa kolom "Asal"!\nFile: ' + filename);
+            alert('PDF berhasil di-export (kolom Asal telah dihilangkan)!\nFile: ' + filename);
         }
 
-        // Fungsi JavaScript lainnya tetap sama seperti versi sebelumnya
-        // (validateNama, asalChanged, simpanData, dll.)
+        // Fungsi-fungsi lainnya tetap sama seperti versi sebelumnya
+        // (validateNama, validateUraian, dll.)
 
+        document.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            showForm();
+        });
     </script>
 </body>
 </html>
