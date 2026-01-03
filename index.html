@@ -911,49 +911,117 @@
 
         // === EXPORT EXCEL ===
         function exportData() {
-            if (dataBukuTamu.length === 0) {
-                alert('Tidak ada data untuk di-export!');
-                return;
+    if (dataBukuTamu.length === 0) {
+        alert('Tidak ada data untuk di-export!');
+        return;
+    }
+
+    const headers = [
+        "No", "Nama", "Asal", "Instansi", "Kecamatan", "Desa/Tiyuh",
+        "Pihak yang Ditemui", "Jenis Layanan", "Uraian", "Nomor HP", "Waktu Kunjungan",
+        "Tanda Tangan", "Foto Depan", "Foto Belakang"
+    ];
+
+    const dataRows = dataBukuTamu.map((data, index) => [
+        index + 1,
+        data.nama,
+        data.asal,
+        data.instansi || "-",
+        data.kecamatan || "-",
+        data.desa || "-",
+        data.pihakDitemui,
+        data.jenisLayanan,
+        data.uraian,
+        data.nomorHp,
+        data.timestamp,
+        "", // Placeholder untuk gambar tanda tangan
+        "", // Placeholder untuk foto depan
+        ""  // Placeholder untuk foto belakang
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+
+    // Atur lebar kolom
+    ws['!cols'] = [
+        { wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 40 },
+        { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 },
+        { wch: 60 }, { wch: 15 }, { wch: 22 },
+        { wch: 25 }, { wch: 25 }, { wch: 25 } // Kolom gambar lebih lebar
+    ];
+
+    // Atur tinggi baris agar gambar muat (mulai dari baris 1 = header, baris 2 = data pertama)
+    ws['!rows'] = [{ hpt: 30 }]; // Baris header
+    for (let i = 0; i < dataBukuTamu.length; i++) {
+        ws['!rows'].push({ hpt: 120 }); // Tinggi baris data = 120 pt (~160 px)
+    }
+
+    // Tambahkan gambar ke worksheet
+    const images = [];
+
+    dataBukuTamu.forEach((data, index) => {
+        const rowIndex = index + 1; // +1 karena baris 0 adalah header
+
+        // Helper untuk konversi base64 ke binary
+        function base64ToArrayBuffer(base64) {
+            if (!base64) return null;
+            const binaryString = atob(base64.split(',')[1]);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
             }
-
-            const headers = [
-                "No", "Nama", "Asal", "Instansi", "Kecamatan", "Desa/Tiyuh",
-                "Pihak yang Ditemui", "Jenis Layanan", "Uraian", "Nomor HP", "Waktu Kunjungan"
-            ];
-
-            const dataRows = dataBukuTamu.map((data, index) => [
-                index + 1,
-                data.nama,
-                data.asal,
-                data.instansi || "-",
-                data.kecamatan || "-",
-                data.desa || "-",
-                data.pihakDitemui,
-                data.jenisLayanan,
-                data.uraian,
-                data.nomorHp,
-                data.timestamp
-            ]);
-
-            const worksheetData = [headers, ...dataRows];
-            const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-
-            ws['!cols'] = [
-                { wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 40 },
-                { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 },
-                { wch: 60 }, { wch: 15 }, { wch: 22 }
-            ];
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Buku Tamu");
-
-            const today = new Date().toISOString().slice(0, 10);
-            const fileName = `Buku_Tamu_Inspektorat_Tubaba_${today}.xlsx`;
-
-            XLSX.writeFile(wb, fileName);
-            alert('Data berhasil di-export ke Excel!\nFile: ' + fileName);
+            return bytes.buffer;
         }
 
+        // Kolom L = Tanda Tangan (index 11)
+        if (data.tandaTangan) {
+            images.push({
+                "!img": {
+                    name: `signature_${index}.png`,
+                    data: base64ToArrayBuffer(data.tandaTangan),
+                    opts: { tl: { col: 11, row: rowIndex }, ext: { width: 200, height: 80 } }
+                }
+            });
+        }
+
+        // Kolom M = Foto Depan (index 12)
+        if (data.fotoFront) {
+            images.push({
+                "!img": {
+                    name: `foto_depan_${index}.png`,
+                    data: base64ToArrayBuffer(data.fotoFront),
+                    opts: { tl: { col: 12, row: rowIndex }, ext: { width: 150, height: 110 } }
+                }
+            });
+        }
+
+        // Kolom N = Foto Belakang (index 13)
+        if (data.fotoBack) {
+            images.push({
+                "!img": {
+                    name: `foto_belakang_${index}.png`,
+                    data: base64ToArrayBuffer(data.fotoBack),
+                    opts: { tl: { col: 13, row: rowIndex }, ext: { width: 150, height: 110 } }
+                }
+            });
+        }
+    });
+
+    // Sisipkan gambar (SheetJS mendukung via !images jika menggunakan versi lengkap)
+    if (images.length > 0) {
+        if (!ws['!images']) ws['!images'] = [];
+        ws['!images'].push(...images.map(img => img["!img"]));
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Buku Tamu");
+
+    const today = new Date().toISOString().slice(0, 10);
+    const fileName = `Buku_Tamu_Inspektorat_Tubaba_${today}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    alert('Data berhasil di-export ke Excel lengkap dengan tanda tangan dan foto!\nFile: ' + fileName);
+}
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
