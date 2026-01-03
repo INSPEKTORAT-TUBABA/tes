@@ -7,6 +7,8 @@
     <meta name="theme-color" content="#007bff"/>
     <link rel="icon" href="icon-192.png"/>
     <title>Buku Tamu Digital</title>
+    <!-- SheetJS untuk export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Reset dan Box Model */
         *, *::before, *::after {
@@ -147,7 +149,7 @@
         .foto-kepala { width: 80px; height: auto; }
         .logo { width: 110px; height: auto; }
 
-        /* ==================== MODAL FOTO - DIPERBAIKI ==================== */
+        /* ==================== MODAL FOTO ==================== */
         #photoModal {
             display: none;
             position: fixed;
@@ -210,7 +212,6 @@
             z-index: 2;
         }
 
-        /* HORIZONTAL pada tablet & laptop */
         @media (min-width: 600px) {
             #dualCameraFrame {
                 flex-direction: row;
@@ -396,7 +397,7 @@
     <div style="margin:30px 0; text-align:center;">
         <button type="button" onclick="showForm()" id="btnForm" style="background:#007bff; color:white; padding:12px 24px; border:none; border-radius:8px; font-size:16px;">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData" style="background:#6c757d; color:white; padding:12px 24px; border:none; border-radius:8px; font-size:16px; margin:0 10px;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-        <button type="button" onclick="exportData()" style="background:#17a2b8; color:white; padding:12px 24px; border:none; border-radius:8px; font-size:16px;">💾 Export Data</button>
+        <button type="button" onclick="exportData()" style="background:#17a2b8; color:white; padding:12px 24px; border:none; border-radius:8px; font-size:16px;">📑 Export Excel</button>
     </div>
 
     <div id="dataSection" style="display:none;">
@@ -837,48 +838,80 @@
             }
         }
 
-        // === Export CSV - DIPERBAIKI ===
+        // === EXPORT KE EXCEL (.xlsx) ===
         function exportData() {
             if (dataBukuTamu.length === 0) {
                 alert('Tidak ada data untuk di-export!');
                 return;
             }
 
+            // Header sesuai urutan form
             const header = [
-                "No", "Nama", "Asal (Instansi/Masyarakat)", "Instansi/Unit Kerja",
-                "Kecamatan", "Desa/Tiyuh", "Pihak yang Ditemui", "Jenis Layanan",
-                "Uraian", "Nomor HP", "Waktu Kunjungan"
+                "No",
+                "Nama",
+                "Asal (Instansi/Masyarakat)",
+                "Instansi/Unit Kerja",
+                "Kecamatan",
+                "Desa/Tiyuh",
+                "Pihak yang Ditemui",
+                "Jenis Layanan",
+                "Uraian",
+                "Nomor HP",
+                "Waktu Kunjungan"
             ];
 
-            let csv = header.join(",") + "\r\n";
+            // Buat data array of arrays
+            const data = [
+                header
+            ];
 
-            dataBukuTamu.forEach((d, i) => {
-                const row = [
-                    i + 1,
-                    d.nama,
-                    d.asal,
-                    d.instansi || "",
-                    d.kecamatan || "",
-                    d.desa || "",
-                    d.pihakDitemui,
-                    d.jenisLayanan,
-                    d.uraian.replace(/"/g, '""'),
-                    d.nomorHp,
-                    d.timestamp
-                ];
-                csv += row.map(v => `"${v}"`).join(",") + "\r\n";
+            dataBukuTamu.forEach((item, index) => {
+                data.push([
+                    index + 1,
+                    item.nama,
+                    item.asal,
+                    item.instansi || "",
+                    item.kecamatan || "",
+                    item.desa || "",
+                    item.pihakDitemui,
+                    item.jenisLayanan,
+                    item.uraian,
+                    item.nomorHp,
+                    item.timestamp
+                ]);
             });
 
-            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `buku_tamu_inspektorat_tubaba_${new Date().toISOString().slice(0,10)}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            alert('Data berhasil di-export ke CSV!');
+            // Buat workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // Styling header
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({r: 0, c: C});
+                if (!ws[address]) ws[address] = {};
+                ws[address].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "1E90FF" } },
+                    alignment: { horizontal: "center", vertical: "center" }
+                };
+            }
+
+            // Auto-size kolom
+            const colWidths = header.map((_, i) => {
+                const values = data.map(row => row[i] ? row[i].toString() : "");
+                const maxLen = Math.max(...values.map(v => v.length));
+                return { wch: Math.min(50, maxLen + 5) };
+            });
+            ws['!cols'] = colWidths;
+
+            XLSX.utils.book_append_sheet(wb, ws, "Buku Tamu");
+
+            // Generate dan download file
+            const today = new Date().toISOString().slice(0,10);
+            XLSX.writeFile(wb, `buku_tamu_inspektorat_tubaba_${today}.xlsx`);
+
+            alert('Data berhasil di-export ke file Excel (.xlsx)!\nFile sudah rapi dan siap dibuka di Microsoft Excel atau Google Sheets.');
         }
 
         function autoResize(t) {
