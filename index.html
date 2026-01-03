@@ -23,6 +23,7 @@
             width: 100%;
             padding: 8px;
             margin-top: 5px;
+            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 16px;
@@ -76,7 +77,6 @@
             margin-top: 15px;
         }
         @media (min-width: 500px) { .data-images { flex-direction: row; } }
-
         .header-gambar {
             display: flex;
             justify-content: center;
@@ -148,15 +148,8 @@
             margin: 0;
         }
         @media (min-width: 768px) {
-            #modalContent {
-                max-width: 1000px;
-                width: 90%;
-                padding: 30px;
-            }
-            #dualCameraFrame {
-                flex-direction: row;
-                gap: 30px;
-            }
+            #modalContent { max-width: 1000px; width: 90%; padding: 30px; }
+            #dualCameraFrame { flex-direction: row; gap: 30px; }
             .camera-view { flex: 1; }
         }
         #modalButtons {
@@ -180,25 +173,30 @@
         .btn-camera:hover { background: #e0a800; }
         .btn-save:hover { background: #218838; }
         .btn-cancel:hover { background: #c82333; }
+
+        button { padding: 10px 15px; margin: 5px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; }
+        #btnForm { background: #007bff; color: white; }
+        #btnData { background: #17a2b8; color: white; }
     </style>
 </head>
 <body onload="initApp()">
+
     <div class="header-gambar">
         <img src="bupati.png" alt="Wakil Bupati" class="foto-kepala">
         <img src="logo-tubaba.png" alt="Logo Tubaba" class="logo">
         <img src="wakil-bupati.png" alt="Bupati" class="foto-kepala">
     </div>
-
     <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
 
+    <!-- Form Input (default tampil) -->
     <div id="formSection">
         <form id="bukuTamuForm">
             <div id="field-nama">
                 <label>Nama: <span class="required">*</span></label>
-                <input id="nama" required type="text" placeholder="Isi Minimal 5 Huruf" oninput="validateNama();"/>
+                <input id="nama" required type="text" placeholder="Isi Minimal 5 Huruf" oninput="validateNama()"/>
             </div>
 
-            <div id="field-asal" style="display: none;">
+            <div id="field-asal" class="hidden">
                 <label>INSTANSI/ASAL: <span class="required">*</span></label>
                 <select id="asal" required onchange="checkAndShowNext('asal', 'field-pihakDitemui')">
                     <option value="">-- Pilih Asal --</option>
@@ -207,41 +205,240 @@
                 </select>
             </div>
 
-            <!-- (semua field lain tetap sama seperti sebelumnya, saya singkat di sini agar tidak terlalu panjang) -->
-            <!-- Pastikan semua field ada seperti kode asli kamu -->
+            <!-- Tambahkan field-field lain sesuai kebutuhan asli kamu di sini -->
+            <!-- Contoh placeholder, ganti dengan field asli -->
+            <div id="field-pihakDitemui" class="hidden">
+                <label>Pihak yang Ditemui:</label>
+                <input type="text" id="pihakDitemui"/>
+            </div>
+            <div id="field-jenisLayanan" class="hidden">
+                <label>Jenis Layanan:</label>
+                <select id="jenisLayanan"><option>---</option></select>
+            </div>
+            <div id="field-uraian" class="hidden">
+                <label>Uraian Keperluan:</label>
+                <textarea id="uraian"></textarea>
+            </div>
+            <div id="field-nomorHp" class="hidden">
+                <label>Nomor HP:</label>
+                <input type="tel" id="nomorHp"/>
+            </div>
+            <div id="field-tandaTangan" class="hidden">
+                <label>Tanda Tangan:</label>
+                <canvas id="signatureCanvas" width="300" height="150" style="border:1px solid #ccc; background:white;"></canvas>
+                <button type="button" onclick="clearSignature()">Hapus Tanda Tangan</button>
+            </div>
 
-            <div class="hidden" id="daftarInstansi"> ... </div>
-            <div class="hidden" id="daftarMasyarakat"> ... </div>
-            <div id="field-pihakDitemui" style="display: none;"> ... </div>
-            <div id="field-jenisLayanan" style="display: none;"> ... </div>
-            <div id="field-uraian" style="display: none;"> ... </div>
-            <div id="field-nomorHp" style="display: none;"> ... </div>
-            <div id="field-tandaTangan" style="display: none;"> ... </div>
-            <div id="field-aksi" style="display: none;"> ... </div>
+            <div id="field-aksi" class="hidden">
+                <button type="button" onclick="openPhotoModal()">📷 Ambil Foto</button>
+                <button type="button" onclick="simpanData()">Simpan Data</button>
+            </div>
         </form>
     </div>
 
-    <div style="margin-bottom: 80px;">
+    <!-- Tombol navigasi -->
+    <div style="margin: 30px 0; text-align: center;">
         <button type="button" onclick="showForm()" id="btnForm">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData">📊 Lihat Data (<span id="dataCount">0</span>)</button>
         <button type="button" onclick="exportData()">💾 Export Data</button>
     </div>
 
-    <div id="dataSection" style="display: none;"> ... </div>
+    <!-- Section untuk menampilkan data tamu -->
+    <div id="dataSection" class="hidden"></div>
 
-    <div id="photoModal"> ... (modal foto dengan perubahan horizontal di laptop) ... </div>
+    <!-- Modal Foto -->
+    <div id="photoModal">
+        <div id="modalContent">
+            <h2>Ambil Foto Tamu</h2>
+            <div id="dualCameraFrame">
+                <div class="camera-view">
+                    <h4>Foto Depan</h4>
+                    <video id="videoFront" autoplay playsinline></video>
+                    <img id="capturedFront" class="hidden"/>
+                </div>
+                <div class="camera-view">
+                    <h4>Foto Samping</h4>
+                    <video id="videoSide" autoplay playsinline></video>
+                    <img id="capturedSide" class="hidden"/>
+                </div>
+            </div>
+            <div id="modalButtons">
+                <button class="btn-camera" onclick="startCamera()">Mulai Kamera</button>
+                <button class="btn-camera" onclick="captureBoth()">Ambil Foto</button>
+                <button class="btn-save" onclick="savePhotos()">Simpan Foto</button>
+                <button class="btn-cancel" onclick="closePhotoModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="btnHome" onclick="showForm()">🏠 Home</button>
 
     <script>
-        // (seluruh script JavaScript asli kamu tetap sama)
-        // Tambahkan fungsi init di paling atas
+        // Variabel global
+        let dataTamu = JSON.parse(localStorage.getItem('dataTamu') || '[]');
+        let currentEntry = {};
+        let streamFront = null, streamSide = null;
+
         function initApp() {
-            resizeCanvas();
-            showForm(); // Pastikan form muncul saat halaman dibuka
-            updateDataCounter();
+            showForm();              // Langsung tampilkan form saat load
+            updateDataCounter();     // Update jumlah data
+            validateNama();          // Validasi nama awal
         }
 
-        // Sisanya script sama persis seperti kode sebelumnya
-        // ...
+        function showForm() {
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('dataSection').classList.add('hidden');
+        }
+
+        function showData() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('dataSection').classList.remove('hidden');
+            renderData();
+        }
+
+        function updateDataCounter() {
+            document.getElementById('dataCount').textContent = dataTamu.length;
+        }
+
+        function validateNama() {
+            const nama = document.getElementById('nama').value.trim();
+            if (nama.length >= 5) {
+                document.getElementById('field-asal').classList.remove('hidden');
+            } else {
+                document.getElementById('field-asal').classList.add('hidden');
+                // sembunyikan field berikutnya juga
+                ['field-pihakDitemui','field-jenisLayanan','field-uraian','field-nomorHp','field-tandaTangan','field-aksi'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden');
+                });
+            }
+        }
+
+        function checkAndShowNext(currentId, nextId) {
+            const val = document.getElementById(currentId).value;
+            if (val) {
+                document.getElementById(nextId).classList.remove('hidden');
+            }
+        }
+
+        function renderData() {
+            const container = document.getElementById('dataSection');
+            container.innerHTML = '';
+            if (dataTamu.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Belum ada data tamu.</p>';
+                return;
+            }
+            dataTamu.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                card.innerHTML = `
+                    <strong>${index+1}. ${item.nama || '-'}</strong><br>
+                    Asal: ${item.asal || '-'}<br>
+                    Pihak Ditemui: ${item.pihakDitemui || '-'}<br>
+                    Waktu: ${item.waktu || '-'}
+                    <div class="data-images">
+                        ${item.fotoDepan ? `<img src="${item.fotoDepan}" style="max-width:100%; border-radius:8px;">` : ''}
+                        ${item.fotoSamping ? `<img src="${item.fotoSamping}" style="max-width:100%; border-radius:8px;">` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function exportData() {
+            if (dataTamu.length === 0) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
+            }
+            const dataStr = JSON.stringify(dataTamu, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'buku_tamu_tubaba.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // === Fungsi Modal Foto ===
+        function openPhotoModal() {
+            document.getElementById('photoModal').style.display = 'flex';
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').style.display = 'none';
+            stopCameras();
+        }
+
+        async function startCamera() {
+            try {
+                streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                document.getElementById('videoFront').srcObject = streamFront;
+
+                // Untuk samping, biasanya pakai camera belakang jika ada
+                streamSide = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('videoSide').srcObject = streamSide;
+            } catch (err) {
+                alert('Gagal mengakses kamera: ' + err.message);
+            }
+        }
+
+        function captureBoth() {
+            const canvasFront = document.createElement('canvas');
+            const videoFront = document.getElementById('videoFront');
+            canvasFront.width = videoFront.videoWidth;
+            canvasFront.height = videoFront.videoHeight;
+            canvasFront.getContext('2d').drawImage(videoFront, 0, 0);
+            document.getElementById('capturedFront').src = canvasFront.toDataURL('image/jpeg');
+            document.getElementById('capturedFront').classList.remove('hidden');
+            document.getElementById('videoFront').classList.add('hidden');
+
+            const canvasSide = document.createElement('canvas');
+            const videoSide = document.getElementById('videoSide');
+            canvasSide.width = videoSide.videoWidth;
+            canvasSide.height = videoSide.videoHeight;
+            canvasSide.getContext('2d').drawImage(videoSide, 0, 0);
+            document.getElementById('capturedSide').src = canvasSide.toDataURL('image/jpeg');
+            document.getElementById('capturedSide').classList.remove('hidden');
+            document.getElementById('videoSide').classList.add('hidden');
+        }
+
+        function savePhotos() {
+            currentEntry.fotoDepan = document.getElementById('capturedFront').src;
+            currentEntry.fotoSamping = document.getElementById('capturedSide').src;
+            closePhotoModal();
+            alert('Foto berhasil disimpan ke data sementara.');
+        }
+
+        function stopCameras() {
+            if (streamFront) streamFront.getTracks().forEach(t => t.stop());
+            if (streamSide) streamSide.getTracks().forEach(t => t.stop());
+        }
+
+        function simpanData() {
+            // Ambil nilai form
+            currentEntry.nama = document.getElementById('nama').value.trim();
+            currentEntry.asal = document.getElementById('asal').value;
+            currentEntry.pihakDitemui = document.getElementById('pihakDitemui')?.value || '';
+            currentEntry.waktu = new Date().toLocaleString('id-ID');
+
+            if (!currentEntry.nama || currentEntry.nama.length < 5) {
+                alert('Nama harus minimal 5 huruf!');
+                return;
+            }
+            if (!currentEntry.asal) {
+                alert('Pilih Instansi/Asal!');
+                return;
+            }
+
+            dataTamu.push({...currentEntry});
+            localStorage.setItem('dataTamu', JSON.stringify(dataTamu));
+            updateDataCounter();
+            alert('Data tamu berhasil disimpan!');
+            // Reset form
+            document.getElementById('bukuTamuForm').reset();
+            validateNama();
+            currentEntry = {};
+        }
     </script>
 </body>
 </html>
