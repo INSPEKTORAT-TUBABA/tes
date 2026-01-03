@@ -47,7 +47,7 @@
         @media (min-width: 500px) { .data-grid { grid-template-columns: 1fr 1fr; } }
         .data-images { display: flex; flex-direction: column; gap: 20px; margin-top: 15px; }
         @media (min-width: 500px) { .data-images { flex-direction: row; } }
-        #signature-pad, #capturedPhoto { max-width: 100%; height: auto; width: 100%; }
+        #signature-pad { background: white; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -66,21 +66,20 @@
             <div id="field-nama">
                 <label>Nama: <span class="required">*</span></label>
                 <input id="nama" required type="text" placeholder="Isi Minimal 5 Huruf" oninput="validateNama();"/>
-                <br/>
             </div>
 
             <div id="field-asal" style="display: none;">
                 <label>INSTANSI/ASAL: <span class="required">*</span></label>
-                <select id="asal" required onchange="checkAndShowNext('asal', 'field-pihakDitemui')">
+                <select id="asal" required onchange="asalChanged();">
                     <option value="">-- Pilih Asal --</option>
                     <option value="INSTANSI">INSTANSI/UNIT KERJA</option>
                     <option value="MASYARAKAT">MASYARAKAT</option>
-                </select><br/><br/>
+                </select>
             </div>
 
             <div class="hidden" id="daftarInstansi">
                 <label>DAFTAR INSTANSI/UNIT KERJA: <span class="required">*</span></label>
-                <select id="instansi" onchange="checkAndShowNext('instansi', 'field-pihakDitemui')">
+                <select id="instansi" onchange="checkAndShowNext('instansi', 'field-pihakDitemui');">
                     <option value="">-- Pilih Instansi --</option>
                     <option>SEKRETARIAT DAERAH</option>
                     <option>SEKRETARIAT DPRD</option>
@@ -115,12 +114,12 @@
                     <option>SATUAN POLISI PAMONG PRAJA</option>
                     <option>BADAN PENGAWASAN KEUANGAN DAN PEMBANGUNAN (BPKP)</option>
                     <option>LAINNYA</option>
-                </select><br/><br/>
+                </select>
             </div>
 
             <div class="hidden" id="daftarMasyarakat">
                 <label>Kecamatan: <span class="required">*</span></label>
-                <select id="kecamatan" onchange="updateDesaList()">
+                <select id="kecamatan" onchange="updateDesaList();">
                     <option value="">-- Pilih Kecamatan --</option>
                     <option value="Tulang Bawang Tengah">Tulang Bawang Tengah</option>
                     <option value="Tulang Bawang Udik">Tulang Bawang Udik</option>
@@ -131,19 +130,19 @@
                     <option value="Tumijajar">Tumijajar</option>
                     <option value="Pagar Dewa">Pagar Dewa</option>
                     <option value="Batu Putih">Batu Putih</option>
-                </select><br/><br/>
+                </select>
 
                 <div class="hidden" id="field-desa">
                     <label>Desa/Tiyuh: <span class="required">*</span></label>
-                    <select id="desa" onchange="checkAndShowNext('desa', 'field-pihakDitemui')">
+                    <select id="desa" onchange="checkAndShowNext('desa', 'field-pihakDitemui');">
                         <option value="">-- Pilih Desa --</option>
-                    </select><br/><br/>
+                    </select>
                 </div>
             </div>
 
             <div id="field-pihakDitemui" style="display: none;">
                 <label>PIHAK YANG DITEMUI: <span class="required">*</span></label>
-                <select id="pihakDitemui" required onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan')">
+                <select id="pihakDitemui" required onchange="checkAndShowNext('pihakDitemui', 'field-jenisLayanan');">
                     <option value="">-- Pilih Pihak yang Ditemui --</option>
                     <option>INSPEKTUR</option>
                     <option>SEKRETARIS</option>
@@ -152,12 +151,12 @@
                     <option>IRBAN 2</option>
                     <option>IRBAN 3</option>
                     <option>IRBAN 4</option>
-                </select><br/><br/>
+                </select>
             </div>
 
             <div id="field-jenisLayanan" style="display: none;">
                 <label>JENIS LAYANAN: <span class="required">*</span></label>
-                <select id="jenisLayanan" required onchange="checkAndShowNext('jenisLayanan', 'field-uraian')">
+                <select id="jenisLayanan" required onchange="checkAndShowNext('jenisLayanan', 'field-uraian');">
                     <option value="">-- Pilih Jenis Layanan --</option>
                     <option>Permintaan Audit/Klarifikasi Khusus</option>
                     <option>Penanganan Pengaduan</option>
@@ -167,24 +166,24 @@
                     <option>Review</option>
                     <option>Evaluasi/Monitoring</option>
                     <option>Tindak Lanjut Temuan</option>
-                </select><br/><br/>
+                </select>
             </div>
 
             <div id="field-uraian" style="display: none;">
                 <label>URAIAN: <span class="required">*</span></label>
-                <textarea id="uraian" required oninput="autoResize(this); validateUraian();" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea><br/><br/>
+                <textarea id="uraian" required oninput="autoResize(this); validateUraian();" style="overflow:hidden; resize:none; width:100%; min-height:60px;"></textarea>
             </div>
 
             <div id="field-nomorHp" style="display: none;">
                 <label>NOMOR HP: <span class="required">*</span></label>
-                <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text" oninput="validateNomorHp();"/><br/><br/>
+                <input id="nomorHp" inputmode="numeric" pattern="\d*" required type="text" oninput="validateNomorHp();"/>
             </div>
 
             <div id="field-tandaTangan" style="display: none;">
                 <label>Tanda Tangan: <span class="required">*</span></label>
                 <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!</div>
-                <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas><br/>
-                <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button><br/><br/>
+                <canvas height="200" id="signature-pad" style="border:1px solid #ccc; width: 100%;" width="700"></canvas>
+                <button onclick="clearSignature()" type="button" style="background: #e9ecef; color: black; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🧹 Bersihkan Tanda Tangan</button>
             </div>
 
             <div id="field-aksi" style="display: none;">
@@ -197,7 +196,7 @@
         </form>
     </div>
 
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 80px;">
         <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
         <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
@@ -887,71 +886,97 @@
                 alert('Tidak ada data untuk di-export!');
                 return;
             }
+
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for wider table
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape agar muat semua kolom
 
-            doc.setFontSize(12);
-            doc.text('Data Buku Tamu Inspektorat Tubaba', 148, 10, { align: 'center' });
+            // Judul rapi di tengah
+            doc.setFontSize(14);
+            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
 
-            const columns = ["No", "Nama", "Asal", "Instansi", "Kecamatan", "Desa", "Pihak Ditemui", "Jenis Layanan", "Uraian", "Nomor HP", "Waktu", "Tanda Tangan", "Foto Depan", "Foto Belakang"];
+            // Kolom tabel
+            const head = [[
+                'No', 'Nama', 'Asal', 'Instansi/Kecamatan', 'Desa', 
+                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
+                'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
+            ]];
 
-            const rows = dataBukuTamu.map((data, index) => [
-                index + 1,
-                data.nama,
-                data.asal,
-                data.instansi || '-',
-                data.kecamatan || '-',
-                data.desa || '-',
-                data.pihakDitemui,
-                data.jenisLayanan,
-                data.uraian,
-                data.nomorHp,
-                data.timestamp,
-                '', // placeholder tanda tangan
+            // Data baris
+            const body = dataBukuTamu.map((d, i) => [
+                i + 1,
+                d.nama,
+                d.asal,
+                d.instansi || d.kecamatan || '-',
+                d.desa || '-',
+                d.pihakDitemui,
+                d.jenisLayanan,
+                d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian, // Potong panjang agar muat
+                d.nomorHp,
+                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                '', // placeholder gambar tanda tangan
                 '', // placeholder foto depan
                 ''  // placeholder foto belakang
             ]);
 
+            // AutoTable dengan pengaturan rapi
             doc.autoTable({
-                head: [columns],
-                body: rows,
-                startY: 20,
+                head: head,
+                body: body,
+                startY: 30,
                 theme: 'grid',
-                headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 7, halign: 'center', valign: 'middle' },
-                bodyStyles: { fontSize: 6, cellPadding: 2, overflow: 'linebreak', minCellHeight: 15, valign: 'middle', halign: 'left' },
-                columnStyles: {
-                    0: { cellWidth: 8, halign: 'center' },
-                    1: { cellWidth: 20 },
-                    2: { cellWidth: 15 },
-                    3: { cellWidth: 25 },
-                    4: { cellWidth: 20 },
-                    5: { cellWidth: 20 },
-                    6: { cellWidth: 20 },
-                    7: { cellWidth: 25 },
-                    8: { cellWidth: 40, overflow: 'linebreak' }, // Uraian lebih lebar dan wrap text
-                    9: { cellWidth: 15 },
-                    10: { cellWidth: 20 },
-                    11: { cellWidth: 20, minCellHeight: 20 },
-                    12: { cellWidth: 20, minCellHeight: 20 },
-                    13: { cellWidth: 20, minCellHeight: 20 }
+                headStyles: {
+                    fillColor: [0, 123, 255],
+                    textColor: 255,
+                    fontSize: 8,
+                    fontStyle: 'bold',
+                    halign: 'center'
                 },
-                didDrawCell: (data) => {
-                    if (data.section === 'body' && data.column.index >= 11 && data.column.index <= 13) {
+                bodyStyles: {
+                    fontSize: 7,
+                    cellPadding: 3,
+                    valign: 'middle'
+                },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                columnStyles: {
+                    0: { cellWidth: 10, halign: 'center' },     // No
+                    1: { cellWidth: 28 },                       // Nama
+                    2: { cellWidth: 18 },                       // Asal
+                    3: { cellWidth: 35 },                       // Instansi/Kec
+                    4: { cellWidth: 25 },                       // Desa
+                    5: { cellWidth: 22 },                       // Pihak Ditemui
+                    6: { cellWidth: 28 },                       // Jenis Layanan
+                    7: { cellWidth: 40 },                       // Uraian (paling lebar)
+                    8: { cellWidth: 20 },                       // No HP
+                    9: { cellWidth: 22 },                       // Waktu
+                    10: { cellWidth: 22 },                      // Tanda Tangan
+                    11: { cellWidth: 22 },                      // Foto Depan
+                    12: { cellWidth: 22 }                       // Foto Belakang
+                },
+                didDrawCell: function(data) {
+                    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
                         const item = dataBukuTamu[data.row.index];
                         let imgData = null;
-                        if (data.column.index === 11) imgData = item.tandaTangan;
-                        if (data.column.index === 12) imgData = item.fotoFront;
-                        if (data.column.index === 13) imgData = item.fotoBack;
+                        if (data.column.index === 10) imgData = item.tandaTangan;
+                        if (data.column.index === 11) imgData = item.fotoFront;
+                        if (data.column.index === 12) imgData = item.fotoBack;
+
                         if (imgData) {
-                            doc.addImage(imgData, 'PNG', data.cell.x + 1, data.cell.y + 1, 18, 13, undefined, 'FAST');
+                            // Ukuran gambar kecil tapi jelas
+                            doc.addImage(imgData, 'PNG', data.cell.x + 2, data.cell.y + 2, 18, 14, '', 'FAST');
                         }
                     }
                 },
-                margin: { left: 5, right: 5 }
+                margin: { top: 30, left: 10, right: 10 },
+                pageBreak: 'auto',
+                rowPageBreak: 'avoid'
             });
 
-            const today = new Date().toISOString().slice(0, 10);
-            doc.save(`buku_tamu_${today}.pdf`);
+            // Simpan file
+            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+            doc.save(filename);
+            alert('PDF berhasil di-export dengan tampilan rapi dan gambar jelas!\nFile: ' + filename);
         }
 
         function autoResize(textarea) {
@@ -962,13 +987,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             resizeCanvas();
             showForm();
-            // Pasang listener tambahan jika perlu
-            if (instansi && !instansi.getAttribute('onchange')) {
-                instansi.addEventListener('change', () => checkAndShowNext('instansi', 'field-pihakDitemui'));
-            }
-            if (desa && !desa.getAttribute('onchange')) {
-                desa.addEventListener('change', () => checkAndShowNext('desa', 'field-pihakDitemui'));
-            }
         });
     </script>
 </body>
