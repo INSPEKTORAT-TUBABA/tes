@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <link rel="manifest" href="manifest.json"/>
     <meta name="theme-color" content="#007bff"/>
     <link rel="icon" href="icon-192.png"/>
     <title>Buku Tamu Digital</title>
+
+    <!-- Library untuk Export Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <style>
         /* Reset dan Box Model */
         *, *::before, *::after {
@@ -208,41 +212,6 @@
             left: 0;
         }
 
-    /* Perubahan: Bingkai foto horizontal dan menyesuaikan ukuran monitor laptop */
-    @media (min-width: 768px) {
-        #dualCameraFrame {
-            flex-direction: row;        /* Horizontal side-by-side */
-            justify-content: center;
-            gap: 30px;
-            max-width: 95vw;            /* Maksimal 95% lebar viewport */
-            width: auto;
-        }
-
-        .camera-view {
-            flex: 1;                    /* Ambil ruang yang tersedia secara merata */
-            min-width: 400px;           /* Ukuran minimum agar tidak terlalu kecil */
-            max-width: 600px;           /* Batas maksimal agar tetap proporsional */
-            aspect-ratio: 4/3;
-        }
-
-        .camera-view video,
-        .camera-view img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        #modalContent {
-            width: auto;
-            max-width: 95vw;
-            padding: 20px;
-        }
-
-        #modalButtons {
-            margin-top: 20px;
-        }
-    }
-
         #modalButtons {
             margin-top: 10px;
             display: flex;
@@ -283,6 +252,41 @@
 
         .btn-cancel:hover {
             background: #c82333;
+        }
+
+        /* Perubahan: Bingkai foto horizontal dan menyesuaikan ukuran monitor laptop */
+        @media (min-width: 768px) {
+            #dualCameraFrame {
+                flex-direction: row;
+                justify-content: center;
+                gap: 30px;
+                max-width: 95vw;
+                width: auto;
+            }
+
+            .camera-view {
+                flex: 1;
+                min-width: 400px;
+                max-width: 600px;
+                aspect-ratio: 4/3;
+            }
+
+            .camera-view video,
+            .camera-view img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            #modalContent {
+                width: auto;
+                max-width: 95vw;
+                padding: 20px;
+            }
+
+            #modalButtons {
+                margin-top: 20px;
+            }
         }
     </style>
 </head>
@@ -434,7 +438,7 @@
     <div style="margin-bottom: 20px;">
         <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export Data</button>
+        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='#138496'" onmouseout="this.style.background='#17a2b8'">💾 Export Data</button>
     </div>
 
     <div id="dataSection" style="display: none;">
@@ -472,7 +476,7 @@
         </div>
     </div>
 
-    <script type="text/javascript">
+    <script>
         var gk_isXlsx = false;
         var gk_xlsxFileLookup = {};
         var gk_fileData = {};
@@ -486,22 +490,17 @@
                 var firstSheetName = workbook.SheetNames[0];
                 var worksheet = workbook.Sheets[firstSheetName];
 
-                // Convert sheet to JSON to filter blank rows
                 var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
                 var filteredData = jsonData.filter(row => row.some(filledCell));
 
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
                   row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
-                // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
                   headerRowIndex = 0;
                 }
 
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
                 csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
                 return csv;
             } catch (e) {
@@ -511,9 +510,7 @@
         }
         return gk_fileData[filename] || "";
         }
-    </script>
 
-    <script>
         // === Element References ===
         const signatureCanvas = document.getElementById('signature-pad');
         const ctx = signatureCanvas.getContext('2d');
@@ -1143,71 +1140,62 @@
             }
         }
 
+        // === EXPORT TO EXCEL (.xlsx) ===
         function exportData() {
-    if (dataBukuTamu.length === 0) {
-        alert('⚠️ Tidak ada data untuk di-export!');
-        return;
-    }
+            if (dataBukuTamu.length === 0) {
+                alert('⚠️ Tidak ada data untuk di-export!');
+                return;
+            }
 
-    // Pastikan library SheetJS sudah ter-load
-    if (typeof XLSX === 'undefined') {
-        alert('❌ Gagal export: Library Excel belum ter-load. Pastikan koneksi internet saat pertama kali membuka aplikasi.');
-        return;
-    }
+            try {
+                const wb = XLSX.utils.book_new();
 
-    try {
-        // Buat workbook baru
-        const wb = XLSX.utils.book_new();
+                const dataExport = dataBukuTamu.map((item, index) => ({
+                    "No": index + 1,
+                    "Nama": item.nama,
+                    "Asal": item.asal,
+                    "Instansi": item.instansi || "-",
+                    "Kecamatan": item.kecamatan || "-",
+                    "Desa/Tiyuh": item.desa || "-",
+                    "Pihak yang Ditemui": item.pihakDitemui,
+                    "Jenis Layanan": item.jenisLayanan,
+                    "Uraian": item.uraian,
+                    "Nomor HP": item.nomorHp,
+                    "Waktu Kunjungan": item.timestamp
+                }));
 
-        // Siapkan data dalam format array of objects
-        const dataExport = dataBukuTamu.map((item, index) => ({
-            "No": index + 1,
-            "Nama": item.nama,
-            "Asal": item.asal,
-            "Instansi": item.instansi || "-",
-            "Kecamatan": item.kecamatan || "-",
-            "Desa/Tiyuh": item.desa || "-",
-            "Pihak yang Ditemui": item.pihakDitemui,
-            "Jenis Layanan": item.jenisLayanan,
-            "Uraian": item.uraian,
-            "Nomor HP": item.nomorHp,
-            "Waktu Kunjungan": item.timestamp
-        }));
+                const ws = XLSX.utils.json_to_sheet(dataExport);
 
-        // Buat worksheet
-        const ws = XLSX.utils.json_to_sheet(dataExport);
+                ws['!cols'] = [
+                    { wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 35 },
+                    { wch: 25 }, { wch: 25 }, { wch: 22 }, { wch: 30 },
+                    { wch: 60 }, { wch: 15 }, { wch: 22 }
+                ];
 
-        // Atur lebar kolom agar rapi saat dibuka di Excel
-        ws['!cols'] = [
-            { wch: 6 },   // No
-            { wch: 25 },  // Nama
-            { wch: 15 },  // Asal
-            { wch: 35 },  // Instansi
-            { wch: 25 },  // Kecamatan
-            { wch: 25 },  // Desa/Tiyuh
-            { wch: 22 },  // Pihak yang Ditemui
-            { wch: 30 },  // Jenis Layanan
-            { wch: 60 },  // Uraian
-            { wch: 15 },  // Nomor HP
-            { wch: 22 }   // Waktu Kunjungan
-        ];
+                XLSX.utils.book_append_sheet(wb, ws, "Data Buku Tamu");
 
-        // Tambahkan sheet ke workbook
-        XLSX.utils.book_append_sheet(wb, ws, "Data Buku Tamu");
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
 
-        // Generate nama file dengan tanggal hari ini
-        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-        const fileName = `Buku_Tamu_Inspektorat_Tubaba_${today}.xlsx`;
+                function s2ab(s) {
+                    const buf = new ArrayBuffer(s.length);
+                    const view = new Uint8Array(buf);
+                    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                    return buf;
+                }
 
-        // Trigger download
-        XLSX.writeFile(wb, fileName);
+                const blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+                const today = new Date().toISOString().slice(0, 10);
+                const fileName = `Buku_Tamu_Inspektorat_Tubaba_${today}.xlsx`;
 
-        alert(`✅ Data berhasil di-export!\nFile: ${fileName}\nTotal entri: ${dataBukuTamu.length}`);
-    } catch (error) {
-        console.error("Error saat export Excel:", error);
-        alert('❌ Terjadi kesalahan saat export. Cek console browser untuk detail.');
-    }
-}
+                saveAs(blob, fileName);
+
+                alert(`✅ Export berhasil!\nFile: ${fileName}\nTotal data: ${dataBukuTamu.length} entri`);
+            } catch (error) {
+                console.error("Error export:", error);
+                alert('❌ Gagal export. Buka Console browser (F12) untuk detail error.');
+            }
+        }
+
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
