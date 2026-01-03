@@ -934,9 +934,9 @@
         data.uraian,
         data.nomorHp,
         data.timestamp,
-        "", // Placeholder untuk gambar tanda tangan
-        "", // Placeholder untuk foto depan
-        ""  // Placeholder untuk foto belakang
+        data.tandaTangan ? data.tandaTangan : "-",  // Hyperlink ke tanda tangan
+        data.fotoFront ? data.fotoFront : "-",      // Hyperlink ke foto depan
+        data.fotoBack ? data.fotoBack : "-"         // Hyperlink ke foto belakang
     ]);
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
@@ -946,72 +946,28 @@
         { wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 40 },
         { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 30 },
         { wch: 60 }, { wch: 15 }, { wch: 22 },
-        { wch: 25 }, { wch: 25 }, { wch: 25 } // Kolom gambar lebih lebar
+        { wch: 30 }, { wch: 30 }, { wch: 30 }  // Kolom gambar lebih lebar untuk link
     ];
 
-    // Atur tinggi baris agar gambar muat (mulai dari baris 1 = header, baris 2 = data pertama)
-    ws['!rows'] = [{ hpt: 30 }]; // Baris header
-    for (let i = 0; i < dataBukuTamu.length; i++) {
-        ws['!rows'].push({ hpt: 120 }); // Tinggi baris data = 120 pt (~160 px)
-    }
-
-    // Tambahkan gambar ke worksheet
-    const images = [];
-
+    // Jadikan kolom gambar sebagai hyperlink
     dataBukuTamu.forEach((data, index) => {
-        const rowIndex = index + 1; // +1 karena baris 0 adalah header
+        const row = index + 2; // Baris data mulai dari 2 (1 = header)
 
-        // Helper untuk konversi base64 ke binary
-        function base64ToArrayBuffer(base64) {
-            if (!base64) return null;
-            const binaryString = atob(base64.split(',')[1]);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        // Kolom L = Tanda Tangan (index 11)
+        // Kolom L (index 11) = Tanda Tangan
         if (data.tandaTangan) {
-            images.push({
-                "!img": {
-                    name: `signature_${index}.png`,
-                    data: base64ToArrayBuffer(data.tandaTangan),
-                    opts: { tl: { col: 11, row: rowIndex }, ext: { width: 200, height: 80 } }
-                }
-            });
+            ws[XLSX.utils.encode_cell({c:11, r:row})] = { f: `=HYPERLINK("${data.tandaTangan}", "Lihat Tanda Tangan")` };
         }
 
-        // Kolom M = Foto Depan (index 12)
+        // Kolom M (index 12) = Foto Depan
         if (data.fotoFront) {
-            images.push({
-                "!img": {
-                    name: `foto_depan_${index}.png`,
-                    data: base64ToArrayBuffer(data.fotoFront),
-                    opts: { tl: { col: 12, row: rowIndex }, ext: { width: 150, height: 110 } }
-                }
-            });
+            ws[XLSX.utils.encode_cell({c:12, r:row})] = { f: `=HYPERLINK("${data.fotoFront}", "Lihat Foto Depan")` };
         }
 
-        // Kolom N = Foto Belakang (index 13)
+        // Kolom N (index 13) = Foto Belakang
         if (data.fotoBack) {
-            images.push({
-                "!img": {
-                    name: `foto_belakang_${index}.png`,
-                    data: base64ToArrayBuffer(data.fotoBack),
-                    opts: { tl: { col: 13, row: rowIndex }, ext: { width: 150, height: 110 } }
-                }
-            });
+            ws[XLSX.utils.encode_cell({c:13, r:row})] = { f: `=HYPERLINK("${data.fotoBack}", "Lihat Foto Belakang")` };
         }
     });
-
-    // Sisipkan gambar (SheetJS mendukung via !images jika menggunakan versi lengkap)
-    if (images.length > 0) {
-        if (!ws['!images']) ws['!images'] = [];
-        ws['!images'].push(...images.map(img => img["!img"]));
-    }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Buku Tamu");
@@ -1020,9 +976,8 @@
     const fileName = `Buku_Tamu_Inspektorat_Tubaba_${today}.xlsx`;
 
     XLSX.writeFile(wb, fileName);
-    alert('Data berhasil di-export ke Excel lengkap dengan tanda tangan dan foto!\nFile: ' + fileName);
-}
-        function autoResize(textarea) {
+    alert('Data berhasil di-export ke Excel!\nKlik link di kolom gambar untuk melihat tanda tangan & foto.\nFile: ' + fileName);
+}        function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
         }
