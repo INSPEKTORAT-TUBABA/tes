@@ -8,6 +8,7 @@
     <link rel="icon" href="icon-192.png"/>
     <title>Buku Tamu Digital</title>
     <style>
+        /* Style tetap sama seperti sebelumnya */
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
         body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 20px 10px; min-height: 100vh; }
@@ -22,7 +23,7 @@
         .foto-kepala { width: 80px; height: auto; }
         .logo { width: 100px; height: auto; }
 
-        /* Modal Foto */
+        /* Modal Foto tetap sama */
         #photoModal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; padding: 10px; }
         #modalContent { background-color: #fefefe; padding: 20px; border: 1px solid #888; width: 95%; max-width: 1300px; text-align: center; border-radius: 8px; }
         #dualCameraFrame { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 900px; margin: 20px auto; }
@@ -53,7 +54,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <!-- Bagian HTML form, header, dan tampilan data tetap sama seperti sebelumnya -->
+    <!-- Bagian HTML lainnya tetap sama -->
 
     <div style="margin-bottom: 80px;">
         <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
@@ -61,135 +62,129 @@
         <button type="button" onclick="exportData()" id="btnExport" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
     </div>
 
-    <!-- Sisanya sama seperti kode asli Anda -->
+    <!-- Sisanya tetap sama -->
 
     <script>
-        // ... (semua kode JavaScript sebelumnya tetap sama, termasuk signature, kamera, simpan data, dll) ...
+        // ... (semua kode JavaScript lainnya tetap sama) ...
 
-        // Fungsi exportData yang sudah sangat dioptimasi dan aman
-        <script>
-    // Fungsi exportData yang sudah diperbaiki: pisah Instansi & Kecamatan, tampilan lebih rapi & utuh
-    function exportData() {
-        if (dataBukuTamu.length === 0) {
-            alert('Tidak ada data untuk di-export!\nSilakan tambahkan data terlebih dahulu.');
-            return;
-        }
+        function exportData() {
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!\nSilakan tambahkan data terlebih dahulu.');
+                return;
+            }
 
-        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-            alert('Gagal memuat library PDF.\nCoba refresh halaman atau periksa koneksi internet.');
-            return;
-        }
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                alert('Gagal memuat library PDF.\nCoba refresh halaman atau periksa koneksi internet.');
+                return;
+            }
 
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: 'a4'
-            });
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
 
-            // Header
-            doc.setFontSize(14);
-            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 12, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 18, { align: 'center' });
+                // Header
+                doc.setFontSize(14);
+                doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 12, { align: 'center' });
+                doc.setFontSize(10);
+                doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 18, { align: 'center' });
 
-            // Header tabel (dipisah Instansi dan Kecamatan/Desa)
-            const head = [[
-                'No', 'Nama', 'Asal', 'Instansi', 'Kecamatan', 'Desa/Tiyuh',
-                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal',
-                'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
-            ]];
+                // Header tabel
+                const head = [[
+                    'No', 'Nama', 'Instansi', 'Kecamatan', 'Desa/Tiyuh',
+                    'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal',
+                    'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
+                ]];
 
-            // Body tabel
-            const body = dataBukuTamu.map((d, i) => [
-                i + 1,
-                d.nama ? d.nama.substring(0, 40) + (d.nama.length > 40 ? '...' : '') : '-',
-                d.asal || '-',
-                d.asal === 'INSTANSI' ? (d.instansi || '-').substring(0, 40) + ((d.instansi || '').length > 40 ? '...' : '') : '-',
-                d.asal === 'MASYARAKAT' ? (d.kecamatan || '-').substring(0, 30) + ((d.kecamatan || '').length > 30 ? '...' : '') : '-',
-                d.asal === 'MASYARAKAT' ? (d.desa || '-').substring(0, 30) + (d.desa.length > 30 ? '...' : '') : '-',
-                d.pihakDitemui || '-',
-                d.jenisLayanan || '-',
-                d.uraian ? d.uraian.substring(0, 280) + (d.uraian.length > 280 ? '...' : '') : '-',
-                d.nomorHp || '-',
-                d.timestamp ? d.timestamp.split(', ')[0] : '-',
-                '', '', ''  // placeholder untuk gambar
-            ]);
+                // Body - tanpa pemotongan teks berlebih, biarkan wrap otomatis
+                const body = dataBukuTamu.map((d, i) => [
+                    i + 1,
+                    d.nama || '-',
+                    d.asal === 'INSTANSI' ? (d.instansi || '-') : '-',
+                    d.asal === 'MASYARAKAT' ? (d.kecamatan || '-') : '-',
+                    d.desa || '-',
+                    d.pihakDitemui || '-',
+                    d.jenisLayanan || '-',
+                    d.uraian || '-',  // Tidak dipotong, biarkan wrap
+                    d.nomorHp || '-',
+                    d.timestamp ? d.timestamp.split(', ')[0] : '-',
+                    '', '', ''  // Placeholder gambar
+                ]);
 
-            doc.autoTable({
-                head: head,
-                body: body,
-                startY: 24,
-                margin: { top: 24, left: 5, right: 5 },
-                theme: 'grid',
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 3,
-                    overflow: 'linebreak',
-                    halign: 'center',
-                    valign: 'middle',
-                    lineWidth: 0.1
-                },
-                headStyles: {
-                    fillColor: [0, 123, 255],
-                    textColor: 255,
-                    fontSize: 8.5,
-                    fontStyle: 'bold',
-                    halign: 'center'
-                },
-                alternateRowStyles: { fillColor: [248, 250, 255] },
-                columnStyles: {
-                    0:  { cellWidth: 10, halign: 'center' },  // No
-                    1:  { cellWidth: 28 },                    // Nama
-                    2:  { cellWidth: 18 },                    // Asal
-                    3:  { cellWidth: 32 },                    // Instansi
-                    4:  { cellWidth: 26 },                    // Kecamatan
-                    5:  { cellWidth: 26 },                    // Desa/Tiyuh
-                    6:  { cellWidth: 24 },                    // Pihak Ditemui
-                    7:  { cellWidth: 22 },                    // Jenis Layanan
-                    8:  { cellWidth: 50 },                    // Uraian (kolom terpanjang)
-                    9:  { cellWidth: 20 },                    // No HP
-                    10: { cellWidth: 18 },                    // Tanggal
-                    11: { cellWidth: 15 },                    // Tanda Tangan
-                    12: { cellWidth: 15 },                    // Foto Depan
-                    13: { cellWidth: 15 }                     // Foto Belakang
-                },
-                didDrawCell: function(data) {
-                    if (data.section === 'body' && data.column.index >= 11 && data.column.index <= 13) {
-                        const item = dataBukuTamu[data.row.index];
-                        let imgData = null;
-                        if (data.column.index === 11) imgData = item.tandaTangan;
-                        if (data.column.index === 12) imgData = item.fotoFront;
-                        if (data.column.index === 13) imgData = item.fotoBack;
+                doc.autoTable({
+                    head: head,
+                    body: body,
+                    startY: 24,
+                    margin: { top: 24, left: 5, right: 5, bottom: 10 },
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        lineWidth: 0.1
+                    },
+                    headStyles: {
+                        fillColor: [0, 123, 255],
+                        textColor: 255,
+                        fontSize: 8.5,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    alternateRowStyles: { fillColor: [248, 250, 255] },
+                    columnStyles: {
+                        0: { cellWidth: 10, halign: 'center' },      // No
+                        1: { cellWidth: 30 },                        // Nama
+                        2: { cellWidth: 38 },                        // Instansi (khusus instansi, lebih lebar)
+                        3: { cellWidth: 30 },                        // Kecamatan (khusus masyarakat)
+                        4: { cellWidth: 28 },                        // Desa/Tiyuh
+                        5: { cellWidth: 25 },                        // Pihak Ditemui
+                        6: { cellWidth: 25 },                        // Jenis Layanan
+                        7: { cellWidth: 70 },                        // Uraian - paling lebar agar tampil utuh
+                        8: { cellWidth: 22 },                        // No HP
+                        9: { cellWidth: 20, halign: 'center' },      // Tanggal
+                        10: { cellWidth: 16, halign: 'center' },      // Tanda Tangan
+                        11: { cellWidth: 16, halign: 'center' },      // Foto Depan
+                        12: { cellWidth: 16, halign: 'center' }       // Foto Belakang
+                    },
+                    didDrawCell: function(data) {
+                        if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+                            const item = dataBukuTamu[data.row.index];
+                            let imgData = null;
+                            if (data.column.index === 10) imgData = item.tandaTangan;
+                            if (data.column.index === 11) imgData = item.fotoFront;
+                            if (data.column.index === 12) imgData = item.fotoBack;
 
-                        if (imgData) {
-                            try {
-                                const imgWidth = 13;
-                                const imgHeight = 10;
-                                const x = data.cell.x + (data.cell.width - imgWidth) / 2;
-                                const y = data.cell.y + (data.cell.height - imgHeight) / 2;
-                                doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, undefined, 'FAST');
-                            } catch (e) {
-                                console.warn('Gambar gagal ditambahkan:', e);
+                            if (imgData) {
+                                try {
+                                    const imgWidth = 14;
+                                    const imgHeight = 10.5;  // Sedikit lebih kecil agar muat
+                                    const x = data.cell.x + (data.cell.width - imgWidth) / 2;
+                                    const y = data.cell.y + (data.cell.height - imgHeight) / 2;
+                                    doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, undefined, 'FAST');
+                                } catch (e) {
+                                    console.warn('Gambar gagal ditambahkan:', e);
+                                }
                             }
                         }
-                    }
-                },
-                rowPageBreak: 'avoid'
-            });
+                    },
+                    rowPageBreak: 'avoid',
+                    pageBreak: 'auto'  // Otomatis pindah halaman jika terlalu panjang
+                });
 
-            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
-            doc.save(filename);
-            
-            alert('PDF berhasil diekspor!\nFile tersimpan dengan nama:\n' + filename);
-        } catch (error) {
-            console.error('Error saat export PDF:', error);
-            alert('Gagal mengekspor PDF!\nPesan error: ' + error.message);
+                const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+                doc.save(filename);
+                
+                alert('PDF berhasil diekspor!\nFile tersimpan dengan nama:\n' + filename);
+            } catch (error) {
+                console.error('Error saat export PDF:', error);
+                alert('Gagal mengekspor PDF!\nPesan error: ' + error.message);
+            }
         }
-    }
-</script>
-        // ... (fungsi autoResize dan event DOMContentLoaded tetap sama) ...
+
+        // ... (fungsi lainnya tetap sama) ...
     </script>
 </body>
 </html>
