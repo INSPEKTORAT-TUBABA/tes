@@ -412,47 +412,40 @@
         };
 
         // === Dropdown Logic ===
-        function asalChanged() {
-            checkAndShowNext('asal', 'field-pihakDitemui');
+        asal.addEventListener("change", function () {
+            daftarInstansi.classList.add("hidden");
+            daftarMasyarakat.classList.add("hidden");
+            fieldDesa.classList.add("hidden");
+            instansi.removeAttribute('required');
+            kecamatan.removeAttribute('required');
+            desa.removeAttribute('required');
             if (asal.value === "INSTANSI") {
                 daftarInstansi.classList.remove("hidden");
-                daftarMasyarakat.classList.add("hidden");
-                fieldDesa.classList.add("hidden");
-                instansi.setAttribute('required', true);
-                kecamatan.removeAttribute('required');
-                desa.removeAttribute('required');
+                instansi.setAttribute('required', 'required');
             } else if (asal.value === "MASYARAKAT") {
-                daftarInstansi.classList.add("hidden");
                 daftarMasyarakat.classList.remove("hidden");
-                fieldDesa.classList.remove("hidden");
-                instansi.removeAttribute('required');
-                kecamatan.setAttribute('required', true);
-                desa.setAttribute('required', true);
-            } else {
-                daftarInstansi.classList.add("hidden");
-                daftarMasyarakat.classList.add("hidden");
-                fieldDesa.classList.add("hidden");
-                instansi.removeAttribute('required');
-                kecamatan.removeAttribute('required');
-                desa.removeAttribute('required');
+                kecamatan.setAttribute('required', 'required');
+                desa.setAttribute('required', 'required');
             }
-        }
+            checkAndShowNext('asal', 'field-pihakDitemui');
+        });
 
         function updateDesaList() {
             const selectedKecamatan = kecamatan.value;
             desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
             if (dataDesa[selectedKecamatan]) {
                 dataDesa[selectedKecamatan].forEach(d => {
-                    const option = document.createElement('option');
-                    option.value = d;
-                    option.textContent = d;
-                    desa.appendChild(option);
+                    desa.innerHTML += `<option value="${d}">${d}</option>`;
                 });
             }
-            checkAndShowNext('kecamatan', 'field-desa');
+            fieldDesa.classList.remove("hidden");
+            checkAndShowNext('kecamatan', 'field-pihakDitemui');
         }
 
-        // === Validation Functions ===
+        function asalChanged() {
+            checkAndShowNext('asal', 'field-pihakDitemui');
+        }
+
         function validateNama() {
             const input = document.getElementById('nama');
             let hurufCount = 0;
@@ -904,7 +897,7 @@
                 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
 
-            // Data baris (tanpa pemotongan manual)
+            // Data baris
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
@@ -913,15 +906,15 @@
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
-                d.uraian,
+                d.uraian, // Hapus potong teks, biarkan wrap
                 d.nomorHp,
-                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                d.timestamp, // Gunakan timestamp lengkap
                 '', // placeholder gambar tanda tangan
                 '', // placeholder foto depan
                 ''  // placeholder foto belakang
             ]);
 
-            // AutoTable dengan pengaturan rapi dan wrap teks
+            // AutoTable dengan pengaturan rapi
             doc.autoTable({
                 head: head,
                 body: body,
@@ -930,37 +923,32 @@
                 headStyles: {
                     fillColor: [0, 123, 255],
                     textColor: 255,
-                    fontSize: 8,
+                    fontSize: 9,
                     fontStyle: 'bold',
                     halign: 'center',
                     valign: 'middle'
                 },
                 bodyStyles: {
-                    fontSize: 7,
-                    cellPadding: 2,
+                    fontSize: 8,
+                    cellPadding: 3,
                     valign: 'middle',
-                    overflow: 'linebreak'
+                    overflow: 'linebreak' // Aktifkan wrap teks otomatis
                 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
-                styles: {
-                    overflow: 'linebreak',
-                    lineWidth: 0.1,
-                    lineColor: [0, 0, 0]
-                },
                 columnStyles: {
-                    0: { cellWidth: 8, halign: 'center' },     // No (dikurangi)
-                    1: { cellWidth: 20 },                      // Nama (dikurangi agar total muat)
-                    2: { cellWidth: 15 },                      // Asal
-                    3: { cellWidth: 30 },                      // Instansi/Kec (dikurangi)
-                    4: { cellWidth: 20 },                      // Desa
-                    5: { cellWidth: 18 },                      // Pihak Ditemui (dikurangi)
-                    6: { cellWidth: 25 },                      // Jenis Layanan (dikurangi)
-                    7: { cellWidth: 50 },                      // Uraian (dilebarkan untuk wrap teks panjang)
-                    8: { cellWidth: 18 },                      // No HP (dikurangi)
-                    9: { cellWidth: 20 },                      // Waktu (dikurangi)
-                    10: { cellWidth: 18 },                     // Tanda Tangan (dikurangi)
-                    11: { cellWidth: 18 },                     // Foto Depan
-                    12: { cellWidth: 18 }                      // Foto Belakang
+                    0: { cellWidth: 8, halign: 'center', overflow: 'linebreak' },     // No
+                    1: { cellWidth: 25, overflow: 'linebreak' },                       // Nama
+                    2: { cellWidth: 15, overflow: 'linebreak' },                       // Asal
+                    3: { cellWidth: 30, overflow: 'linebreak' },                       // Instansi/Kec
+                    4: { cellWidth: 20, overflow: 'linebreak' },                       // Desa
+                    5: { cellWidth: 20, overflow: 'linebreak' },                       // Pihak Ditemui
+                    6: { cellWidth: 25, overflow: 'linebreak' },                       // Jenis Layanan
+                    7: { cellWidth: 50, overflow: 'linebreak' },                       // Uraian (paling lebar)
+                    8: { cellWidth: 18, overflow: 'linebreak' },                       // No HP
+                    9: { cellWidth: 18, overflow: 'linebreak' },                       // Waktu
+                    10: { cellWidth: 12, overflow: 'linebreak' },                      // Tanda Tangan
+                    11: { cellWidth: 12, overflow: 'linebreak' },                      // Foto Depan
+                    12: { cellWidth: 12, overflow: 'linebreak' }                       // Foto Belakang
                 },
                 didDrawCell: function(data) {
                     if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
@@ -971,12 +959,12 @@
                         if (data.column.index === 12) imgData = item.fotoBack;
 
                         if (imgData) {
-                            // Ukuran gambar kecil tapi jelas
-                            doc.addImage(imgData, 'PNG', data.cell.x + 1, data.cell.y + 1, 16, 12, '', 'FAST');
+                            // Ukuran gambar kecil tapi jelas, disesuaikan dengan cellWidth
+                            doc.addImage(imgData, 'PNG', data.cell.x + 1, data.cell.y + 1, 10, 8, '', 'FAST');
                         }
                     }
                 },
-                margin: { top: 30, left: 5, right: 5 }, // Kurangi margin agar lebih lebar (total lebar ~287mm)
+                margin: { top: 30, left: 10, right: 10 },
                 pageBreak: 'auto',
                 rowPageBreak: 'avoid'
             });
