@@ -412,55 +412,56 @@
         };
 
         // === Dropdown Logic ===
-        asal.addEventListener("change", function () {
-            daftarInstansi.classList.add("hidden");
-            daftarMasyarakat.classList.add("hidden");
-            fieldDesa.classList.add("hidden");
-            instansi.removeAttribute('required');
-            kecamatan.removeAttribute('required');
-            desa.removeAttribute('required');
-            if (this.value === "INSTANSI") {
-                daftarInstansi.classList.remove("hidden");
-                instansi.setAttribute('required', '');
-            } else if (this.value === "MASYARAKAT") {
-                daftarMasyarakat.classList.remove("hidden");
-                kecamatan.setAttribute('required', '');
-            }
+        function asalChanged() {
             checkAndShowNext('asal', 'field-pihakDitemui');
-        });
-
-        function updateDesaList() {
-            const desaList = dataDesa[kecamatan.value] || [];
-            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
-            desaList.forEach(nama => {
-                const opt = document.createElement("option");
-                opt.value = nama;
-                opt.textContent = nama;
-                desa.appendChild(opt);
-            });
-            if (kecamatan.value) {
-                fieldDesa.classList.remove("hidden");
-                desa.setAttribute('required', '');
-            } else {
+            if (asal.value === "INSTANSI") {
+                daftarInstansi.classList.remove("hidden");
+                daftarMasyarakat.classList.add("hidden");
                 fieldDesa.classList.add("hidden");
+                instansi.setAttribute('required', true);
+                kecamatan.removeAttribute('required');
+                desa.removeAttribute('required');
+            } else if (asal.value === "MASYARAKAT") {
+                daftarInstansi.classList.add("hidden");
+                daftarMasyarakat.classList.remove("hidden");
+                fieldDesa.classList.remove("hidden");
+                instansi.removeAttribute('required');
+                kecamatan.setAttribute('required', true);
+                desa.setAttribute('required', true);
+            } else {
+                daftarInstansi.classList.add("hidden");
+                daftarMasyarakat.classList.add("hidden");
+                fieldDesa.classList.add("hidden");
+                instansi.removeAttribute('required');
+                kecamatan.removeAttribute('required');
                 desa.removeAttribute('required');
             }
-            checkAndShowNext('kecamatan', 'field-pihakDitemui');
+        }
+
+        function updateDesaList() {
+            const selectedKecamatan = kecamatan.value;
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            if (dataDesa[selectedKecamatan]) {
+                dataDesa[selectedKecamatan].forEach(d => {
+                    const option = document.createElement('option');
+                    option.value = d;
+                    option.textContent = d;
+                    desa.appendChild(option);
+                });
+            }
+            checkAndShowNext('kecamatan', 'field-desa');
         }
 
         // === Validation Functions ===
         function validateNama() {
             const input = document.getElementById('nama');
-            input.value = input.value.replace(/\d+/g, ''); // Hapus angka
             let hurufCount = 0;
             try {
-                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
+                hurufCount = (input.value.match(/\p{L}/gu) || []).length;
             } catch (e) {
                 hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
             }
-            const isValid = hurufCount >= 5;
-
-            if (isValid) {
+            if (hurufCount >= 5 && input.value.trim() !== '') {
                 input.classList.remove('error');
                 input.classList.add('success');
                 document.getElementById('field-asal').style.display = 'block';
@@ -882,110 +883,109 @@
         }
 
         function exportData() {
-    if (dataBukuTamu.length === 0) {
-        alert('Tidak ada data untuk di-export!');
-        return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape A4
-
-    // Header
-    doc.setFontSize(16);
-    doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
-    doc.setFontSize(11);
-    doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
-
-    // Definisi kolom
-    const head = [[
-        'No', 'Nama', 'Asal', 'Instansi/Kecamatan', 'Desa',
-        'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
-        'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
-    ]];
-
-    // Data tabel
-    const body = dataBukuTamu.map((d, i) => [
-        i + 1,
-        d.nama,
-        d.asal,
-        d.instansi || d.kecamatan || '-',
-        d.desa || '-',
-        d.pihakDitemui,
-        d.jenisLayanan,
-        d.uraian.length > 60 ? d.uraian.substring(0, 57) + '...' : d.uraian,
-        d.nomorHp,
-        d.timestamp.split(', ')[0], // Hanya tanggal
-        '', // placeholder tanda tangan
-        '', // placeholder foto depan
-        ''  // placeholder foto belakang
-    ]);
-
-    doc.autoTable({
-        head: head,
-        body: body,
-        startY: 30,
-        theme: 'grid',
-        tableWidth: 'wrap', // Kunci utama agar tidak terpotong
-        headStyles: {
-            fillColor: [0, 123, 255],
-            textColor: 255,
-            fontSize: 9,
-            fontStyle: 'bold',
-            halign: 'center',
-            valign: 'middle'
-        },
-        bodyStyles: {
-            fontSize: 8,
-            cellPadding: 4,
-            valign: 'middle',
-            overflow: 'ellipsize', // Otomatis potong teks panjang dengan ...
-            halign: 'left'
-        },
-        alternateRowStyles: { fillColor: [245, 250, 255] },
-        columnStyles: {
-            0: { cellWidth: 10, halign: 'center' },     // No
-            1: { cellWidth: 28 },                       // Nama
-            2: { cellWidth: 18 },                       // Asal
-            3: { cellWidth: 40 },                       // Instansi/Kecamatan (lebih lebar)
-            4: { cellWidth: 25 },                       // Desa
-            5: { cellWidth: 25 },                       // Pihak Ditemui
-            6: { cellWidth: 30 },                       // Jenis Layanan
-            7: { cellWidth: 45 },                       // Uraian (paling lebar)
-            8: { cellWidth: 22 },                       // No HP
-            9: { cellWidth: 22 },                       // Waktu Kunjungan
-            10: { cellWidth: 18 },                      // Tanda Tangan
-            11: { cellWidth: 18 },                      // Foto Depan
-            12: { cellWidth: 18 }                       // Foto Belakang
-        },
-        didDrawCell: function(data) {
-            // Masukkan gambar hanya di kolom 10, 11, 12 (tanda tangan & foto)
-            if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
-                const item = dataBukuTamu[data.row.index];
-                let imgData = null;
-                if (data.column.index === 10) imgData = item.tandaTangan;
-                if (data.column.index === 11) imgData = item.fotoFront;
-                if (data.column.index === 12) imgData = item.fotoBack;
-
-                if (imgData) {
-                    // Gambar ukuran 15x15 mm, diposisikan di tengah sel
-                    const imgWidth = 15;
-                    const imgHeight = 15;
-                    const x = data.cell.x + (data.cell.width - imgWidth) / 2;
-                    const y = data.cell.y + (data.cell.height - imgHeight) / 2;
-                    doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, '', 'FAST');
-                }
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!');
+                return;
             }
-        },
-        margin: { top: 30, left: 12, right: 12, bottom: 20 },
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid'
-    });
 
-    // Simpan PDF
-    const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
-    doc.save(filename);
-    alert('PDF berhasil di-export dengan tampilan rapi dan tidak terpotong!\nFile: ' + filename);
-}
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape agar muat semua kolom
+
+            // Judul rapi di tengah
+            doc.setFontSize(14);
+            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
+
+            // Kolom tabel
+            const head = [[
+                'No', 'Nama', 'Asal', 'Instansi/Kecamatan', 'Desa', 
+                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
+                'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
+            ]];
+
+            // Data baris (tanpa pemotongan manual)
+            const body = dataBukuTamu.map((d, i) => [
+                i + 1,
+                d.nama,
+                d.asal,
+                d.instansi || d.kecamatan || '-',
+                d.desa || '-',
+                d.pihakDitemui,
+                d.jenisLayanan,
+                d.uraian,
+                d.nomorHp,
+                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                '', // placeholder gambar tanda tangan
+                '', // placeholder foto depan
+                ''  // placeholder foto belakang
+            ]);
+
+            // AutoTable dengan pengaturan rapi dan wrap teks
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 123, 255],
+                    textColor: 255,
+                    fontSize: 8,
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    valign: 'middle'
+                },
+                bodyStyles: {
+                    fontSize: 7,
+                    cellPadding: 2,
+                    valign: 'middle',
+                    overflow: 'linebreak'
+                },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                styles: {
+                    overflow: 'linebreak',
+                    lineWidth: 0.1,
+                    lineColor: [0, 0, 0]
+                },
+                columnStyles: {
+                    0: { cellWidth: 8, halign: 'center' },     // No (dikurangi)
+                    1: { cellWidth: 20 },                      // Nama (dikurangi agar total muat)
+                    2: { cellWidth: 15 },                      // Asal
+                    3: { cellWidth: 30 },                      // Instansi/Kec (dikurangi)
+                    4: { cellWidth: 20 },                      // Desa
+                    5: { cellWidth: 18 },                      // Pihak Ditemui (dikurangi)
+                    6: { cellWidth: 25 },                      // Jenis Layanan (dikurangi)
+                    7: { cellWidth: 50 },                      // Uraian (dilebarkan untuk wrap teks panjang)
+                    8: { cellWidth: 18 },                      // No HP (dikurangi)
+                    9: { cellWidth: 20 },                      // Waktu (dikurangi)
+                    10: { cellWidth: 18 },                     // Tanda Tangan (dikurangi)
+                    11: { cellWidth: 18 },                     // Foto Depan
+                    12: { cellWidth: 18 }                      // Foto Belakang
+                },
+                didDrawCell: function(data) {
+                    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+                        const item = dataBukuTamu[data.row.index];
+                        let imgData = null;
+                        if (data.column.index === 10) imgData = item.tandaTangan;
+                        if (data.column.index === 11) imgData = item.fotoFront;
+                        if (data.column.index === 12) imgData = item.fotoBack;
+
+                        if (imgData) {
+                            // Ukuran gambar kecil tapi jelas
+                            doc.addImage(imgData, 'PNG', data.cell.x + 1, data.cell.y + 1, 16, 12, '', 'FAST');
+                        }
+                    }
+                },
+                margin: { top: 30, left: 5, right: 5 }, // Kurangi margin agar lebih lebar (total lebar ~287mm)
+                pageBreak: 'auto',
+                rowPageBreak: 'avoid'
+            });
+
+            // Simpan file
+            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+            doc.save(filename);
+            alert('PDF berhasil di-export dengan tampilan rapi dan gambar jelas!\nFile: ' + filename);
+        }
 
         function autoResize(textarea) {
             textarea.style.height = 'auto';
