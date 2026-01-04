@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <link rel="manifest" href="manifest.json"/>
     <meta name="theme-color" content="#007bff"/>
     <link rel="icon" href="icon-192.png"/>
@@ -10,9 +10,9 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
-        body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 20px 10px; min-height: 100vh; background: #f8f9fa; }
+        body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 20px 10px; min-height: 100vh; }
         label { font-weight: bold; }
-        select, input, textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        select, input, textarea { width: 100%; padding: 6px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
         .hidden { display: none; }
         .required { color: red; }
         .error { border: 2px solid red !important; }
@@ -34,199 +34,154 @@
             .camera-view { flex: 1; aspect-ratio: 16/9; max-width: 600px; }
             .camera-view h4 { font-size: 18px; padding: 10px 20px; }
         }
-        #modalButtons { margin-top: 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        #modalButtons button { padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; min-width: 120px; }
+        #modalButtons { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
+        #modalButtons button { padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         .btn-camera { background: #ffc107; color: black; }
         .btn-save { background: #28a745; color: white; }
         .btn-cancel { background: #dc3545; color: white; }
         .btn-camera:hover { background: #e0a800; }
         .btn-save:hover { background: #218838; }
         .btn-cancel:hover { background: #c82333; }
-
-        .data-card { border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .data-card { border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px; background: #f9f9f9; }
         .data-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; }
         @media (min-width: 500px) { .data-grid { grid-template-columns: 1fr 1fr; } }
         .data-images { display: flex; flex-direction: column; gap: 20px; margin-top: 15px; }
-        @media (min-width: 500px) { .data-images { flex-direction: row; justify-content: center; } }
-        .data-images img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd; }
-        #signature-pad { background: white; border: 1px solid #ccc; border-radius: 4px; }
+        @media (min-width: 500px) { .data-images { flex-direction: row; } }
+        #signature-pad { background: white; }
     </style>
-
-    <!-- jsPDF dan AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
     <div style="margin-bottom: 80px; text-align: center;">
-        <button type="button" onclick="showForm()" id="btnForm" style="background:#007bff;color:white;padding:12px 20px;border:none;border-radius:5px;margin:5px;font-size:16px;cursor:pointer;">📝 Form Input</button>
-        <button type="button" onclick="showData()" id="btnData" style="background:#6c757d;color:white;padding:12px 20px;border:none;border-radius:5px;margin:5px;font-size:16px;cursor:pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-        <button type="button" onclick="exportData()" id="btnExport" style="background:#17a2b8;color:white;padding:12px 20px;border:none;border-radius:5px;margin:5px;font-size:16px;cursor:pointer;">💾 Export PDF</button>
+        <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 10px; cursor: pointer; font-size: 16px;">📝 Form Input</button>
+        <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 10px; cursor: pointer; font-size: 16px;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+        <button type="button" onclick="exportData()" id="btnExport" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 10px; cursor: pointer; font-size: 16px;">💾 Export PDF</button>
     </div>
 
-    <!-- Tempatkan form dan tampilan data Anda di sini (pastikan ada elemen dengan id yang sesuai seperti #formSection, #dataSection, dll) -->
-    <!-- Contoh placeholder jika belum ada: -->
-    <div id="formSection" class="hidden">
-        <h2>Form Buku Tamu</h2>
-        <!-- Isi form Anda di sini -->
+    <!-- Tempatkan form dan tampilan data kamu di sini (kode asli kamu) -->
+    <!-- Contoh placeholder, ganti dengan form asli kamu -->
+    <div id="formSection">
+        <!-- Form input buku tamu kamu -->
     </div>
 
     <div id="dataSection" class="hidden">
-        <h2>Data Buku Tamu</h2>
-        <div id="dataList"></div>
+        <!-- Tampilan daftar data kamu -->
     </div>
 
     <script>
-        // Variabel global data (pastikan ini ada di kode asli Anda)
-        let dataBukuTamu = JSON.parse(localStorage.getItem('dataBukuTamu')) || [];
+        // === Inisialisasi data ===
+        let dataBukuTamu = localStorage.getItem('dataBukuTamu')
+            ? JSON.parse(localStorage.getItem('dataBukuTamu'))
+            : [];
 
-        // Fungsi untuk update jumlah data
+        // Update angka di tombol Lihat Data
         function updateDataCount() {
             document.getElementById('dataCount').textContent = dataBukuTamu.length;
         }
 
-        // Contoh fungsi showForm dan showData (sesuaikan dengan kode Anda)
-        function showForm() {
-            document.getElementById('formSection').classList.remove('hidden');
-            document.getElementById('dataSection').classList.add('hidden');
-        }
-
-        function showData() {
-            document.getElementById('formSection').classList.add('hidden');
-            document.getElementById('dataSection').classList.remove('hidden');
-            // Render data di sini jika belum ada fungsi render
-        }
-
-        // *** FUNGSI EXPORT PDF YANG SUDAH DIPERBAIKI ***
+        // Fungsi export PDF yang sudah diperbaiki
         function exportData() {
-    if (dataBukuTamu.length === 0) {
-        alert('Tidak ada data untuk di-export!\nSilakan tambahkan data terlebih dahulu.');
-        return;
-    }
+            // Refresh data dari localStorage (untuk sinkronisasi antar tab)
+            dataBukuTamu = JSON.parse(localStorage.getItem('dataBukuTamu') || '[]');
 
-    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-        alert('Gagal memuat library PDF.\nCoba refresh halaman atau periksa koneksi internet.');
-        return;
-    }
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!\nSilakan isi form dan simpan data terlebih dahulu.');
+                return;
+            }
 
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
+            if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+                alert('Library PDF gagal dimuat.\nCoba refresh halaman (F5) atau periksa koneksi internet Anda.');
+                return;
+            }
 
-        doc.setFontSize(13);
-        doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 10, { align: 'center' });
-        doc.setFontSize(9);
-        doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 16, { align: 'center' });
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape', 'mm', 'a4');
 
-        const head = [[
-            'No',
-            'Nama',
-            'Instansi',
-            'Kecamatan',
-            'Desa/Tiyuh',
-            'Pihak\nDitemui',
-            'Jenis\nLayanan',
-            'Uraian',
-            'No HP',
-            'Tanggal',
-            'Tanda\nTangan',
-            'Foto\nDepan',
-            'Foto\nBelakang'
-        ]];
+                // Header
+                doc.setFontSize(14);
+                doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 12, { align: 'center' });
+                doc.setFontSize(10);
+                doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 18, { align: 'center' });
 
-        const body = dataBukuTamu.map((d, i) => [
-            i + 1,
-            d.nama ? d.nama.substring(0, 40) + (d.nama.length > 40 ? '...' : '') : '-',
-            d.asal === 'INSTANSI' ? (d.instansi || '-').substring(0, 35) + ((d.instansi || '').length > 35 ? '...' : '') : '-',
-            d.asal === 'MASYARAKAT' ? (d.kecamatan || '-').substring(0, 28) + ((d.kecamatan || '').length > 28 ? '...' : '') : '-',
-            d.desa ? d.desa.substring(0, 28) + (d.desa.length > 28 ? '...' : '') : '-',
-            d.pihakDitemui || '-',
-            d.jenisLayanan || '-',
-            d.uraian ? d.uraian.substring(0, 150) + (d.uraian.length > 150 ? '...' : '') : '-',  // dikurangi jadi 150 char
-            d.nomorHp || '-',
-            d.timestamp ? d.timestamp.split(', ')[0] : '-',
-            '', '', ''
-        ]);
+                // Kolom tabel
+                const head = [['No','Nama','Instansi','Kecamatan','Desa/Tiyuh','Pihak Ditemui','Jenis Layanan','Uraian','No HP','Tanggal','Tanda Tangan','Foto Depan','Foto Belakang']];
 
-        doc.autoTable({
-            head: head,
-            body: body,
-            startY: 20,
-            margin: { top: 20, left: 5, right: 5, bottom: 12 },  // margin lebih kecil
-            theme: 'grid',
-            styles: {
-                fontSize: 7,          // dikecilkan dari 7.6
-                cellPadding: 2,
-                overflow: 'linebreak',
-                halign: 'left',
-                valign: 'middle',
-                lineWidth: 0.1
-            },
-            headStyles: {
-                fillColor: [0, 123, 255],
-                textColor: 255,
-                fontSize: 8,
-                fontStyle: 'bold',
-                halign: 'center',
-                cellPadding: 2.5
-            },
-            alternateRowStyles: { fillColor: [245, 248, 255] },
-            columnStyles: {
-                0:  { cellWidth: 8,   halign: 'center' },   // No
-                1:  { cellWidth: 28 },                      // Nama
-                2:  { cellWidth: 30 },                      // Instansi
-                3:  { cellWidth: 24 },                      // Kecamatan
-                4:  { cellWidth: 24 },                      // Desa
-                5:  { cellWidth: 20 },                      // Pihak Ditemui
-                6:  { cellWidth: 18 },                      // Jenis Layanan
-                7:  { cellWidth: 50 },                      // Uraian (dikurangi dari 58)
-                8:  { cellWidth: 18 },                      // No HP
-                9:  { cellWidth: 18 },                      // Tanggal
-                10: { cellWidth: 12 },                      // Tanda Tangan
-                11: { cellWidth: 12 },                      // Foto Depan
-                12: { cellWidth: 12 }                       // Foto Belakang
-            },
-            didDrawCell: function(data) {
-                if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
-                    const item = dataBukuTamu[data.row.index];
-                    let imgData = null;
-                    if (data.column.index === 10) imgData = item.tandaTangan;
-                    if (data.column.index === 11) imgData = item.fotoFront;
-                    if (data.column.index === 12) imgData = item.fotoBack;
+                const body = dataBukuTamu.map((d, i) => [
+                    i + 1,
+                    (d.nama || '-').substring(0,40) + ((d.nama || '').length > 40 ? '...' : ''),
+                    d.asal === 'INSTANSI' ? ((d.instansi || '-').substring(0,38) + ((d.instansi || '').length > 38 ? '...' : '')) : '-',
+                    d.asal === 'MASYARAKAT' ? ((d.kecamatan || '-').substring(0,30) + ((d.kecamatan || '').length > 30 ? '...' : '')) : '-',
+                    (d.desa || '-').substring(0,30) + ((d.desa || '').length > 30 ? '...' : ''),
+                    d.pihakDitemui || '-',
+                    d.jenisLayanan || '-',
+                    (d.uraian || '-').substring(0,220) + ((d.uraian || '').length > 220 ? '...' : ''),
+                    d.nomorHp || '-',
+                    d.timestamp ? d.timestamp.split(', ')[0] : '-',
+                    '', '', ''  // placeholder gambar
+                ]);
 
-                    if (imgData) {
-                        try {
-                            const imgWidth = 10;   // dikecilkan
-                            const imgHeight = 7.5;
-                            const x = data.cell.x + (data.cell.width - imgWidth) / 2;
-                            const y = data.cell.y + (data.cell.height - imgHeight) / 2;
-                            doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight, undefined, 'FAST');
-                        } catch (e) {
-                            console.warn('Gambar gagal ditambahkan:', e);
+                doc.autoTable({
+                    head: head,
+                    body: body,
+                    startY: 25,
+                    theme: 'grid',
+                    styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
+                    headStyles: { fillColor: [0, 123, 255], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                    columnStyles: {
+                        0: { cellWidth: 10, halign: 'center' },
+                        1: { cellWidth: 32 },
+                        2: { cellWidth: 34 },
+                        3: { cellWidth: 28 },
+                        4: { cellWidth: 28 },
+                        5: { cellWidth: 24 },
+                        6: { cellWidth: 22 },
+                        7: { cellWidth: 60 },
+                        8: { cellWidth: 22 },
+                        9: { cellWidth: 20 },
+                        10: { cellWidth: 15 },
+                        11: { cellWidth: 15 },
+                        12: { cellWidth: 15 }
+                    },
+                    didDrawCell: function(data) {
+                        if (data.column.index >= 10 && data.column.index <= 12) {
+                            const item = dataBukuTamu[data.row.index];
+                            let imgData = null;
+                            if (data.column.index === 10) imgData = item.tandaTangan;
+                            if (data.column.index === 11) imgData = item.fotoFront;
+                            if (data.column.index === 12) imgData = item.fotoBack;
+
+                            if (imgData) {
+                                try {
+                                    doc.addImage(imgData, 'PNG', data.cell.x + 1.5, data.cell.y + 1.5, 12, 9, undefined, 'FAST');
+                                } catch (e) {
+                                    console.warn('Gagal menambahkan gambar:', e);
+                                }
+                            }
                         }
                     }
-                }
-            },
-            rowPageBreak: 'avoid'
-        });
+                });
 
-        const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
-        doc.save(filename);
-        
-        alert('PDF berhasil diekspor!\nFile tersimpan dengan nama:\n' + filename);
-    } catch (error) {
-        console.error('Error saat export PDF:', error);
-        alert('Gagal mengekspor PDF!\nPesan error: ' + error.message + '\nCoba refresh halaman.');
-    }
-        // Panggil saat halaman dimuat
+                const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+                doc.save(filename);
+                alert('PDF berhasil diekspor!\nNama file: ' + filename);
+
+            } catch (error) {
+                console.error('Error export PDF:', error);
+                alert('Gagal mengekspor PDF!\nPesan: ' + error.message + '\nCoba refresh halaman atau kurangi jumlah data.');
+            }
+        }
+
+        // Jalankan saat halaman selesai load
         document.addEventListener('DOMContentLoaded', () => {
             updateDataCount();
-            // Tambahkan inisialisasi lain jika perlu
+            // Panggil fungsi lain kamu seperti inisialisasi kamera, signature pad, dll di sini
         });
+
+        // Jika kamu punya fungsi simpan data, tambahkan updateDataCount() di akhirnya, contoh:
+        // function simpanData() { ... localStorage.setItem('dataBukuTamu', JSON.stringify(dataBukuTamu)); updateDataCount(); ... }
     </script>
 </body>
 </html>
