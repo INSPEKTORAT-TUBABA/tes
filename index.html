@@ -455,55 +455,53 @@
         }
 
         // === Validation Functions ===
-        function validateNama() {
-            const input = document.getElementById('nama');
-            input.value = input.value.replace(/\d+/g, ''); // Hapus angka
-            let hurufCount = 0;
-            try {
-                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
-            } catch (e) {
-                hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
-            }
-            const isValid = hurufCount >= 5;
-            if (isValid) {
-                input.classList.remove('error');
-                input.classList.add('success');
-                document.getElementById('field-asal').style.display = 'block';
-                // Tampilkan kembali dropdown yang telah dipilih
-                document.querySelectorAll('select:not(#nama)').forEach(select => {
-                    if (select.value && select.closest('.hidden') === null) {
-                        select.closest('div[id^="field-"], .hidden').style.display = 'block';
-                    }
-                });
-            } else {
-                input.classList.remove('success');
-                input.classList.add('error');
-                // Sembunyikan dan reset semua field setelah field-nama hingga field-tandaTangan
-                document.querySelectorAll('#formSection > form > div[id^="field-"]:not(#field-nama)').forEach(div => {
-                    div.style.display = 'none';
-                    const input = div.querySelector('input, select, textarea');
-                    if (input) {
-                        input.value = ''; // Reset input ke kosong
-                        input.classList.remove('error', 'success');
-                    }
-                });
-                // Reset tanda tangan
-                clearSignature();
-                // Reset dropdown dan sub-field
-                daftarInstansi.classList.add("hidden");
-                daftarMasyarakat.classList.add("hidden");
-                fieldDesa.classList.add("hidden");
-                instansi.value = '';
-                kecamatan.value = '';
-                desa.value = '';
-                desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
-                // Reset field lain
-                document.getElementById('pihakDitemui').value = '';
-                document.getElementById('jenisLayanan').value = '';
-                document.getElementById('uraian').value = '';
-                document.getElementById('nomorHp').value = '';
-            }
+       function validateNama() {
+    const input = document.getElementById('nama');
+    input.value = input.value.replace(/\d+/g, ''); // Hapus angka
+    let hurufCount = 0;
+    try {
+        hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
+    } catch (e) {
+        hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+    }
+    const isValid = hurufCount >= 5 && input.value.trim() !== '';
+
+    if (isValid) {
+        input.classList.remove('error');
+        input.classList.add('success');
+        document.getElementById('field-asal').style.display = 'block';
+
+        // Trigger ulang validasi asal agar chain berikutnya aktif
+        const asalValue = asal.value;
+        if (asalValue === "INSTANSI" || asalValue === "MASYARAKAT") {
+            asal.dispatchEvent(new Event('change')); // Trigger onchange asal
         }
+    } else {
+        input.classList.remove('success');
+        input.classList.add('error');
+        // Reset semua field setelah nama
+        document.querySelectorAll('#formSection > form > div[id^="field-"]:not(#field-nama)').forEach(div => {
+            div.style.display = 'none';
+            const inp = div.querySelector('input, select, textarea');
+            if (inp) {
+                inp.value = '';
+                inp.classList.remove('error', 'success');
+            }
+        });
+        clearSignature();
+        daftarInstansi.classList.add("hidden");
+        daftarMasyarakat.classList.add("hidden");
+        fieldDesa.classList.add("hidden");
+        instansi.value = '';
+        kecamatan.value = '';
+        desa.value = '';
+        desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+        document.getElementById('pihakDitemui').value = '';
+        document.getElementById('jenisLayanan').value = '';
+        document.getElementById('uraian').value = '';
+        document.getElementById('nomorHp').value = '';
+    }
+}
 
         function validateUraian() {
             const uraian = document.getElementById('uraian');
