@@ -405,7 +405,7 @@
             "Gunung Agung": ["Tunas Jaya", "Mulya Jaya", "Mulya Sari", "Mekar Jaya", "Bangun Jaya", "Dwikora Jaya", "Marga Jaya", "Sumber Jaya", "Sumber Rejeki", "Jaya Murni", "Wonorejo", "Suka Jaya", "Tri Jaya Tunggal"],
             "Tumijajar": ["Murni Jaya", "Daya Asri", "Daya Sakti", "Makarti", "Sumber Rejo", "Margodadi", "Gunung Menanti", "Gunung Timbul", "Margo Mulyo"],
             "Way Kenanga": ["Agung Jaya", "Mercubuana", "Balam Jaya", "Pagar Buana", "Indraloka I", "Indraloka II", "Balam Asri", "Indraloka Jaya", "Indraloka Mukti", "Sido Agung"],
-            "Batu Putih": ["Toto Katon", "Sakti Jaya", "Margo Mulyo", "Margo Dadi", "Marga Sari", "Mulyo Sari", "Toto Makmur", "Panca Marga", "Sido Makmur", "Toto Wonodadi"],
+            "Batu Putih": ["Toto Katon", "Sakti Jaya", "Margo Mulya", "Margo Dadi", "Marga Sari", "Mulyo Sari", "Toto Makmur", "Panca Marga", "Sido Makmur", "Toto Wonodadi"],
             "Gunung Terang": ["Setia Bumi", "Setia Agung", "Mulya Jadi", "Gunung Agung", "Gunung Terang", "Toto Mulyo", "Kagungan Jaya", "Terang Mulya", "Terang Makmur", "Rerang Bumi Agung"],
             "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
             "Pagar Dewa": ["Bujung Dewa", "Bujungsari Marga", "Marga Jaya Indah", "Pagar Dewa", "Cahyo Randu", "Pagar Dewa Suka Mulya"]
@@ -873,6 +873,102 @@
                 displayData();
                 alert('Semua data berhasil dihapus!');
             }
+        }
+
+        function exportData() {
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape agar muat semua kolom
+
+            // Judul rapi di tengah
+            doc.setFontSize(14);
+            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
+
+            // Kolom tabel
+            const head = [[
+                'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
+                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
+                'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
+            ]];
+
+            // Data baris
+            const body = dataBukuTamu.map((d, i) => [
+                i + 1,
+                d.nama,
+                d.instansi || d.kecamatan || '-',
+                d.desa || '-',
+                d.pihakDitemui,
+                d.jenisLayanan,
+                d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian, // Potong panjang agar muat
+                d.nomorHp,
+                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                '', // placeholder gambar tanda tangan
+                '', // placeholder foto depan
+                ''  // placeholder foto belakang
+            ]);
+
+            // AutoTable dengan pengaturan rapi
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 123, 255],
+                    textColor: 255,
+                    fontSize: 8,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    fontSize: 7,
+                    cellPadding: 3,
+                    valign: 'middle'
+                },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                columnStyles: {
+                    0: { cellWidth: 10, halign: 'center' },     // No
+                    1: { cellWidth: 28 },                       // Nama
+                    2: { cellWidth: 35 },                       // Instansi/Kec
+                    3: { cellWidth: 25 },                       // Desa
+                    4: { cellWidth: 22 },                       // Pihak Ditemui
+                    5: { cellWidth: 28 },                       // Jenis Layanan
+                    6: { cellWidth: 40 },                       // Uraian (paling lebar)
+                    7: { cellWidth: 20 },                       // No HP
+                    8: { cellWidth: 22 },                       // Waktu
+                    9: { cellWidth: 22 },                      // Tanda Tangan
+                    10: { cellWidth: 22 },                      // Foto Depan
+                    11: { cellWidth: 22 }                       // Foto Belakang
+                },
+                didDrawCell: function(data) {
+                    if (data.section === 'body' && data.column.index >= 9 && data.column.index <= 11) {
+                        const item = dataBukuTamu[data.row.index];
+                        let imgData = null;
+                        if (data.column.index === 9) imgData = item.tandaTangan;
+                        if (data.column.index === 10) imgData = item.fotoFront;
+                        if (data.column.index === 11) imgData = item.fotoBack;
+
+                        if (imgData) {
+                            // Ukuran gambar kecil tapi jelas
+                            doc.addImage(imgData, 'PNG', data.cell.x + 2, data.cell.y + 2, 18, 14, '', 'FAST');
+                        }
+                    }
+                },
+                margin: { top: 30, left: 10, right: 10 },
+                pageBreak: 'auto',
+                rowPageBreak: 'avoid'
+            });
+
+            // Simpan file
+            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+            doc.save(filename);
+            alert('PDF berhasil di-export dengan tampilan rapi dan gambar jelas!\nFile: ' + filename);
         }
 
         function autoResize(textarea) {
