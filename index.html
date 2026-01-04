@@ -933,18 +933,18 @@
                 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 columnStyles: {
-                    0: { cellWidth: 10, halign: 'center' },     // No
-                    1: { cellWidth: 28 },                       // Nama
-                    2: { cellWidth: 35 },                       // Instansi/Kec
-                    3: { cellWidth: 25 },                       // Desa
-                    4: { cellWidth: 22 },                       // Pihak Ditemui
-                    5: { cellWidth: 28 },                       // Jenis Layanan
-                    6: { cellWidth: 40 },                       // Uraian (paling lebar)
-                    7: { cellWidth: 20 },                       // No HP
-                    8: { cellWidth: 22 },                       // Waktu
-                    9: { cellWidth: 22 },                      // Tanda Tangan
-                    10: { cellWidth: 22 },                      // Foto Depan
-                    11: { cellWidth: 22 }                       // Foto Belakang
+                    0: { cellWidth: 8, halign: 'center' },     // No
+                    1: { cellWidth: 25 },                      // Nama
+                    2: { cellWidth: 30 },                      // Instansi/Kec
+                    3: { cellWidth: 25 },                      // Desa
+                    4: { cellWidth: 20 },                      // Pihak Ditemui
+                    5: { cellWidth: 25 },                      // Jenis Layanan
+                    6: { cellWidth: 35 },                      // Uraian (paling lebar)
+                    7: { cellWidth: 18 },                      // No HP
+                    8: { cellWidth: 18 },                      // Waktu
+                    9: { cellWidth: 15 },                      // Tanda Tangan
+                    10: { cellWidth: 15 },                     // Foto Depan
+                    11: { cellWidth: 15 }                      // Foto Belakang
                 },
                 didDrawCell: function(data) {
                     if (data.section === 'body' && data.column.index >= 9 && data.column.index <= 11) {
@@ -956,11 +956,11 @@
 
                         if (imgData) {
                             // Ukuran gambar kecil tapi jelas
-                            doc.addImage(imgData, 'PNG', data.cell.x + 2, data.cell.y + 2, 18, 14, '', 'FAST');
+                            doc.addImage(imgData, 'PNG', data.cell.x + 1, data.cell.y + 1, 13, 10, '', 'FAST');
                         }
                     }
                 },
-                margin: { top: 30, left: 10, right: 10 },
+                margin: { top: 30, left: 5, right: 5 },
                 pageBreak: 'auto',
                 rowPageBreak: 'avoid'
             });
