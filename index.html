@@ -900,7 +900,8 @@
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi || d.kecamatan || '-',
+                d.instansi || '-',
+                d.kecamatan || '-',
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
