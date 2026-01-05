@@ -39,7 +39,7 @@
             background-color: #007bff;
             color: white;
         }
-        /* Atur lebar kolom secara proporsional untuk menghindari potongan */
+        /* Atur lebar kolom secara proporsional */
         th:nth-child(1), td:nth-child(1) { width: 3%; } /* No */
         th:nth-child(2), td:nth-child(2) { width: 12%; } /* Nama */
         th:nth-child(3), td:nth-child(3) { width: 15%; } /* Instansi */
@@ -86,8 +86,8 @@
                 <td>gfgfgfgfgfgfgff</td>
                 <td>4343434343 43434</td>
                 <td>4/1/2026</td>
-                <td></td> <!-- Jika ada gambar tanda tangan, ganti dengan <img src="path/to/signature1.png" alt="Tanda Tangan" style="width:100%;"> -->
-                <td></td> <!-- Jika ada foto, ganti dengan <img src="path/to/foto1.png" alt="Foto Data" style="width:100%;"> -->
+                <td><!-- Jika ada gambar tanda tangan, ganti dengan <img src="path/to/signature1.png" alt="Tanda Tangan" style="width:100%; height:auto;"> --></td>
+                <td><!-- Jika ada foto, ganti dengan <img src="path/to/foto1.png" alt="Foto Data" style="width:100%; height:auto;"> --></td>
             </tr>
             <tr>
                 <td>2</td>
@@ -100,8 +100,8 @@
                 <td>dfgdddgdddgddfdf</td>
                 <td>3232323232 323232</td>
                 <td>5/1/2026</td>
-                <td></td> <!-- Tambahkan <img> jika diperlukan -->
-                <td></td>
+                <td><!-- Tambahkan <img> jika diperlukan --></td>
+                <td><!-- Tambahkan <img> jika diperlukan --></td>
             </tr>
             <tr>
                 <td>3</td>
@@ -114,10 +114,31 @@
                 <td>ererererererere</td>
                 <td>1212121212 12121</td>
                 <td>5/1/2026</td>
-                <td></td> <!-- Tambahkan <img> jika diperlukan -->
-                <td></td>
+                <td><!-- Tambahkan <img> jika diperlukan --></td>
+                <td><!-- Tambahkan <img> jika diperlukan --></td>
             </tr>
         </tbody>
     </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('table');
+            const rows = table.querySelectorAll('tbody tr');
+            let showLocation = false;
+            rows.forEach(row => {
+                const kecamatan = row.querySelector('td:nth-child(4)').textContent.trim();
+                const desa = row.querySelector('td:nth-child(5)').textContent.trim();
+                if (kecamatan !== '-' || desa !== '-') {
+                    showLocation = true;
+                }
+            });
+            if (!showLocation) {
+                // Sembunyikan kolom Kecamatan (nth-child 4) dan Desa/Tiyuh (nth-child 5)
+                table.querySelectorAll('th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5)').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        });
+    </script>
 </body>
 </html>
