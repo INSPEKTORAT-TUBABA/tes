@@ -6,58 +6,114 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 1cm;
+            margin: 8mm;          /* margin sangat kecil tapi masih aman untuk kebanyakan printer */
         }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             margin: 0;
             padding: 0;
+            font-size: 9.5pt;     /* ukuran font lebih kecil agar muat lebih banyak */
+            line-height: 1.2;
         }
+
         h1 {
             text-align: center;
-            font-size: 18pt;
+            font-size: 16pt;
+            margin: 8px 0 12px 0;
         }
-        p {
+
+        .export-date {
             text-align: center;
-            font-size: 12pt;
+            font-size: 10pt;
+            margin: 0 0 10px 0;
+            color: #444;
         }
+
         table {
             width: 100%;
-            table-layout: fixed;
+            table-layout: fixed;       /* sangat penting agar kolom tidak melebar tak terkendali */
             border-collapse: collapse;
-            font-size: 10pt;
+            font-size: 9pt;            /* font tabel lebih kecil */
+            page-break-inside: auto;
         }
+
         th, td {
-            border: 1px solid black;
-            padding: 8px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+            border: 1px solid #333;
+            padding: 5px 6px;          /* padding lebih kecil agar muat lebih banyak teks */
+            word-break: break-word;    /* break kata panjang (lebih baik daripada overflow) */
+            hyphens: auto;
             text-align: left;
             vertical-align: top;
+            line-height: 1.15;
         }
+
         th {
-            background-color: #007bff;
+            background-color: #0066cc;
             color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 6px;
+            white-space: nowrap;       /* header tetap satu baris */
         }
-        /* Atur lebar kolom secara proporsional untuk menghindari potongan */
-        th:nth-child(1), td:nth-child(1) { width: 3%; } /* No */
-        th:nth-child(2), td:nth-child(2) { width: 12%; } /* Nama */
-        th:nth-child(3), td:nth-child(3) { width: 15%; } /* Instansi */
-        th:nth-child(4), td:nth-child(4) { width: 8%; } /* Kecamatan */
-        th:nth-child(5), td:nth-child(5) { width: 10%; } /* Desa/Tiyuh */
-        th:nth-child(6), td:nth-child(6) { width: 8%; } /* Pihak Ditemui */
-        th:nth-child(7), td:nth-child(7) { width: 10%; } /* Jenis Layanan */
-        th:nth-child(8), td:nth-child(8) { width: 15%; } /* Uraian */
-        th:nth-child(9), td:nth-child(9) { width: 10%; } /* No HP */
-        th:nth-child(10), td:nth-child(10) { width: 8%; } /* Tanggal */
-        th:nth-child(11), td:nth-child(11) { width: 6%; } /* Tanda Tangan */
-        th:nth-child(12), td:nth-child(12) { width: 5%; } /* Foto Data */
+
+        td {
+            font-size: 9pt;
+        }
+
+        /* Lebar kolom - disesuaikan lebih ketat + proporsional */
+        colgroup {
+            display: table-column-group;
+        }
+
+        /* Urutan lebar (total ~100%) */
+        col.no          { width: 2.8%; }
+        col.nama        { width: 13%; }
+        col.instansi    { width: 14%; }
+        col.kecamatan   { width: 7.5%; }
+        col.desa        { width: 9%; }
+        col.ditemui     { width: 8.5%; }
+        col.jenis       { width: 10%; }
+        col.uraian      { width: 18%; }   /* kolom paling panjang biasanya uraian */
+        col.nohp        { width: 9%; }
+        col.tanggal     { width: 7.2%; }
+        col.ttd         { width: 5%; }
+        col.foto        { width: 5%; }
+
+        /* Tambahan agar tidak mudah terpotong */
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        /* Jika teks di uraian sangat panjang, tetap dipaksa wrap */
+        td.uraian-long {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
+
     <h1>BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT</h1>
-    <p>Tanggal Export: 5/1/2026</p>
+    <p class="export-date">Tanggal Export: 5 Januari 2026</p>
+
     <table>
+        <colgroup>
+            <col class="no">
+            <col class="nama">
+            <col class="instansi">
+            <col class="kecamatan">
+            <col class="desa">
+            <col class="ditemui">
+            <col class="jenis">
+            <col class="uraian">
+            <col class="nohp">
+            <col class="tanggal">
+            <col class="ttd">
+            <col class="foto">
+        </colgroup>
+
         <thead>
             <tr>
                 <th>No</th>
@@ -83,41 +139,15 @@
                 <td>-</td>
                 <td>IRBAN 4</td>
                 <td>Tindak Lanjut Temuan</td>
-                <td>gfgfgfgfgfgfgff</td>
+                <td class="uraian-long">gfgfgfgfgfgfgff</td>
                 <td>4343434343 43434</td>
                 <td>4/1/2026</td>
-                <td></td> <!-- Jika ada gambar tanda tangan, ganti dengan <img src="path/to/signature1.png" alt="Tanda Tangan" style="width:100%;"> -->
-                <td></td> <!-- Jika ada foto, ganti dengan <img src="path/to/foto1.png" alt="Foto Data" style="width:100%;"> -->
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>UNTUNG TURYANTO</td>
-                <td>DINAS PENDIDIKAN DAN KEBUDAYAAN</td>
-                <td>-</td>
-                <td>-</td>
-                <td>IRBAN 4</td>
-                <td>Tindak Lanjut Temuan</td>
-                <td>dfgdddgdddgddfdf</td>
-                <td>3232323232 323232</td>
-                <td>5/1/2026</td>
-                <td></td> <!-- Tambahkan <img> jika diperlukan -->
+                <td></td>
                 <td></td>
             </tr>
-            <tr>
-                <td>3</td>
-                <td>UNTUNG TURYANTO</td>
-                <td>DINAS PENDIDIKAN DAN KEBUDAYAAN</td>
-                <td>-</td>
-                <td>-</td>
-                <td>IRBAN 4</td>
-                <td>Tindak Lanjut Temuan</td>
-                <td>ererererererere</td>
-                <td>1212121212 12121</td>
-                <td>5/1/2026</td>
-                <td></td> <!-- Tambahkan <img> jika diperlukan -->
-                <td></td>
-            </tr>
+            <!-- baris lainnya sama seperti contoh Anda -->
         </tbody>
     </table>
+
 </body>
 </html>
