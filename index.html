@@ -16,7 +16,7 @@
         .header-gambar { display: flex; justify-content: center; gap: 20px; margin-bottom: 15px; }
         .foto-kepala { width: 80px; height: auto; }
         .logo { width: 100px; height: auto; }
-        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 0 5px; }
         #photoModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
         .camera-view { width: 100%; max-width: 400px; aspect-ratio: 4/3; border: 3px solid #007bff; border-radius: 10px; overflow: hidden; position: relative; background: #000; }
         .camera-view h4 { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 6px 12px; border-radius: 15px; z-index: 10; }
@@ -35,8 +35,8 @@
 
     <h1 style="text-align:center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
 
-    <!-- Form input tetap sama seperti sebelumnya -->
-    <!-- ... (kode form, signature pad, kamera, dll tetap sama) ... -->
+    <!-- Bagian form, signature pad, kamera, dll tetap sama seperti kode Anda sebelumnya -->
+    <!-- ... (kode form input, validasi, simpan data, tampil data, hapus, dll bisa tetap dari kode Anda) ... -->
 
     <div style="text-align:center; margin: 30px 0;">
         <button onclick="showForm()" style="background:#007bff;color:white;">📝 Form Input</button>
@@ -44,10 +44,10 @@
         <button onclick="exportData()" style="background:#17a2b8;color:white;">💾 Export PDF</button>
     </div>
 
-    <!-- Bagian dataSection dan photoModal tetap sama -->
+    <!-- Bagian dataSection dan photoModal tetap sama seperti kode asli -->
 
     <script>
-        // ... (semua variabel, fungsi signature, kamera, validasi, simpan data, dll tetap sama) ...
+        // ... (semua kode sebelum fungsi exportData() tetap sama: variabel, signature pad, kamera, simpanData, dll) ...
 
         function exportData() {
             if (dataBukuTamu.length === 0) {
@@ -56,34 +56,34 @@
             }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
 
-            // Header judul sesuai contoh
+            // Judul sesuai contoh Anda
             doc.setFontSize(14);
             doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 18, { align: 'center' });
             doc.setFontSize(10);
             doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 26, { align: 'center' });
 
-            // Header tabel sesuai permintaan
+            // Header kolom: INSTANSI dan KECAMATAN sudah DIPISAH
             const head = [[
                 'No', 'Nama', 'Instansi', 'Kecamatan', 'Desa', 
                 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 
                 'Waktu Kunjungan', 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
 
-            // Isi data
+            // Isi data (Instansi & Kecamatan dipisah)
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama || '-',
-                d.instansi || '-',
-                d.kecamatan || '-',
+                d.instansi || '-',           // Kolom Instansi
+                d.kecamatan || '-',          // Kolom Kecamatan (terpisah)
                 d.desa || '-',
                 d.pihakDitemui || '-',
                 d.jenisLayanan || '-',
                 d.uraian.length > 60 ? d.uraian.substring(0, 57) + '...' : d.uraian || '-',
                 d.nomorHp || '-',
                 d.timestamp.split(', ')[0] || '-',
-                '', '', '' // placeholder untuk gambar
+                '', '', '' // placeholder gambar
             ]);
 
             doc.autoTable({
@@ -113,7 +113,7 @@
                     4: { cellWidth: 22 },                      // Desa
                     5: { cellWidth: 24 },                      // Pihak Ditemui
                     6: { cellWidth: 28 },                      // Jenis Layanan
-                    7: { cellWidth: 40 },                      // Uraian (lebar paling besar)
+                    7: { cellWidth: 40 },                      // Uraian (terluas)
                     8: { cellWidth: 20 },                      // No HP
                     9: { cellWidth: 22 },                      // Waktu
                     10: { cellWidth: 26 },                     // Tanda Tangan
@@ -125,19 +125,16 @@
                         const item = dataBukuTamu[data.row.index];
                         let imgData = null;
 
-                        switch (data.column.index) {
-                            case 10: imgData = item.tandaTangan; break;
-                            case 11: imgData = item.fotoFront; break;
-                            case 12: imgData = item.fotoBack; break;
-                        }
+                        // Mapping yang benar (tidak bergeser lagi)
+                        if (data.column.index === 10) imgData = item.tandaTangan;
+                        if (data.column.index === 11) imgData = item.fotoFront;
+                        if (data.column.index === 12) imgData = item.fotoBack;
 
                         if (imgData) {
                             doc.addImage(imgData, 'PNG',
-                                data.cell.x + 3,
-                                data.cell.y + 2,
-                                20, 15,           // ukuran gambar lebih rapi
-                                undefined,
-                                'FAST'
+                                data.cell.x + 3, data.cell.y + 2,
+                                20, 15,           // ukuran gambar rapi
+                                undefined, 'FAST'
                             );
                         }
                     }
@@ -149,10 +146,10 @@
 
             const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
             doc.save(filename);
-            alert('PDF berhasil diekspor dengan format rapi!\nFile: ' + filename);
+            alert('PDF berhasil diekspor dengan kolom Instansi & Kecamatan terpisah!\nFile: ' + filename);
         }
 
-        // ... (fungsi-fungsi lain seperti simpanData, displayData, dll tetap sama) ...
+        // ... (fungsi lain seperti simpanData, displayData, dll tetap sama dari kode Anda sebelumnya) ...
     </script>
 </body>
 </html>
