@@ -61,9 +61,6 @@
 
     <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
 
-    <!-- Form dan elemen lainnya tetap sama seperti sebelumnya -->
-    <!-- (Tidak diubah karena sudah berfungsi baik) -->
-
     <div id="formSection">
         <form id="bukuTamuForm">
             <div id="field-nama">
@@ -200,15 +197,15 @@
     </div>
 
     <div style="margin-bottom: 80px;">
-        <button type="button" onclick="showForm()" id="btnForm">📝 Form Input</button>
-        <button type="button" onclick="showData()" id="btnData">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-        <button type="button" onclick="exportData()">💾 Export PDF</button>
+        <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
+        <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
+        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
     </div>
 
     <div id="dataSection" style="display: none;">
         <h2>📊 DATA BUKU TAMU</h2>
         <div style="margin-bottom: 20px;">
-            <button type="button" onclick="clearAllData()">🗑️ Hapus Semua Data</button>
+            <button type="button" onclick="clearAllData()" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Hapus Semua Data</button>
         </div>
         <div id="dataContainer">
             <p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>
@@ -234,16 +231,649 @@
             <canvas id="canvasBack" style="display:none;"></canvas>
             <div id="modalButtons">
                 <button type="button" class="btn-camera" onclick="ambilFoto()">📸 Ambil Foto</button>
-                <button type="button" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
-                <button type="button" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
+                <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
+                <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
             </div>
         </div>
     </div>
 
     <script>
-        // === Script tetap sama hingga bagian exportData() ===
+        // === Element References ===
+        const signatureCanvas = document.getElementById('signature-pad');
+        const ctx = signatureCanvas.getContext('2d');
+        const signatureWarning = document.getElementById('signatureWarning');
+        const photoWarning = document.getElementById('photoWarning');
+        const asal = document.getElementById("asal");
+        const daftarInstansi = document.getElementById("daftarInstansi");
+        const daftarMasyarakat = document.getElementById("daftarMasyarakat");
+        const kecamatan = document.getElementById("kecamatan");
+        const desa = document.getElementById("desa");
+        const instansi = document.getElementById("instansi");
+        const fieldDesa = document.getElementById("field-desa");
+        const photoModal = document.getElementById('photoModal');
+        const videoFront = document.getElementById('videoFront');
+        const videoBack = document.getElementById('videoBack');
+        const canvasFront = document.getElementById('canvasFront');
+        const canvasBack = document.getElementById('canvasBack');
+        const capturedFrontPhoto = document.getElementById('capturedFrontPhoto');
+        const capturedBackPhoto = document.getElementById('capturedBackPhoto');
 
-        // ... (semua script sebelumnya tetap sama)
+        let streamFront = null;
+        let streamBack = null;
+        let fotoDataURLFront = null;
+        let fotoDataURLBack = null;
+        let hasPhoto = false;
+        let drawing = false;
+        let hasSignature = false;
+        let dataBukuTamu = [];
+        let lastX = 0;
+        let lastY = 0;
+        let totalStrokeLength = 0; // Total panjang goresan dalam piksel
+        const MIN_STROKE_LENGTH_CM = 2; // Panjang minimal goresan dalam cm
+        const PIXELS_PER_CM = 37.8; // Asumsi 96 DPI (1 cm ≈ 37.8 piksel)
+
+        // === Canvas Signature Setup ===
+        function resizeCanvas() {
+            const originalWidth = 700;
+            const originalHeight = 200;
+            const newWidth = Math.min(window.innerWidth - 40, originalWidth);
+            const tempData = signatureCanvas.toDataURL();
+            signatureCanvas.width = newWidth;
+            signatureCanvas.height = Math.round(originalHeight * (newWidth / originalWidth));
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
+            img.src = tempData;
+            // Atur ulang properti canvas untuk memastikan warna biru
+            ctx.strokeStyle = '#0000FF';
+            ctx.globalAlpha = 0.85;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Pengaturan tanda tangan dengan warna biru cerah dan efek pena realistis
+        ctx.strokeStyle = '#0000FF'; // Warna biru cerah
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = 0.85; // Transparansi untuk efek tinta pena
+        ctx.globalCompositeOperation = 'source-over'; // Pastikan warna tidak ditimpa
+        let lastVelocity = 0;
+        let lastTime = Date.now();
+
+        function getCanvasPos(e) {
+            const rect = signatureCanvas.getBoundingClientRect();
+            if (e.touches && e.touches[0]) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+            drawing = true;
+            hasSignature = true;
+            totalStrokeLength = 0; // Reset panjang goresan
+            ctx.beginPath();
+            ctx.strokeStyle = '#0000FF'; // Pastikan warna biru
+            const pos = getCanvasPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+            ctx.moveTo(lastX, lastY);
+            lastTime = Date.now();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getCanvasPos(e);
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            const distance = Math.sqrt((pos.x - lastX) ** 2 + (pos.y - lastY) ** 2);
+            totalStrokeLength += distance; // Tambahkan panjang goresan
+            const velocity = distance / (deltaTime || 1);
+            const smoothedVelocity = lastVelocity * 0.7 + velocity * 0.3;
+            ctx.lineWidth = Math.max(1.5, Math.min(3.5, 2 - smoothedVelocity / 100)); // Variasi ketebalan
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+            lastVelocity = smoothedVelocity;
+            lastTime = currentTime;
+        }
+
+        function stopDrawing(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            drawing = false;
+            // Validasi panjang goresan (2 cm ≈ 75.6 piksel)
+            const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+            if (strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                hasSignature = false;
+                signatureWarning.style.display = 'block';
+                signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                signatureCanvas.classList.add('error');
+                signatureCanvas.classList.remove('success');
+                document.getElementById('field-aksi').style.display = 'none';
+            } else {
+                signatureWarning.style.display = 'none';
+                signatureCanvas.classList.remove('error');
+                signatureCanvas.classList.add('success');
+                checkAndShowNext('signature-pad', 'field-aksi');
+            }
+        }
+
+        signatureCanvas.addEventListener('mousedown', startDrawing);
+        signatureCanvas.addEventListener('mousemove', draw);
+        signatureCanvas.addEventListener('mouseup', stopDrawing);
+        signatureCanvas.addEventListener('mouseout', stopDrawing);
+        signatureCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        signatureCanvas.addEventListener('touchmove', draw, { passive: false });
+        signatureCanvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+            hasSignature = false;
+            totalStrokeLength = 0; // Reset panjang goresan
+            signatureCanvas.classList.remove('error', 'success');
+            signatureWarning.style.display = 'none';
+            signatureWarning.textContent = '⚠️ Tanda tangan wajib diisi dengan goresan minimal 2 cm!';
+            // Atur ulang properti canvas
+            ctx.strokeStyle = '#0000FF';
+            ctx.globalAlpha = 0.85;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalCompositeOperation = 'source-over';
+            document.getElementById('field-aksi').style.display = 'none';
+        }
+
+        // === Dropdown Data ===
+        const dataDesa = {
+            "Lambu Kibang": ["Kibang Budi Jaya Jaya", "Lesung Bhakti Jaya", "Mekar Sari Jaya", "Pagar Jaya", "Gunung Sari", "Sumber Rejo", "Kibang Yekti Jaya", "Kibang Tri Jaya", "Gilang Tunggal Makarta", "Kibang Mulya Jaya"],
+            "Tulang Bawang Tengah": ["Penumangan", "Penumangan Baru", "Menggala Mas", "Bandar Dewa", "Panaragan", "Panaragan Jaya Indah", "Panaragan Jaya Utama", "Tirta Kencana", "Tirta Makmur", "Pulung Kencana", "Mulya Jaya", "Mulya Kencana", "Candra Mukti", "Candra Kencana", "Candra Jaya", "Tunas Asri", "Wonokerto", "Mekar Asri", "Marga Asri"],
+            "Gunung Agung": ["Tunas Jaya", "Mulya Jaya", "Mulya Sari", "Mekar Jaya", "Bangun Jaya", "Dwikora Jaya", "Marga Jaya", "Sumber Jaya", "Sumber Rejeki", "Jaya Murni", "Wonorejo", "Suka Jaya", "Tri Jaya Tunggal"],
+            "Tumijajar": ["Murni Jaya", "Daya Asri", "Daya Sakti", "Makarti", "Sumber Rejo", "Margodadi", "Gunung Menanti", "Gunung Timbul", "Margo Mulyo"],
+            "Way Kenanga": ["Agung Jaya", "Mercubuana", "Balam Jaya", "Pagar Buana", "Indraloka I", "Indraloka II", "Balam Asri", "Indraloka Jaya", "Indraloka Mukti", "Sido Agung"],
+            "Batu Putih": ["Toto Katon", "Sakti Jaya", "Margo Mulya", "Margo Dadi", "Marga Sari", "Mulyo Sari", "Toto Makmur", "Panca Marga", "Sido Makmur", "Toto Wonodadi"],
+            "Gunung Terang": ["Setia Bumi", "Setia Agung", "Mulya Jadi", "Gunung Agung", "Gunung Terang", "Toto Mulyo", "Kagungan Jaya", "Terang Mulya", "Terang Makmur", "Rerang Bumi Agung"],
+            "Tulang Bawang Udik": ["Kagungan Ratu", "Kartaraharja", "Kartasari", "Marga Kencana", "Waysido", "Kagungan Ratu Agung", "Gunung Katun Tanjungan", "Gedung Ratu", "Gunung Katun Malay", "Karta", "Karta Tanjung Selamat", "Karta Raya", "Way Sido"],
+            "Pagar Dewa": ["Bujung Dewa", "Bujungsari Marga", "Marga Jaya Indah", "Pagar Dewa", "Cahyo Randu", "Pagar Dewa Suka Mulya"]
+        };
+
+        // === Dropdown Logic ===
+        asal.addEventListener("change", function () {
+            daftarInstansi.classList.add("hidden");
+            daftarMasyarakat.classList.add("hidden");
+            fieldDesa.classList.add("hidden");
+            instansi.removeAttribute('required');
+            kecamatan.removeAttribute('required');
+            desa.removeAttribute('required');
+            if (this.value === "INSTANSI") {
+                daftarInstansi.classList.remove("hidden");
+                instansi.setAttribute('required', '');
+            } else if (this.value === "MASYARAKAT") {
+                daftarMasyarakat.classList.remove("hidden");
+                kecamatan.setAttribute('required', '');
+            }
+            checkAndShowNext('asal', 'field-pihakDitemui');
+        });
+
+        function updateDesaList() {
+            const desaList = dataDesa[kecamatan.value] || [];
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            desaList.forEach(nama => {
+                const opt = document.createElement("option");
+                opt.value = nama;
+                opt.textContent = nama;
+                desa.appendChild(opt);
+            });
+            if (kecamatan.value) {
+                fieldDesa.classList.remove("hidden");
+                desa.setAttribute('required', '');
+            } else {
+                fieldDesa.classList.add("hidden");
+                desa.removeAttribute('required');
+            }
+            checkAndShowNext('kecamatan', 'field-pihakDitemui');
+        }
+
+        // === Validation Functions ===
+        function validateNama() {
+            const input = document.getElementById('nama');
+            input.value = input.value.replace(/\d+/g, ''); // Hapus angka
+            let hurufCount = 0;
+            try {
+                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
+            } catch (e) {
+                hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+            }
+            const isValid = hurufCount >= 5;
+            if (isValid) {
+                input.classList.remove('error');
+                input.classList.add('success');
+                document.getElementById('field-asal').style.display = 'block';
+                // Tampilkan kembali dropdown yang telah dipilih
+                document.querySelectorAll('select:not(#nama)').forEach(select => {
+                    if (select.value && select.closest('.hidden') === null) {
+                        select.closest('div[id^="field-"], .hidden').style.display = 'block';
+                    }
+                });
+            } else {
+                input.classList.remove('success');
+                input.classList.add('error');
+                // Sembunyikan dan reset semua field setelah field-nama hingga field-tandaTangan
+                document.querySelectorAll('#formSection > form > div[id^="field-"]:not(#field-nama)').forEach(div => {
+                    div.style.display = 'none';
+                    const input = div.querySelector('input, select, textarea');
+                    if (input) {
+                        input.value = ''; // Reset input ke kosong
+                        input.classList.remove('error', 'success');
+                    }
+                });
+                // Reset tanda tangan
+                clearSignature();
+                // Reset dropdown dan sub-field
+                daftarInstansi.classList.add("hidden");
+                daftarMasyarakat.classList.add("hidden");
+                fieldDesa.classList.add("hidden");
+                instansi.value = '';
+                kecamatan.value = '';
+                desa.value = '';
+                desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+                // Reset field lain
+                document.getElementById('pihakDitemui').value = '';
+                document.getElementById('jenisLayanan').value = '';
+                document.getElementById('uraian').value = '';
+                document.getElementById('nomorHp').value = '';
+            }
+        }
+
+        function validateUraian() {
+            const uraian = document.getElementById('uraian');
+            const isValid = uraian.value.trim().length >= 15;
+            if (isValid) {
+                uraian.classList.remove('error');
+                uraian.classList.add('success');
+                document.getElementById('field-nomorHp').style.display = 'block';
+            } else {
+                uraian.classList.remove('success');
+                uraian.classList.add('error');
+                hideFieldsAfter('field-uraian');
+            }
+        }
+
+        function validateNomorHp() {
+            const nomorHp = document.getElementById('nomorHp');
+            nomorHp.value = nomorHp.value.replace(/\D/g, '');
+            const isValid = nomorHp.value.length >= 11;
+            if (isValid) {
+                nomorHp.classList.remove('error');
+                nomorHp.classList.add('success');
+                document.getElementById('field-tandaTangan').style.display = 'block';
+            } else {
+                nomorHp.classList.remove('success');
+                nomorHp.classList.add('error');
+                hideFieldsAfter('field-nomorHp');
+            }
+        }
+
+        // === Camera Functions ===
+        async function bukaKamera() {
+            photoModal.style.display = 'flex';
+            try {
+                streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                videoFront.srcObject = streamFront;
+                videoFront.play();
+            } catch (error) {
+                console.error("Gagal mengakses kamera depan:", error);
+                videoFront.style.display = 'none';
+            }
+            try {
+                streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                videoBack.srcObject = streamBack;
+                videoBack.play();
+            } catch (error) {
+                console.error("Gagal mengakses kamera belakang:", error);
+                videoBack.style.display = 'none';
+            }
+            if (!streamFront && !streamBack) {
+                alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
+                tutupModal();
+            }
+        }
+
+        function ambilFoto() {
+            if (!streamFront && !streamBack) {
+                alert("Kamera belum aktif!");
+                return;
+            }
+            if (streamFront) {
+                const contextFront = canvasFront.getContext('2d');
+                canvasFront.width = videoFront.videoWidth || 480;
+                canvasFront.height = videoFront.videoHeight || Math.round(canvasFront.width * 3 / 4);
+                contextFront.drawImage(videoFront, 0, 0, canvasFront.width, canvasFront.height);
+                fotoDataURLFront = canvasFront.toDataURL('image/png');
+                capturedFrontPhoto.src = fotoDataURLFront;
+                capturedFrontPhoto.style.display = 'block';
+                videoFront.style.display = 'none';
+            }
+            if (streamBack) {
+                const contextBack = canvasBack.getContext('2d');
+                canvasBack.width = videoBack.videoWidth || 480;
+                canvasBack.height = videoBack.videoHeight || Math.round(canvasBack.width * 3 / 4);
+                contextBack.drawImage(videoBack, 0, 0, canvasBack.width, canvasBack.height);
+                fotoDataURLBack = canvasBack.toDataURL('image/png');
+                capturedBackPhoto.src = fotoDataURLBack;
+                capturedBackPhoto.style.display = 'block';
+                videoBack.style.display = 'none';
+            }
+            hasPhoto = !!(fotoDataURLFront || fotoDataURLBack);
+        }
+
+        function tutupModal() {
+            photoModal.style.display = 'none';
+            if (streamFront) {
+                streamFront.getTracks().forEach(track => track.stop());
+                streamFront = null;
+            }
+            if (streamBack) {
+                streamBack.getTracks().forEach(track => track.stop());
+                streamBack = null;
+            }
+            capturedFrontPhoto.style.display = 'none';
+            capturedBackPhoto.style.display = 'none';
+            videoFront.style.display = 'block';
+            videoBack.style.display = 'block';
+            fotoDataURLFront = null;
+            fotoDataURLBack = null;
+            hasPhoto = false;
+        }
+
+        function simpanFotoLangsung() {
+            if (!hasPhoto) {
+                alert("❌ Harap ambil foto terlebih dahulu!");
+                return;
+            }
+            if (simpanData()) {
+                alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+                tutupModal();
+                showData();
+            } else {
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
+            }
+        }
+
+        // === Data Handling ===
+        function hideFieldsAfter(startFieldId) {
+            let hide = false;
+            document.querySelectorAll('#formSection > form > div[id^="field-"]').forEach(div => {
+                if (div.id === startFieldId) {
+                    hide = true;
+                } else if (hide) {
+                    div.style.display = 'none';
+                    const input = div.querySelector('input, select, textarea');
+                    if (input) {
+                        input.classList.remove('error', 'success');
+                    }
+                }
+            });
+        }
+
+        function checkAndShowNext(currentElementId, nextElementId) {
+            const currentElement = document.getElementById(currentElementId);
+            const nextElement = document.getElementById(nextElementId);
+            let isValid = true;
+
+            if (currentElementId === 'signature-pad') {
+                const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+                if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                    signatureWarning.style.display = 'block';
+                    signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                    signatureCanvas.classList.add('error');
+                    signatureCanvas.classList.remove('success');
+                    isValid = false;
+                } else {
+                    signatureWarning.style.display = 'none';
+                    signatureCanvas.classList.remove('error');
+                    signatureCanvas.classList.add('success');
+                }
+            } else if (currentElementId === 'asal') {
+                if (asal.value === 'INSTANSI') {
+                    if (!instansi.value || instansi.value.trim() === '') isValid = false;
+                } else if (asal.value === 'MASYARAKAT') {
+                    if (!kecamatan.value || kecamatan.value.trim() === '' || !desa.value || desa.value.trim() === '') isValid = false;
+                } else {
+                    isValid = false;
+                }
+            } else if (currentElementId === 'kecamatan') {
+                if (!kecamatan.value || kecamatan.value.trim() === '' || !desa.value || desa.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'desa') {
+                if (!desa.value || desa.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'instansi') {
+                if (!instansi.value || instansi.value.trim() === '') isValid = false;
+            } else if (currentElementId === 'uraian') {
+                isValid = currentElement.value.trim().length >= 15;
+            } else if (currentElementId === 'nomorHp') {
+                isValid = currentElement.value.length >= 11;
+            } else if (currentElement) {
+                if ((currentElement.tagName === 'INPUT' || currentElement.tagName === 'TEXTAREA' || currentElement.tagName === 'SELECT')) {
+                    if (currentElement.value === undefined || currentElement.value.trim() === '') {
+                        isValid = false;
+                    }
+                }
+            }
+
+            if (currentElement && (currentElement.tagName === 'INPUT' || currentElement.tagName === 'SELECT' || currentElement.tagName === 'TEXTAREA')) {
+                if (isValid) {
+                    currentElement.classList.remove('error');
+                    currentElement.classList.add('success');
+                } else {
+                    currentElement.classList.add('error');
+                    currentElement.classList.remove('success');
+                }
+            }
+
+            if (isValid && nextElement) {
+                nextElement.style.display = 'block';
+                const nextInput = nextElement.querySelector('input, select, textarea, canvas');
+                if (nextInput && typeof nextInput.focus === 'function') nextInput.focus();
+            } else {
+                const mapToFieldStart = {
+                    'nama': 'field-nama',
+                    'asal': 'field-asal',
+                    'instansi': 'field-asal',
+                    'kecamatan': 'field-asal',
+                    'desa': 'field-asal',
+                    'pihakDitemui': 'field-pihakDitemui',
+                    'jenisLayanan': 'field-jenisLayanan',
+                    'uraian': 'field-uraian',
+                    'nomorHp': 'field-nomorHp',
+                    'signature-pad': 'field-tandaTangan'
+                };
+                const startId = mapToFieldStart[currentElementId] || currentElementId;
+                hideFieldsAfter(startId);
+            }
+        }
+
+        function simpanData() {
+            const form = document.getElementById('bukuTamuForm');
+            let isValid = true;
+
+            signatureWarning.style.display = 'none';
+            photoWarning.style.display = 'none';
+
+            if (!form.reportValidity()) {
+                isValid = false;
+            }
+
+            const namaInput = document.getElementById('nama');
+            let hurufCount = 0;
+            try {
+                hurufCount = (namaInput.value.match(/\p{L}/gu) || []).length;
+            } catch (e) {
+                hurufCount = (namaInput.value.match(/[A-Za-z]/g) || []).length;
+            }
+            if (hurufCount < 5 || namaInput.value.trim() === '') {
+                namaInput.classList.add('error');
+                isValid = false;
+            } else {
+                namaInput.classList.remove('error');
+                namaInput.classList.add('success');
+            }
+
+            const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
+            if (!hasSignature || strokeLengthCm < MIN_STROKE_LENGTH_CM) {
+                signatureWarning.style.display = 'block';
+                signatureWarning.textContent = '⚠️ Tanda Tangan Terlalu Pendek';
+                signatureCanvas.classList.add('error');
+                isValid = false;
+            } else {
+                signatureCanvas.classList.remove('error');
+                signatureCanvas.classList.add('success');
+            }
+
+            if (!hasPhoto) {
+                photoWarning.style.display = 'block';
+                isValid = false;
+            }
+
+            if (isValid) {
+                const formData = {
+                    nama: namaInput.value.trim(),
+                    asal: asal.value,
+                    instansi: asal.value === 'INSTANSI' ? instansi.value : '',
+                    kecamatan: asal.value === 'MASYARAKAT' ? kecamatan.value : '',
+                    desa: asal.value === 'MASYARAKAT' ? desa.value : '',
+                    pihakDitemui: document.getElementById('pihakDitemui').value,
+                    jenisLayanan: document.getElementById('jenisLayanan').value,
+                    uraian: document.getElementById('uraian').value.trim(),
+                    nomorHp: document.getElementById('nomorHp').value.trim(),
+                    tandaTangan: signatureCanvas.toDataURL('image/png'),
+                    fotoFront: fotoDataURLFront,
+                    fotoBack: fotoDataURLBack,
+                    timestamp: new Date().toLocaleString('id-ID')
+                };
+                dataBukuTamu.push(formData);
+                updateDataCounter();
+                resetFormComplete();
+                return true;
+            }
+            return false;
+        }
+
+        function simpanDataDanTutupForm() {
+            if (simpanData()) {
+                alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+                showData();
+            } else {
+                alert("❌ Mohon lengkapi semua data yang diperlukan:\n- Isi semua field yang bertanda (*)\n- Buat tanda tangan dengan goresan minimal 2 cm\n- Ambil foto");
+            }
+        }
+
+        function resetFormComplete() {
+            document.getElementById('bukuTamuForm').reset();
+            hasSignature = false;
+            hasPhoto = false;
+            fotoDataURLFront = null;
+            fotoDataURLBack = null;
+            clearSignature();
+            daftarInstansi.classList.add("hidden");
+            daftarMasyarakat.classList.add("hidden");
+            fieldDesa.classList.add("hidden");
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            instansi.removeAttribute('required');
+            kecamatan.removeAttribute('required');
+            desa.removeAttribute('required');
+            document.querySelectorAll('#formSection > form > div:not(#field-nama)').forEach(el => el.style.display = 'none');
+            const elements = [signatureCanvas, document.getElementById('nama'), asal, document.getElementById('pihakDitemui'), document.getElementById('jenisLayanan'), document.getElementById('uraian'), document.getElementById('nomorHp')];
+            elements.forEach(el => { if (el) el.classList.remove('error', 'success'); });
+            signatureWarning.style.display = 'none';
+            photoWarning.style.display = 'none';
+            document.getElementById('nama').focus();
+        }
+
+        function showForm() {
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('dataSection').style.display = 'none';
+            document.getElementById('btnForm').style.background = '#007bff';
+            document.getElementById('btnData').style.background = '#6c757d';
+        }
+
+        function showData() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('dataSection').style.display = 'block';
+            document.getElementById('btnForm').style.background = '#6c757d';
+            document.getElementById('btnData').style.background = '#28a745';
+            displayData();
+        }
+
+        function updateDataCounter() {
+            document.getElementById('dataCount').textContent = dataBukuTamu.length;
+        }
+
+        function displayData() {
+            const container = document.getElementById('dataContainer');
+            if (dataBukuTamu.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Belum ada data yang tersimpan</p>';
+                return;
+            }
+            let html = '';
+            dataBukuTamu.forEach((data, index) => {
+                html += `<div class="data-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; color: #333;">Tamu #${index + 1}</h3>
+                        <button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️ Hapus</button>
+                    </div>
+                    <div class="data-grid">
+                        <div><strong>Nama:</strong> ${data.nama}</div>
+                        <div><strong>Asal:</strong> ${data.asal}</div>
+                        ${data.instansi ? `<div><strong>Instansi:</strong> ${data.instansi}</div>` : ''}
+                        ${data.kecamatan ? `<div><strong>Kecamatan:</strong> ${data.kecamatan}</div>` : ''}
+                        ${data.desa ? `<div><strong>Desa:</strong> ${data.desa}</div>` : ''}
+                        <div><strong>Pihak Ditemui:</strong> ${data.pihakDitemui}</div>
+                        <div><strong>Jenis Layanan:</strong> ${data.jenisLayanan}</div>
+                        <div><strong>Nomor HP:</strong> ${data.nomorHp}</div>
+                        <div><strong>Waktu:</strong> ${data.timestamp}</div>
+                    </div>
+                    <div><strong>Uraian:</strong> ${data.uraian}</div>
+                    <div class="data-images">
+                        <div><strong>Tanda Tangan:</strong><br><img src="${data.tandaTangan}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                        <div><strong>Foto Depan:</strong><br><img src="${data.fotoFront || ''}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                        <div><strong>Foto Belakang:</strong><br><img src="${data.fotoBack || ''}" style="border: 1px solid #ccc; max-width: 200px; height: auto;"></div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function deleteData(index) {
+            if (confirm('Yakin ingin menghapus data tamu #' + (index + 1) + '?')) {
+                dataBukuTamu.splice(index, 1);
+                updateDataCounter();
+                displayData();
+                alert('Data berhasil dihapus!');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Yakin ingin menghapus SEMUA data buku tamu?')) {
+                dataBukuTamu = [];
+                updateDataCounter();
+                displayData();
+                alert('Semua data berhasil dihapus!');
+            }
+        }
 
         function exportData() {
             if (dataBukuTamu.length === 0) {
@@ -252,36 +882,38 @@
             }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape agar muat semua kolom
 
-            // Judul
+            // Judul rapi di tengah
             doc.setFontSize(14);
             doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
             doc.setFontSize(10);
             doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
 
-            // Header tabel — Instansi dan Kecamatan dipisah!
+            // Kolom tabel
             const head = [[
-                'No', 'Nama', 'Instansi', 'Kecamatan', 'Desa',
+                'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
                 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
                 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
 
-            // Body data
+            // Data baris
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi || '-',           // Kolom Instansi
-                d.kecamatan || '-',          // Kolom Kecamatan (dipisah!)
+                d.instansi || d.kecamatan || '-',
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
-                d.uraian.length > 70 ? d.uraian.substring(0, 67) + '...' : d.uraian,
+                d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian, // Potong panjang agar muat
                 d.nomorHp,
-                d.timestamp.split(', ')[0],
-                '', '', '' // placeholder untuk gambar
+                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                '', // placeholder gambar tanda tangan
+                '', // placeholder foto depan
+                ''  // placeholder foto belakang
             ]);
 
+            // AutoTable dengan pengaturan rapi
             doc.autoTable({
                 head: head,
                 body: body,
@@ -301,53 +933,63 @@
                 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 columnStyles: {
-                    0: { cellWidth: 10, halign: 'center' },   // No
-                    1: { cellWidth: 28 },                     // Nama
-                    2: { cellWidth: 35 },                     // Instansi
-                    3: { cellWidth: 28 },                     // Kecamatan
-                    4: { cellWidth: 25 },                     // Desa
-                    5: { cellWidth: 24 },                     // Pihak Ditemui
-                    6: { cellWidth: 30 },                     // Jenis Layanan
-                    7: { cellWidth: 45 },                     // Uraian (terluas)
-                    8: { cellWidth: 20 },                     // No HP
-                    9: { cellWidth: 20 },                     // Waktu
-                    10: { cellWidth: 28 },                    // Tanda Tangan
-                    11: { cellWidth: 28 },                    // Foto Depan
-                    12: { cellWidth: 28 }                     // Foto Belakang
+                    0: { cellWidth: 8, halign: 'center' },     // No
+                    1: { cellWidth: 24 },                      // Nama
+                    2: { cellWidth: 30 },                      // Instansi/Kec
+                    3: { cellWidth: 22 },                      // Desa
+                    4: { cellWidth: 20 },                      // Pihak Ditemui
+                    5: { cellWidth: 25 },                      // Jenis Layanan
+                    6: { cellWidth: 35 },                      // Uraian (paling lebar)
+                    7: { cellWidth: 18 },                      // No HP
+                    8: { cellWidth: 18 },                      // Waktu
+                    9: { cellWidth: 24 },                      // Tanda Tangan
+                    10: { cellWidth: 24 },                     // Foto Depan
+                    11: { cellWidth: 24 }                      // Foto Belakang
                 },
                 didDrawCell: function(data) {
-                    // Hanya gambar di kolom 10, 11, 12
-                    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
-                        const item = dataBukuTamu[data.row.index];
-                        let imgData = null;
+    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+        const item = dataBukuTamu[data.row.index];
+        let imgData = null;
 
-                        if (data.column.index === 10) imgData = item.tandaTangan;
-                        if (data.column.index === 11) imgData = item.fotoFront;
-                        if (data.column.index === 12) imgData = item.fotoBack;
+        switch (data.column.index) {
+            case 10:
+                imgData = item.tandaTangan;
+                break;
+            case 11:
+                imgData = item.fotoFront;
+                break;
+            case 12:
+                imgData = item.fotoBack;
+                break;
+        }
 
-                        if (imgData) {
-                            doc.addImage(imgData, 'PNG',
-                                data.cell.x + 3,
-                                data.cell.y + 2,
-                                22, 16.5,  // ukuran gambar lebih besar dan proporsional
-                                undefined,
-                                'FAST'
-                            );
-                        }
-                    }
-                },
-                margin: { top: 30, left: 6, right: 6 },
+        if (imgData) {
+            // Ukuran gambar kecil tapi tetap terbaca (sesuaikan jika perlu)
+            doc.addImage(imgData, 'PNG', 
+                data.cell.x + 2,     // sedikit margin kiri
+                data.cell.y + 1.5,   // sedikit margin atas
+                20, 15,              // lebar 20mm × tinggi 15mm → proporsi bagus
+                undefined, 
+                'FAST'               // kualitas render lebih cepat
+            );
+        }
+    }
+},
+                margin: { top: 30, left: 5, right: 5 },
                 pageBreak: 'auto',
                 rowPageBreak: 'avoid'
             });
 
+            // Simpan file
             const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
             doc.save(filename);
-            alert('PDF berhasil diekspor dengan tampilan sempurna!\nFile: ' + filename);
+            alert('PDF berhasil di-export dengan tampilan rapi dan gambar jelas!\nFile: ' + filename);
         }
 
-        // === Semua fungsi lain tetap sama seperti versi sebelumnya ===
-        // (validateNama, bukaKamera, simpanData, dll — tidak perlu diulang di sini karena panjang)
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             resizeCanvas();
