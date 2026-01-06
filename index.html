@@ -892,9 +892,7 @@
 
             // Kolom tabel
             const head = [[
-                'No', 'Nama', 'Instansi',
-                'Kecamatan', 
-                'Desa', 
+                'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
                 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
                 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
@@ -903,8 +901,7 @@
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi, 
-                d.kecamatan || '-',
+                d.instansi || d.kecamatan || '-',
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
@@ -980,7 +977,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            resizeCanvas(); 
+            resizeCanvas();
             showForm();
         });
     </script>
