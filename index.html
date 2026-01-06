@@ -418,7 +418,47 @@
             fieldDesa.classList.add("hidden");
             instansi.removeAttribute('required');
             kecamatan.removeAttribute('required');
-            des...(truncated 1704 characters)...t >= 5;
+            desa.removeAttribute('required');
+            if (this.value === "INSTANSI") {
+                daftarInstansi.classList.remove("hidden");
+                instansi.setAttribute('required', '');
+            } else if (this.value === "MASYARAKAT") {
+                daftarMasyarakat.classList.remove("hidden");
+                kecamatan.setAttribute('required', '');
+            }
+            checkAndShowNext('asal', 'field-pihakDitemui');
+        });
+
+        function updateDesaList() {
+            const desaList = dataDesa[kecamatan.value] || [];
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            desaList.forEach(nama => {
+                const opt = document.createElement("option");
+                opt.value = nama;
+                opt.textContent = nama;
+                desa.appendChild(opt);
+            });
+            if (kecamatan.value) {
+                fieldDesa.classList.remove("hidden");
+                desa.setAttribute('required', '');
+            } else {
+                fieldDesa.classList.add("hidden");
+                desa.removeAttribute('required');
+            }
+            checkAndShowNext('kecamatan', 'field-pihakDitemui');
+        }
+
+        // === Validation Functions ===
+        function validateNama() {
+            const input = document.getElementById('nama');
+            input.value = input.value.replace(/\d+/g, ''); // Hapus angka
+            let hurufCount = 0;
+            try {
+                hurufCount = (input.value.match(new RegExp("\\p{L}", "gu")) || []).length;
+            } catch (e) {
+                hurufCount = (input.value.match(/[A-Za-z]/g) || []).length;
+            }
+            const isValid = hurufCount >= 5;
             if (isValid) {
                 input.classList.remove('error');
                 input.classList.add('success');
@@ -850,9 +890,10 @@
             doc.setFontSize(10);
             doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
 
-            // Kolom tabel - Pisah Instansi dan Kecamatan
+            // Kolom tabel
             const head = [[
-                'No', 'Nama', 'Instansi', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
+                'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
+                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
                 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
             ]];
 
@@ -860,8 +901,7 @@
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi, '', // Kolom Instansi terpisah
-                d.kecamatan, '', // Kolom Kecamatan terpisah
+                d.instansi || d.kecamatan || '-',
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
@@ -895,32 +935,46 @@
                 columnStyles: {
                     0: { cellWidth: 8, halign: 'center' },     // No
                     1: { cellWidth: 24 },                      // Nama
-                    2: { cellWidth: 30 },                      // Instansi
-                    3: { cellWidth: 22 },                      // Kecamatan
-                    4: { cellWidth: 20 },                      // Desa
-                    5: { cellWidth: 25 },                      // Pihak Ditemui
-                    6: { cellWidth: 35 },                      // Jenis Layanan
-                    7: { cellWidth: 35 },                      // Uraian (paling lebar)
-                    8: { cellWidth: 18 },                      // No HP
-                    9: { cellWidth: 18 },                      // Waktu
-                    10: { cellWidth: 24 },                     // Tanda Tangan
-                    11: { cellWidth: 24 },                     // Foto Depan
-                    12: { cellWidth: 24 }                      // Foto Belakang
+                    2: { cellWidth: 30 },                      // Instansi/Kec
+                    3: { cellWidth: 22 },                      // Desa
+                    4: { cellWidth: 20 },                      // Pihak Ditemui
+                    5: { cellWidth: 25 },                      // Jenis Layanan
+                    6: { cellWidth: 35 },                      // Uraian (paling lebar)
+                    7: { cellWidth: 18 },                      // No HP
+                    8: { cellWidth: 18 },                      // Waktu
+                    9: { cellWidth: 24 },                      // Tanda Tangan
+                    10: { cellWidth: 24 },                     // Foto Depan
+                    11: { cellWidth: 24 }                      // Foto Belakang
                 },
                 didDrawCell: function(data) {
-                    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
-                        const item = dataBukuTamu[data.row.index];
-                        let imgData = null;
-                        if (data.column.index === 10) imgData = item.tandaTangan;
-                        if (data.column.index === 11) imgData = item.fotoFront;
-                        if (data.column.index === 12) imgData = item.fotoBack;
+    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+        const item = dataBukuTamu[data.row.index];
+        let imgData = null;
 
-                        if (imgData) {
-                            // Ukuran gambar kecil tapi jelas
-                            doc.addImage(imgData, 'PNG', data.cell.x + 3, data.cell.y + 2, 18, 13, '', 'FAST');
-                        }
-                    }
-                },
+        switch (data.column.index) {
+            case 10:
+                imgData = item.tandaTangan;
+                break;
+            case 11:
+                imgData = item.fotoFront;
+                break;
+            case 12:
+                imgData = item.fotoBack;
+                break;
+        }
+
+        if (imgData) {
+            // Ukuran gambar kecil tapi tetap terbaca (sesuaikan jika perlu)
+            doc.addImage(imgData, 'PNG', 
+                data.cell.x + 2,     // sedikit margin kiri
+                data.cell.y + 1.5,   // sedikit margin atas
+                20, 15,              // lebar 20mm × tinggi 15mm → proporsi bagus
+                undefined, 
+                'FAST'               // kualitas render lebih cepat
+            );
+        }
+    }
+},
                 margin: { top: 30, left: 5, right: 5 },
                 pageBreak: 'auto',
                 rowPageBreak: 'avoid'
