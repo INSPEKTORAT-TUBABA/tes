@@ -949,20 +949,35 @@
                     10: { cellWidth: 24 },                     // Foto Depan
                     11: { cellWidth: 24 }                      // Foto Belakang
                 },
-                didDrawCell: function(data) {
-                    if (data.section === 'body' && data.column.index >= 9 && data.column.index <= 11) {
-                        const item = dataBukuTamu[data.row.index];
-                        let imgData = null;
-                        if (data.column.index === 9) imgData = item.tandaTangan;
-                        if (data.column.index === 10) imgData = item.fotoFront;
-                        if (data.column.index === 11) imgData = item.fotoBack;
+               didDrawCell: function(data) {
+    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+        const item = dataBukuTamu[data.row.index];
+        let imgData = null;
 
-                        if (imgData) {
-                            // Ukuran gambar kecil tapi jelas
-                            doc.addImage(imgData, 'PNG', data.cell.x + 3, data.cell.y + 2, 18, 13, '', 'FAST');
-                        }
-                    }
-                },
+        switch (data.column.index) {
+            case 10:
+                imgData = item.tandaTangan;
+                break;
+            case 11:
+                imgData = item.fotoFront;
+                break;
+            case 12:
+                imgData = item.fotoBack;
+                break;
+        }
+
+        if (imgData) {
+            // Ukuran gambar kecil tapi tetap terbaca (sesuaikan jika perlu)
+            doc.addImage(imgData, 'PNG', 
+                data.cell.x + 2,     // sedikit margin kiri
+                data.cell.y + 1.5,   // sedikit margin atas
+                20, 15,              // lebar 20mm × tinggi 15mm → proporsi bagus
+                undefined, 
+                'FAST'               // kualitas render lebih cepat
+            );
+        }
+    }
+},
                 margin: { top: 30, left: 5, right: 5 },
                 pageBreak: 'auto',
                 rowPageBreak: 'avoid'
