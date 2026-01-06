@@ -860,8 +860,8 @@
             const body = dataBukuTamu.map((d, i) => [
                 i + 1,
                 d.nama,
-                d.instansi || '-',  // Kolom Instansi terpisah
-                d.kecamatan || '-', // Kolom Kecamatan terpisah
+                d.instansi,  // Kolom Instansi terpisah
+                d.kecamatan,  // Kolom Kecamatan terpisah
                 d.desa || '-',
                 d.pihakDitemui,
                 d.jenisLayanan,
