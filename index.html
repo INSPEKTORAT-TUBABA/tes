@@ -882,7 +882,7 @@
     }
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+    const doc = new jsPDF('l', 'mm', 'a4');
 
     // Judul
     doc.setFontSize(14);
@@ -890,100 +890,80 @@
     doc.setFontSize(10);
     doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
 
-    // Header kolom (sudah benar, 13 kolom)
-    const head = [[
-        'No', 'Nama', 'Instansi', 'Kecamatan', 'Desa', 
-        'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
-        'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
-    ]];
+    let yPosition = 30;
 
-    // Data body
-    const body = dataBukuTamu.map((d, i) => [
-        i + 1,
-        d.nama,
-        d.instansi,  // Changed: no '|| '-''
-        d.kecamatan, // Changed: no '|| '-''
-        d.desa,      // Changed: no '|| '-''
-        d.pihakDitemui,
-        d.jenisLayanan,
-        d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian,
-        d.nomorHp,
-        d.timestamp.split(', ')[0], // hanya tanggal
-        '', // placeholder Tanda Tangan
-        '', // placeholder Foto Depan
-        ''  // placeholder Foto Belakang
-    ]);
+    // Kelompokkan data berdasarkan asal
+    const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
+    const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
 
-    // Konfigurasi AutoTable
-    doc.autoTable({
-        head: head,
-        body: body,
-        startY: 30,
-        theme: 'grid',
-        headStyles: {
-            fillColor: [0, 123, 255],
-            textColor: 255,
-            fontSize: 8,
-            fontStyle: 'bold',
-            halign: 'center'
-        },
-        bodyStyles: {
-            fontSize: 7,
-            cellPadding: 3,
-            valign: 'middle',
-            halign: 'left'
-        },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        columnStyles: {
-            0:  { cellWidth: 8,  halign: 'center' },  // No
-            1:  { cellWidth: 24 },                    // Nama
-            2:  { cellWidth: 30 },                    // Instansi
-            3:  { cellWidth: 22 },                    // Kecamatan
-            4:  { cellWidth: 22 },                    // Desa
-            5:  { cellWidth: 20 },                    // Pihak Ditemui
-            6:  { cellWidth: 25 },                    // Jenis Layanan
-            7:  { cellWidth: 35 },                    // Uraian (lebar terbesar)
-            8:  { cellWidth: 18 },                    // No HP
-            9:  { cellWidth: 18 },                    // Waktu
-            10: { cellWidth: 24 },                    // Tanda Tangan
-            11: { cellWidth: 24 },                    // Foto Depan
-            12: { cellWidth: 24 }                     // Foto Belakang
-        },
-        didDrawCell: function(data) {
-            if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
-                const item = dataBukuTamu[data.row.index];
-                let imgData = null;
+    // Fungsi bantu untuk membuat tabel
+    function buatTabel(data, header, title) {
+        if (data.length === 0) return;
 
-                // MAPPING YANG BENAR SESUAI HEADER
-                switch (data.column.index) {
-                    case 10: imgData = item.tandaTangan; break;   // Kolom Tanda Tangan
-                    case 11: imgData = item.fotoFront;    break;  // Kolom Foto Depan
-                    case 12: imgData = item.fotoBack;     break;  // Kolom Foto Belakang
+        doc.setFontSize(12);
+        doc.text(title, 10, yPosition);
+        yPosition += 8;
+
+        doc.autoTable({
+            head: [header],
+            body: data.map((d, i) => {
+                const row = [i + 1, d.nama];
+                if (d.asal === 'INSTANSI') {
+                    row.push(d.instansi);
+                } else {
+                    row.push(d.kecamatan, d.desa);
                 }
-
-                if (imgData && typeof imgData === 'string' && imgData.startsWith('data:image')) {
-                    try {
-                        doc.addImage(imgData, 'PNG',
-                            data.cell.x + 2,      // margin kiri kecil
-                            data.cell.y + 1.5,    // margin atas kecil
-                            20, 15,               // ukuran gambar (lebar × tinggi dalam mm)
-                            undefined,
-                            'FAST'
-                        );
-                    } catch (e) {
-                        console.warn("Gagal menambahkan gambar:", e);
+                row.push(
+                    d.pihakDitemui,
+                    d.jenisLayanan,
+                    d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian,
+                    d.nomorHp,
+                    d.timestamp.split(', ')[0],
+                    '', '', ''  // placeholder gambar
+                );
+                return row;
+            }),
+            startY: yPosition,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 9, halign: 'center' },
+            bodyStyles: { fontSize: 8, cellPadding: 3, valign: 'middle' },
+            columnStyles: {
+                0: { cellWidth: 8, halign: 'center' },
+                // sesuaikan lebar kolom sesuai kebutuhan
+            },
+            didDrawCell: function(data) {
+                if (data.section === 'body' && data.column.index >= header.length - 3) {
+                    const item = data.row.raw;
+                    const imgIndex = data.column.index - (header.length - 3);
+                    let imgData = [item.tandaTangan, item.fotoFront, item.fotoBack][imgIndex];
+                    if (imgData && imgData.startsWith('data:image')) {
+                        try {
+                            doc.addImage(imgData, 'PNG', data.cell.x + 2, data.cell.y + 1, 18, 13);
+                        } catch (e) {}
                     }
                 }
-            }
-        },
-        margin: { top: 30, left: 5, right: 5 },
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid'
-    });
+            },
+            margin: { left: 10, right: 10 }
+        });
+
+        yPosition = doc.lastAutoTable.finalY + 15;
+    }
+
+    // Header untuk INSTANSI
+    if (dataInstansi.length > 0) {
+        const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan', 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'];
+        buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA');
+    }
+
+    // Header untuk MASYARAKAT
+    if (dataMasyarakat.length > 0) {
+        const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan', 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'];
+        buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT');
+    }
 
     const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
     doc.save(filename);
-    alert('PDF berhasil diekspor dengan posisi gambar yang benar!\nFile: ' + filename);
+    alert('PDF berhasil diekspor dengan kolom dinamis!');
 }
         function autoResize(textarea) {
             textarea.style.height = 'auto';
