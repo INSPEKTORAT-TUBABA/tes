@@ -875,148 +875,116 @@
             }
         }
 
-       function exportData() {
-    if (dataBukuTamu.length === 0) {
-        alert('Tidak ada data untuk di-export!');
-        return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-    // --- Judul ---
-    doc.setFontSize(14);
-    doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 12, { align: 'center' });
-    doc.setFontSize(10);
-    doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID', {dateStyle: 'long'}), 148, 20, { align: 'center' });
-
-    // --- Tentukan header & column styles secara dinamis ---
-    const hasInstansi = dataBukuTamu.some(d => d.asal === 'INSTANSI' && d.instansi);
-    const hasMasyarakat = dataBukuTamu.some(d => d.asal === 'MASYARAKAT' && (d.kecamatan || d.desa));
-
-    let head = [['No', 'Nama', 'Asal']];
-
-    let columnStyles = {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 25 }
-    };
-
-    let colIndex = 3;
-
-    if (hasInstansi) {
-        head[0].push('Instansi/Unit Kerja');
-        columnStyles[colIndex] = { cellWidth: 45 };
-        colIndex++;
-    }
-
-    if (hasMasyarakat) {
-        head[0].push('Kecamatan');
-        columnStyles[colIndex] = { cellWidth: 30 };
-        colIndex++;
-
-        head[0].push('Desa/Tiyuh');
-        columnStyles[colIndex] = { cellWidth: 30 };
-        colIndex++;
-    }
-
-    // Kolom wajib yang selalu ada
-    head[0].push(
-        'Pihak Ditemui',
-        'Jenis Layanan',
-        'Uraian',
-        'No. HP',
-        'Tanggal',
-        'Tanda Tangan',
-        'Foto Depan',
-        'Foto Belakang'
-    );
-
-    columnStyles[colIndex++] = { cellWidth: 28 };
-    columnStyles[colIndex++] = { cellWidth: 32 };
-    columnStyles[colIndex++] = { cellWidth: 45 }; // Uraian paling lebar
-    columnStyles[colIndex++] = { cellWidth: 22 };
-    columnStyles[colIndex++] = { cellWidth: 22 };
-    columnStyles[colIndex]   = { cellWidth: 22 };
-    columnStyles[colIndex+1] = { cellWidth: 22 };
-    columnStyles[colIndex+2] = { cellWidth: 22 };
-
-    // --- Body data ---
-    const body = dataBukuTamu.map((d, i) => {
-        let row = [
-            i + 1,
-            d.nama,
-            d.asal
-        ];
-
-        if (hasInstansi) {
-            row.push(d.instansi || '-');
-        }
-
-        if (hasMasyarakat) {
-            row.push(d.kecamatan || '-');
-            row.push(d.desa || '-');
-        }
-
-        row.push(
-            d.pihakDitemui,
-            d.jenisLayanan,
-            d.uraian.length > 70 ? d.uraian.substring(0,67)+'...' : d.uraian,
-            d.nomorHp,
-            d.timestamp.split(', ')[0],
-            '', '', ''   // placeholder gambar
-        );
-
-        return row;
-    });
-
-    // --- Generate tabel ---
-    doc.autoTable({
-        head: head,
-        body: body,
-        startY: 28,
-        theme: 'grid',
-        headStyles: {
-            fillColor: [0, 102, 204],
-            textColor: 255,
-            fontSize: 8,
-            halign: 'center'
-        },
-        styles: {
-            fontSize: 7.5,
-            cellPadding: 2.5,
-            overflow: 'linebreak'
-        },
-        columnStyles: columnStyles,
-        didDrawCell: function(data) {
-            if (data.section === 'body' && data.column.index >= head[0].length - 3) {
-                const idx = data.row.index;
-                const item = dataBukuTamu[idx];
-                let imgData;
-
-                switch (data.column.index) {
-                    case head[0].length - 3: imgData = item.tandaTangan; break;
-                    case head[0].length - 2: imgData = item.fotoFront;    break;
-                    case head[0].length - 1: imgData = item.fotoBack;     break;
-                }
-
-                if (imgData && imgData.startsWith('data:image')) {
-                    const cell = data.cell;
-                    doc.addImage(imgData, 'PNG',
-                        cell.x + 2,
-                        cell.y + 1,
-                        18, 13,
-                        undefined, 'FAST'
-                    );
-                }
+        function exportData() {
+            if (dataBukuTamu.length === 0) {
+                alert('Tidak ada data untuk di-export!');
+                return;
             }
-        },
-        margin: { top: 28, left: 8, right: 8 },
-        rowPageBreak: 'avoid'
-    });
 
-    doc.save(`Buku_Tamu_Inspektorat_Tubaba_${new Date().toISOString().slice(0,10)}.pdf`);
-}
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape agar muat semua kolom
+
+            // Judul rapi di tengah
+            doc.setFontSize(14);
+            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 22, { align: 'center' });
+
+            // Kolom tabel
+            const head = [[
+                'No', 'Nama', 'Instansi/Kecamatan', 'Desa', 
+                'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu Kunjungan',
+                'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
+            ]];
+
+            // Data baris
+            const body = dataBukuTamu.map((d, i) => [
+                i + 1,
+                d.nama,
+                d.instansi || d.kecamatan || '-',
+                d.desa || '-',
+                d.pihakDitemui,
+                d.jenisLayanan,
+                d.uraian.length > 50 ? d.uraian.substring(0, 47) + '...' : d.uraian, // Potong panjang agar muat
+                d.nomorHp,
+                d.timestamp.split(', ')[0], // Hanya tanggal, bukan jam
+                '', // placeholder gambar tanda tangan
+                '', // placeholder foto depan
+                ''  // placeholder foto belakang
+            ]);
+
+            // AutoTable dengan pengaturan rapi
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 123, 255],
+                    textColor: 255,
+                    fontSize: 8,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    fontSize: 7,
+                    cellPadding: 3,
+                    valign: 'middle'
+                },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                columnStyles: {
+                    0: { cellWidth: 8, halign: 'center' },     // No
+                    1: { cellWidth: 24 },                      // Nama
+                    2: { cellWidth: 30 },                      // Instansi/Kec
+                    3: { cellWidth: 22 },                      // Desa
+                    4: { cellWidth: 20 },                      // Pihak Ditemui
+                    5: { cellWidth: 25 },                      // Jenis Layanan
+                    6: { cellWidth: 35 },                      // Uraian (paling lebar)
+                    7: { cellWidth: 18 },                      // No HP
+                    8: { cellWidth: 18 },                      // Waktu
+                    9: { cellWidth: 24 },                      // Tanda Tangan
+                    10: { cellWidth: 24 },                     // Foto Depan
+                    11: { cellWidth: 24 }                      // Foto Belakang
+                },
+                didDrawCell: function(data) {
+    if (data.section === 'body' && data.column.index >= 10 && data.column.index <= 12) {
+        const item = dataBukuTamu[data.row.index];
+        let imgData = null;
+
+        switch (data.column.index) {
+            case 10:  // Kolom Tanda Tangan
+                imgData = item.tandaTangan;
+                break;
+            case 11:  // Kolom Foto Depan
+                imgData = item.fotoFront;
+                break;
+            case 12:  // Kolom Foto Belakang
+                imgData = item.fotoBack;
+                break;
+        }
+
+        if (imgData) {
+            doc.addImage(imgData, 'PNG', 
+                data.cell.x + 2,      // margin kiri
+                data.cell.y + 1.5,    // margin atas
+                20, 15,               // ukuran gambar: lebar 20mm × tinggi 15mm
+                undefined, 
+                'FAST'
+            );
+        }
+    }
+},
+                margin: { top: 30, left: 5, right: 5 },
+                pageBreak: 'auto',
+                rowPageBreak: 'avoid'
+            });
+
+            // Simpan file
+            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+            doc.save(filename);
+            alert('PDF berhasil di-export dengan tampilan rapi dan gambar jelas!\nFile: ' + filename);
+        }
+
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
