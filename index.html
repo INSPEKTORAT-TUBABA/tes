@@ -1,3 +1,4 @@
+<DOCUMENT filename="index.html">
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -49,8 +50,8 @@
         @media (min-width: 500px) { .data-images { flex-direction: row; } }
         #signature-pad { background: white; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <div class="header-gambar">
@@ -199,7 +200,7 @@
     <div style="margin-bottom: 80px;">
         <button type="button" onclick="showForm()" id="btnForm" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📝 Form Input</button>
         <button type="button" onclick="showData()" id="btnData" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
-        <button type="button" onclick="exportData()" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
+        <button type="button" id="btnExport" style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">💾 Export PDF</button>
     </div>
 
     <div id="dataSection" style="display: none;">
@@ -412,38 +413,41 @@
         };
 
         // === Dropdown Logic ===
-        asal.addEventListener("change", function () {
+        function asalChanged() {
             daftarInstansi.classList.add("hidden");
             daftarMasyarakat.classList.add("hidden");
             fieldDesa.classList.add("hidden");
-            instansi.removeAttribute('required');
-            kecamatan.removeAttribute('required');
-            desa.removeAttribute('required');
-            if (this.value === "INSTANSI") {
+            instansi.value = '';
+            kecamatan.value = '';
+            desa.value = '';
+            desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
+            if (asal.value === 'INSTANSI') {
                 daftarInstansi.classList.remove("hidden");
                 instansi.setAttribute('required', '');
-            } else if (this.value === "MASYARAKAT") {
+                kecamatan.removeAttribute('required');
+                desa.removeAttribute('required');
+            } else if (asal.value === 'MASYARAKAT') {
                 daftarMasyarakat.classList.remove("hidden");
+                instansi.removeAttribute('required');
                 kecamatan.setAttribute('required', '');
+                desa.setAttribute('required', '');
             }
             checkAndShowNext('asal', 'field-pihakDitemui');
-        });
+        }
 
         function updateDesaList() {
-            const desaList = dataDesa[kecamatan.value] || [];
+            const selectedKecamatan = kecamatan.value;
             desa.innerHTML = '<option value="">-- Pilih Desa --</option>';
-            desaList.forEach(nama => {
-                const opt = document.createElement("option");
-                opt.value = nama;
-                opt.textContent = nama;
-                desa.appendChild(opt);
-            });
-            if (kecamatan.value) {
+            if (selectedKecamatan && dataDesa[selectedKecamatan]) {
+                dataDesa[selectedKecamatan].forEach(d => {
+                    const option = document.createElement('option');
+                    option.value = d;
+                    option.textContent = d;
+                    desa.appendChild(option);
+                });
                 fieldDesa.classList.remove("hidden");
-                desa.setAttribute('required', '');
             } else {
                 fieldDesa.classList.add("hidden");
-                desa.removeAttribute('required');
             }
             checkAndShowNext('kecamatan', 'field-pihakDitemui');
         }
@@ -876,8 +880,16 @@
         }
 
         function exportData() {
+    console.log("Tombol Export diklik! Jumlah data:", dataBukuTamu.length);
+
     if (dataBukuTamu.length === 0) {
-        alert('Tidak ada data untuk di-export!');
+        alert('Tidak ada data untuk di-export! Silakan simpan data tamu terlebih dahulu.');
+        return;
+    }
+
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        console.error('jsPDF tidak dimuat');
+        alert('Library PDF gagal dimuat. Periksa koneksi internet atau refresh halaman (Ctrl+F5).');
         return;
     }
 
@@ -893,11 +905,9 @@
 
     let yPosition = 30;
 
-    // Kelompokkan data
     const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
     const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
 
-    // Fungsi pembuat tabel
     function buatTabel(data, header, title, columnStyles) {
         if (data.length === 0) return;
 
@@ -919,10 +929,10 @@
                 row.push(
                     d.pihakDitemui,
                     d.jenisLayanan,
-                    d.uraian,  // Tidak potong, biarkan wrap
+                    d.uraian,
                     d.nomorHp,
                     d.timestamp.split(', ')[0],
-                    '', '', ''  // Placeholder kosong untuk gambar
+                    '', '', ''  // Placeholder untuk TTD, Foto Depan, Foto Belakang
                 );
 
                 return row;
@@ -937,44 +947,47 @@
             rowPageBreak: 'avoid',
             didParseCell: function (data) {
                 if (data.section === 'body') {
-                    data.row.height = 20;  // Tinggi baris tetap untuk muat gambar + padding
+                    data.row.height = 22; // Tinggi cukup untuk gambar
                 }
             },
             didDrawCell: function (data) {
                 if (data.section === 'body' && data.column.index >= header.length - 3) {
-                    const itemIndex = data.row.index;
-                    const item = data[itemIndex];  // Ambil data asli dari array data
+                    const rowIndex = data.row.index;
+                    const item = data.rows[rowIndex].raw; // Ambil data asli
                     const imgIndex = data.column.index - (header.length - 3);
                     const imgData = [item.tandaTangan, item.fotoFront, item.fotoBack][imgIndex];
 
                     if (imgData && imgData.startsWith('data:image')) {
                         const img = new Image();
                         img.src = imgData;
-                        img.onload = function () {
+                        img.onload = () => {
                             try {
-                                // Resize gambar ke 90x70 px
+                                // Resize gambar untuk efisiensi
                                 const tempCanvas = document.createElement('canvas');
                                 const tempCtx = tempCanvas.getContext('2d');
-                                tempCanvas.width = 90;
-                                tempCanvas.height = 70;
-                                tempCtx.drawImage(img, 0, 0, 90, 70);
-                                const resizedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.75);
+                                tempCanvas.width = 120;
+                                tempCanvas.height = 90;
+                                tempCtx.drawImage(img, 0, 0, 120, 90);
+                                const resizedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-                                // Posisi terpusat di sel (dalam mm)
-                                const cellW = data.cell.width - 4;
-                                const cellH = data.cell.height - 4;
-                                const imgW = Math.min(18, cellW);
-                                const imgH = Math.min(14, cellH);
-                                const x = data.cell.x + (data.cell.width - imgW) / 2;
-                                const y = data.cell.y + (data.cell.height - imgH) / 2;
+                                // Posisi terpusat di sel
+                                const cellWidth = data.cell.width - 4;
+                                const cellHeight = data.cell.height - 4;
+                                const drawWidth = Math.min(20, cellWidth);
+                                const drawHeight = Math.min(15, cellHeight);
+                                const x = data.cell.x + (data.cell.width - drawWidth) / 2;
+                                const y = data.cell.y + (data.cell.height - drawHeight) / 2;
 
-                                doc.addImage(resizedDataUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
+                                doc.addImage(resizedDataUrl, 'JPEG', x, y, drawWidth, drawHeight, undefined, 'FAST');
                             } catch (e) {
                                 console.warn('Gagal render gambar:', e);
                                 doc.setFontSize(7);
-                                doc.text('Gambar error', data.cell.x + 3, data.cell.y + 8);
+                                doc.text('[Gambar error]', data.cell.x + 3, data.cell.y + 10);
                             }
                         };
+                    } else {
+                        doc.setFontSize(7);
+                        doc.text('[Tidak ada gambar]', data.cell.x + 3, data.cell.y + 10);
                     }
                 }
             }
@@ -987,49 +1000,52 @@
         }
     }
 
-    // Header dan columnStyles untuk Instansi (11 kolom, total width 240mm)
-    const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Dpn', 'Foto Blkg'];
+    // Kolom untuk Instansi
+    const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
     const stylesInstansi = {
-        0: { cellWidth: 10, halign: 'center' },  // No
-        1: { cellWidth: 25 },                    // Nama
-        2: { cellWidth: 25 },                    // Instansi
-        3: { cellWidth: 20 },                    // Pihak Ditemui
-        4: { cellWidth: 25 },                    // Jenis Layanan
-        5: { cellWidth: 35, overflow: 'linebreak' },  // Uraian
-        6: { cellWidth: 20 },                    // No HP
-        7: { cellWidth: 20 },                    // Waktu
-        8: { cellWidth: 20 },                    // TTD
-        9: { cellWidth: 20 },                    // Foto Dpn
-        10: { cellWidth: 20 }                    // Foto Blkg
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 28 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 40, overflow: 'linebreak' },
+        6: { cellWidth: 22 },
+        7: { cellWidth: 22 },
+        8: { cellWidth: 22 },
+        9: { cellWidth: 22 },
+        10: { cellWidth: 22 }
     };
+
     if (dataInstansi.length > 0) {
         buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA', stylesInstansi);
     }
 
-    // Header dan columnStyles untuk Masyarakat (12 kolom, total width 255mm)
-    const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Dpn', 'Foto Blkg'];
+    // Kolom untuk Masyarakat
+    const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
     const stylesMasyarakat = {
-        0: { cellWidth: 10, halign: 'center' },  // No
-        1: { cellWidth: 25 },                    // Nama
-        2: { cellWidth: 20 },                    // Kecamatan
-        3: { cellWidth: 20 },                    // Desa
-        4: { cellWidth: 20 },                    // Pihak Ditemui
-        5: { cellWidth: 25 },                    // Jenis Layanan
-        6: { cellWidth: 35, overflow: 'linebreak' },  // Uraian
-        7: { cellWidth: 20 },                    // No HP
-        8: { cellWidth: 20 },                    // Waktu
-        9: { cellWidth: 20 },                    // TTD
-        10: { cellWidth: 20 },                   // Foto Dpn
-        11: { cellWidth: 20 }                    // Foto Blkg
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 40, overflow: 'linebreak' },
+        7: { cellWidth: 22 },
+        8: { cellWidth: 22 },
+        9: { cellWidth: 22 },
+        10: { cellWidth: 22 },
+        11: { cellWidth: 22 }
     };
+
     if (dataMasyarakat.length > 0) {
         buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT', stylesMasyarakat);
     }
 
     const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0, 10) + '.pdf';
     doc.save(filename);
-    alert('PDF berhasil diekspor dengan tabel rapi dan gambar di dalam sel!');
+    alert('PDF berhasil diekspor!\nFoto depan & belakang sudah masuk ke kolom yang sesuai.');
 }
+
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
@@ -1038,7 +1054,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             resizeCanvas();
             showForm();
+            // Tambahkan event listener untuk tombol export
+            document.getElementById('btnExport').addEventListener('click', exportData);
+
+            // Cek jika library loaded
+            if (typeof window.jspdf === 'undefined') {
+                console.error('jsPDF tidak dimuat');
+                alert('Library PDF gagal dimuat. Periksa koneksi internet.');
+            }
         });
     </script>
 </body>
 </html>
+</DOCUMENT>
