@@ -882,136 +882,155 @@
     }
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // landscape A4
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Header utama
+    // Judul
     doc.setFontSize(14);
-    doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', 148, 12, { align: 'center' });
+    doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(10);
-    doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), 148, 18, { align: 'center' });
+    doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), pageWidth / 2, 22, { align: 'center' });
 
-    let yPosition = 28;
+    let yPosition = 30;
 
     // Kelompokkan data
     const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
     const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
 
     // Fungsi pembuat tabel
-    function buatTabel(data, header, title) {
+    function buatTabel(data, header, title, columnStyles) {
         if (data.length === 0) return;
 
         doc.setFontSize(12);
         doc.text(title, 10, yPosition);
-        yPosition += 7;
+        yPosition += 8;
 
         doc.autoTable({
             head: [header],
             body: data.map((d, i) => {
-                let row = [
-                    i + 1,
-                    d.nama,
-                    d.asal === 'INSTANSI' ? d.instansi : d.kecamatan,
-                    d.asal === 'INSTANSI' ? '' : d.desa, // kolom kosong untuk instansi
+                let row = [i + 1, d.nama];
+
+                if (d.asal === 'INSTANSI') {
+                    row.push(d.instansi);
+                } else {
+                    row.push(d.kecamatan, d.desa);
+                }
+
+                row.push(
                     d.pihakDitemui,
                     d.jenisLayanan,
-                    d.uraian.length > 80 ? d.uraian.substring(0, 77) + '...' : d.uraian,
+                    d.uraian,  // Tidak potong, biarkan wrap
                     d.nomorHp,
-                    d.timestamp.split(', ')[0] // hanya tanggal
-                ];
+                    d.timestamp.split(', ')[0],
+                    '', '', ''  // Placeholder kosong untuk gambar
+                );
 
-                // Tambahkan placeholder untuk 3 gambar (akan digambar di didDrawCell)
-                row.push('', '', '');
                 return row;
             }),
             startY: yPosition,
             theme: 'grid',
-            styles: {
-                fontSize: 8,
-                cellPadding: 3,
-                overflow: 'linebreak',
-                halign: 'center',
-                valign: 'middle'
-            },
-            headStyles: {
-                fillColor: [0, 123, 255],
-                textColor: 255,
-                fontSize: 9,
-                halign: 'center'
-            },
-            columnStyles: {
-                0: { cellWidth: 8 },   // No
-                1: { cellWidth: 35 },  // Nama
-                2: { cellWidth: 38 },  // Instansi / Kecamatan
-                3: { cellWidth: 38 },  // (kosong) / Desa
-                4: { cellWidth: 28 },  // Pihak Ditemui
-                5: { cellWidth: 32 },  // Jenis Layanan
-                6: { cellWidth: 50 },  // Uraian
-                7: { cellWidth: 22 },  // No HP
-                8: { cellWidth: 22 },  // Tanggal
-                9:  { cellWidth: 25 }, // Tanda Tangan
-                10: { cellWidth: 25 }, // Foto Depan
-                11: { cellWidth: 25 }  // Foto Belakang
-            },
-            margin: { top: yPosition, left: 10, right: 10 },
-            didParseCell: function(data) {
-                // Atur tinggi minimal baris agar muat gambar
+            headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 9, halign: 'center', lineWidth: 0.1 },
+            bodyStyles: { fontSize: 8, cellPadding: 2, valign: 'middle', overflow: 'linebreak', lineWidth: 0.1 },
+            columnStyles: columnStyles,
+            margin: { left: 10, right: 10 },
+            pageBreak: 'auto',
+            rowPageBreak: 'avoid',
+            didParseCell: function (data) {
                 if (data.section === 'body') {
-                    data.cell.height = Math.max(data.cell.height, 22); // minimal ~22mm
+                    data.row.height = 20;  // Tinggi baris tetap untuk muat gambar + padding
                 }
             },
-            didDrawCell: function(data) {
-                if (data.section === 'body' && data.column.index >= 9) {
-                    const item = data.row.raw;
-                    const imgIndex = data.column.index - 9; // 0 = ttd, 1 = depan, 2 = belakang
-                    const images = [item.tandaTangan, item.fotoFront, item.fotoBack];
+            didDrawCell: function (data) {
+                if (data.section === 'body' && data.column.index >= header.length - 3) {
+                    const itemIndex = data.row.index;
+                    const item = data[itemIndex];  // Ambil data asli dari array data
+                    const imgIndex = data.column.index - (header.length - 3);
+                    const imgData = [item.tandaTangan, item.fotoFront, item.fotoBack][imgIndex];
 
-                    const imgData = images[imgIndex];
-                    if (imgData && typeof imgData === 'string' && imgData.startsWith('data:image')) {
-                        try {
-                            const x = data.cell.x + 3;           // padding kiri
-                            const y = data.cell.y + 2;           // padding atas
-                            const w = data.cell.width - 6;       // lebar gambar (minus padding)
-                            const h = data.cell.height - 4;      // tinggi gambar
+                    if (imgData && imgData.startsWith('data:image')) {
+                        const img = new Image();
+                        img.src = imgData;
+                        img.onload = function () {
+                            try {
+                                // Resize gambar ke 90x70 px
+                                const tempCanvas = document.createElement('canvas');
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCanvas.width = 90;
+                                tempCanvas.height = 70;
+                                tempCtx.drawImage(img, 0, 0, 90, 70);
+                                const resizedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.75);
 
-                            doc.addImage(imgData, 'PNG', x, y, w, h, undefined, 'FAST');
-                        } catch (e) {
-                            console.warn("Gagal menambahkan gambar:", e);
-                            doc.setFontSize(7);
-                            doc.text('Gambar error', data.cell.x + 5, data.cell.y + 12);
-                        }
+                                // Posisi terpusat di sel (dalam mm)
+                                const cellW = data.cell.width - 4;
+                                const cellH = data.cell.height - 4;
+                                const imgW = Math.min(18, cellW);
+                                const imgH = Math.min(14, cellH);
+                                const x = data.cell.x + (data.cell.width - imgW) / 2;
+                                const y = data.cell.y + (data.cell.height - imgH) / 2;
+
+                                doc.addImage(resizedDataUrl, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
+                            } catch (e) {
+                                console.warn('Gagal render gambar:', e);
+                                doc.setFontSize(7);
+                                doc.text('Gambar error', data.cell.x + 3, data.cell.y + 8);
+                            }
+                        };
                     }
                 }
-            },
-            rowPageBreak: 'avoid'
+            }
         });
 
-        yPosition = doc.lastAutoTable.finalY + 12;
+        yPosition = doc.lastAutoTable.finalY + 15;
+        if (yPosition > 180) {
+            doc.addPage();
+            yPosition = 30;
+        }
     }
 
-    // Buat tabel sesuai kelompok
+    // Header dan columnStyles untuk Instansi (11 kolom, total width 240mm)
+    const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Dpn', 'Foto Blkg'];
+    const stylesInstansi = {
+        0: { cellWidth: 10, halign: 'center' },  // No
+        1: { cellWidth: 25 },                    // Nama
+        2: { cellWidth: 25 },                    // Instansi
+        3: { cellWidth: 20 },                    // Pihak Ditemui
+        4: { cellWidth: 25 },                    // Jenis Layanan
+        5: { cellWidth: 35, overflow: 'linebreak' },  // Uraian
+        6: { cellWidth: 20 },                    // No HP
+        7: { cellWidth: 20 },                    // Waktu
+        8: { cellWidth: 20 },                    // TTD
+        9: { cellWidth: 20 },                    // Foto Dpn
+        10: { cellWidth: 20 }                    // Foto Blkg
+    };
     if (dataInstansi.length > 0) {
-        const headerInstansi = [
-            'No', 'Nama', 'Instansi', '', 'Pihak Ditemui', 
-            'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal', 
-            'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
-        ];
-        buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA');
+        buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA', stylesInstansi);
     }
 
+    // Header dan columnStyles untuk Masyarakat (12 kolom, total width 255mm)
+    const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Dpn', 'Foto Blkg'];
+    const stylesMasyarakat = {
+        0: { cellWidth: 10, halign: 'center' },  // No
+        1: { cellWidth: 25 },                    // Nama
+        2: { cellWidth: 20 },                    // Kecamatan
+        3: { cellWidth: 20 },                    // Desa
+        4: { cellWidth: 20 },                    // Pihak Ditemui
+        5: { cellWidth: 25 },                    // Jenis Layanan
+        6: { cellWidth: 35, overflow: 'linebreak' },  // Uraian
+        7: { cellWidth: 20 },                    // No HP
+        8: { cellWidth: 20 },                    // Waktu
+        9: { cellWidth: 20 },                    // TTD
+        10: { cellWidth: 20 },                   // Foto Dpn
+        11: { cellWidth: 20 }                    // Foto Blkg
+    };
     if (dataMasyarakat.length > 0) {
-        const headerMasyarakat = [
-            'No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 
-            'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal', 
-            'Tanda Tangan', 'Foto Depan', 'Foto Belakang'
-        ];
-        buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT');
+        buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT', stylesMasyarakat);
     }
 
-    // Simpan file
-    const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0,10) + '.pdf';
+    const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0, 10) + '.pdf';
     doc.save(filename);
-    alert('PDF berhasil diekspor!\nSemua tanda tangan & foto telah masuk ke dalam tabel.');
-}        function autoResize(textarea) {
+    alert('PDF berhasil diekspor dengan tabel rapi dan gambar di dalam sel!');
+}
+        function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
         }
