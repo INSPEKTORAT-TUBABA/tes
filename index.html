@@ -879,7 +879,7 @@
             }
         }
 
-                               function exportData() {
+                                       function exportData() {
             console.log("Tombol Export diklik! Jumlah data:", dataBukuTamu.length);
 
             if (dataBukuTamu.length === 0) {
@@ -893,11 +893,11 @@
             }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape untuk lebih banyak kolom
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
 
-            // Header
+            // Header dokumen
             doc.setFontSize(16);
             doc.text('BUKU TAMU DIGITAL INSPEKTORAT', pageWidth / 2, 15, { align: 'center' });
             doc.text('KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, 22, { align: 'center' });
@@ -909,7 +909,7 @@
             const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
             const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
 
-            // Fungsi untuk resize gambar ke ukuran kecil (30x22.5 mm ≈ 85x64 px)
+            // Fungsi resize gambar (kecil & berkualitas baik)
             function resizeImage(base64Data) {
                 return new Promise((resolve) => {
                     if (!base64Data || !base64Data.startsWith('data:image')) {
@@ -919,10 +919,10 @@
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        canvas.width = 85;
-                        canvas.height = 64;
+                        canvas.width = 90;
+                        canvas.height = 68;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, 85, 64);
+                        ctx.drawImage(img, 0, 0, 90, 68);
                         resolve(canvas.toDataURL('image/jpeg', 0.85));
                     };
                     img.onerror = () => resolve(null);
@@ -930,7 +930,7 @@
                 });
             }
 
-            // Proses semua gambar terlebih dahulu (asinkronus)
+            // Proses semua gambar dulu sebelum buat PDF
             async function generatePDF() {
                 const processedData = await Promise.all(dataBukuTamu.map(async (item) => {
                     const [ttd, fotoFront, fotoBack] = await Promise.all([
@@ -953,19 +953,17 @@
 
                     doc.autoTable({
                         head: [header],
-                        body: dataArr.map((d, i) => {
-                            const baseRow = [
-                                i + 1,
-                                d.nama,
-                                isInstansi ? d.instansi : d.kecamatan,
-                                isInstansi ? '' : d.desa,
-                                d.pihakDitemui,
-                                d.jenisLayanan.substring(0, 30) + (d.jenisLayanan.length > 30 ? '...' : ''), // Potong panjang
-                                d.nomorHp,
-                                d.timestamp.split(', ')[0]
-                            ];
-                            return baseRow;
-                        }),
+                        body: dataArr.map((d, i) => [
+                            i + 1,
+                            d.nama,
+                            isInstansi ? d.instansi : d.kecamatan,
+                            isInstansi ? '' : d.desa,
+                            d.pihakDitemui,        // <-- Sesuai judul "Pihak Ditemui"
+                            d.jenisLayanan,        // <-- Jenis Layanan lengkap
+                            d.uraian,              // <-- Uraian lengkap
+                            d.nomorHp,             // <-- No HP
+                            d.timestamp.split(', ')[0]  // <-- Tanggal saja
+                        ]),
                         startY: yPosition,
                         theme: 'grid',
                         headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 9, halign: 'center' },
@@ -974,14 +972,15 @@
                             0: { cellWidth: 10, halign: 'center' },
                             1: { cellWidth: 30 },
                             2: { cellWidth: 35 },
-                            3: { cellWidth: isInstansi ? 0 : 30 }, // Sembunyikan jika instansi
+                            3: { cellWidth: isInstansi ? 0 : 30 }, // Sembunyikan kolom Desa pada Instansi
                             4: { cellWidth: 25 },
                             5: { cellWidth: 35 },
-                            6: { cellWidth: 20 },
+                            6: { cellWidth: 45 },  // Uraian lebih lebar
                             7: { cellWidth: 20 },
-                            8: { cellWidth: 28, halign: 'center' },  // TTD
-                            9: { cellWidth: 28, halign: 'center' },  // Foto Depan
-                            10: { cellWidth: 28, halign: 'center' }   // Foto Belakang
+                            8: { cellWidth: 20 },
+                            9: { cellWidth: 28, halign: 'center' },   // TTD
+                            10: { cellWidth: 28, halign: 'center' },  // Foto Depan
+                            11: { cellWidth: 28, halign: 'center' }   // Foto Belakang
                         },
                         margin: { left: 10, right: 10 },
                         pageBreak: 'auto',
@@ -989,30 +988,25 @@
                         styles: { overflow: 'linebreak' },
                         didParseCell: (data) => {
                             if (data.section === 'body') {
-                                data.row.height = 28; // Tinggi cukup untuk gambar
+                                data.row.height = 30; // Tinggi cukup untuk gambar
                             }
                         },
                         didDrawCell: (data) => {
-                            if (data.section === 'body' && data.column.index >= 8) {
+                            if (data.section === 'body' && data.column.index >= 9) {
                                 const rowIndex = data.row.index;
                                 const item = dataArr[rowIndex];
                                 let imgData = null;
 
-                                if (data.column.index === 8) imgData = item.ttdResized;
-                                else if (data.column.index === 9) imgData = item.fotoFrontResized;
-                                else if (data.column.index === 10) imgData = item.fotoBackResized;
+                                if (data.column.index === 9) imgData = item.ttdResized;
+                                else if (data.column.index === 10) imgData = item.fotoFrontResized;
+                                else if (data.column.index === 11) imgData = item.fotoBackResized;
 
                                 if (imgData) {
-                                    try {
-                                        const x = data.cell.x + 2;
-                                        const y = data.cell.y + 2;
-                                        const width = 24;
-                                        const height = 24;
-                                        doc.addImage(imgData, 'JPEG', x, y, width, height);
-                                    } catch (e) {
-                                        doc.setFontSize(7);
-                                        doc.text('Error', data.cell.x + 5, data.cell.y + 15);
-                                    }
+                                    const x = data.cell.x + 2;
+                                    const y = data.cell.y + 2;
+                                    const width = 24;
+                                    const height = 24;
+                                    doc.addImage(imgData, 'JPEG', x, y, width, height);
                                 } else {
                                     doc.setFontSize(7);
                                     doc.text('Tidak ada', data.cell.x + 5, data.cell.y + 15);
@@ -1022,20 +1016,19 @@
                     });
 
                     yPosition = doc.lastAutoTable.finalY + 15;
-
                     if (yPosition > pageHeight - 30) {
                         doc.addPage();
                         yPosition = 20;
                     }
                 }
 
-                // Header Instansi
+                // Tabel Instansi
                 const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal', 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'];
                 if (processedInstansi.length > 0) {
                     buatTabel(processedInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA', true);
                 }
 
-                // Header Masyarakat
+                // Tabel Masyarakat
                 const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa/Tiyuh', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Tanggal', 'Tanda Tangan', 'Foto Depan', 'Foto Belakang'];
                 if (processedMasyarakat.length > 0) {
                     buatTabel(processedMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT', false);
@@ -1043,7 +1036,7 @@
 
                 const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0, 10) + '.pdf';
                 doc.save(filename);
-                alert('✅ PDF berhasil diekspor!\nTanda tangan dan foto sudah muncul rapi di tabel.\nFile: ' + filename);
+                alert('✅ PDF berhasil diekspor!\nSemua isi kolom sudah sesuai dengan judulnya.\nFile: ' + filename);
             }
 
             generatePDF();
