@@ -879,173 +879,172 @@
             }
         }
 
-               function exportData() {
-            console.log("Tombol Export diklik! Jumlah data:", dataBukuTamu.length);
+        function exportData() {
+    console.log("Tombol Export diklik! Jumlah data:", dataBukuTamu.length);
 
-            if (dataBukuTamu.length === 0) {
-                alert('Tidak ada data untuk di-export! Silakan simpan data tamu terlebih dahulu.');
-                return;
-            }
+    if (dataBukuTamu.length === 0) {
+        alert('Tidak ada data untuk di-export! Silakan simpan data tamu terlebih dahulu.');
+        return;
+    }
 
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                console.error('jsPDF tidak dimuat');
-                alert('Library PDF gagal dimuat. Periksa koneksi internet atau refresh halaman (Ctrl+F5).');
-                return;
-            }
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        console.error('jsPDF tidak dimuat');
+        alert('Library PDF gagal dimuat. Periksa koneksi internet atau refresh halaman (Ctrl+F5).');
+        return;
+    }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            const pageWidth = doc.internal.pageSize.getWidth();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Judul
-            doc.setFontSize(14);
-            doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, 15, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), pageWidth / 2, 22, { align: 'center' });
+    // Judul
+    doc.setFontSize(14);
+    doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('Tanggal Export: ' + new Date().toLocaleDateString('id-ID'), pageWidth / 2, 22, { align: 'center' });
 
-            let yPosition = 30;
+    let yPosition = 30;
 
-            const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
-            const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
+    const dataInstansi = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
+    const dataMasyarakat = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
 
-            function buatTabel(data, header, title, columnStyles) {
-                if (data.length === 0) return;
+    function buatTabel(data, header, title, columnStyles) {
+        if (data.length === 0) return;
 
-                doc.setFontSize(12);
-                doc.text(title, 10, yPosition);
-                yPosition += 8;
+        doc.setFontSize(12);
+        doc.text(title, 10, yPosition);
+        yPosition += 8;
 
-                doc.autoTable({
-                    head: [header],
-                    body: data.map((d, i) => {
-                        let row = [i + 1, d.nama];
+        doc.autoTable({
+            head: [header],
+            body: data.map((d, i) => {
+                let row = [i + 1, d.nama];
 
-                        if (d.asal === 'INSTANSI') {
-                            row.push(d.instansi);
-                        } else {
-                            row.push(d.kecamatan, d.desa);
-                        }
+                if (d.asal === 'INSTANSI') {
+                    row.push(d.instansi);
+                } else {
+                    row.push(d.kecamatan, d.desa);
+                }
 
-                        row.push(
-                            d.pihakDitemui,
-                            d.jenisLayanan,
-                            d.uraian,
-                            d.nomorHp,
-                            d.timestamp.split(', ')[0],
-                            '', '', ''  // Placeholder untuk TTD, Foto Depan, Foto Belakang
-                        );
+                row.push(
+                    d.pihakDitemui,
+                    d.jenisLayanan,
+                    d.uraian,
+                    d.nomorHp,
+                    d.timestamp.split(', ')[0],
+                    '', '', ''  // Placeholder untuk TTD, Foto Depan, Foto Belakang
+                );
 
-                        return row;
-                    }),
-                    startY: yPosition,
-                    theme: 'grid',
-                    headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 9, halign: 'center', lineWidth: 0.1 },
-                    bodyStyles: { fontSize: 8, cellPadding: 2, valign: 'middle', overflow: 'linebreak', lineWidth: 0.1 },
-                    columnStyles: columnStyles,
-                    margin: { left: 10, right: 10 },
-                    pageBreak: 'auto',
-                    rowPageBreak: 'avoid',
-                    didParseCell: function (data) {
-                        if (data.section === 'body') {
-                            data.row.height = 22;
-                        }
-                    },
-                    didDrawCell: function (data) {
-                        if (data.section === 'body' && data.column.index >= header.length - 3) {
-                            const rowIndex = data.row.index;
-                            const item = dataBukuTamu.find((_, idx) => idx === rowIndex + (dataInstansi.length > 0 && data === dataMasyarakat ? dataInstansi.length : 0));
-                            if (!item) return;
+                return row;
+            }),
+            startY: yPosition,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 123, 255], textColor: 255, fontSize: 9, halign: 'center', lineWidth: 0.1 },
+            bodyStyles: { fontSize: 8, cellPadding: 2, valign: 'middle', overflow: 'linebreak', lineWidth: 0.1 },
+            columnStyles: columnStyles,
+            margin: { left: 10, right: 10 },
+            pageBreak: 'auto',
+            rowPageBreak: 'avoid',
+            didParseCell: function (data) {
+                if (data.section === 'body') {
+                    data.row.height = 22; // Tinggi cukup untuk gambar
+                }
+            },
+            didDrawCell: function (data) {
+                if (data.section === 'body' && data.column.index >= header.length - 3) {
+                    const rowIndex = data.row.index;
+                    const item = data.rows[rowIndex].raw; // Ambil data asli
+                    const imgIndex = data.column.index - (header.length - 3);
+                    const imgData = [item.tandaTangan, item.fotoFront, item.fotoBack][imgIndex];
 
-                            const imgIndex = data.column.index - (header.length - 3);
-                            const imgData = [item.tandaTangan, item.fotoFront, item.fotoBack][imgIndex];
+                    if (imgData && imgData.startsWith('data:image')) {
+                        const img = new Image();
+                        img.src = imgData;
+                        img.onload = () => {
+                            try {
+                                // Resize gambar untuk efisiensi
+                                const tempCanvas = document.createElement('canvas');
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCanvas.width = 120;
+                                tempCanvas.height = 90;
+                                tempCtx.drawImage(img, 0, 0, 120, 90);
+                                const resizedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-                            if (imgData && imgData.startsWith('data:image')) {
-                                try {
-                                    const img = new Image();
-                                    img.crossOrigin = 'anonymous';
-                                    img.onload = () => {
-                                        const tempCanvas = document.createElement('canvas');
-                                        const tempCtx = tempCanvas.getContext('2d');
-                                        tempCanvas.width = 120;
-                                        tempCanvas.height = 90;
-                                        tempCtx.drawImage(img, 0, 0, 120, 90);
-                                        const resizedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                                // Posisi terpusat di sel
+                                const cellWidth = data.cell.width - 4;
+                                const cellHeight = data.cell.height - 4;
+                                const drawWidth = Math.min(20, cellWidth);
+                                const drawHeight = Math.min(15, cellHeight);
+                                const x = data.cell.x + (data.cell.width - drawWidth) / 2;
+                                const y = data.cell.y + (data.cell.height - drawHeight) / 2;
 
-                                        const cellWidth = data.cell.width - 4;
-                                        const cellHeight = data.cell.height - 4;
-                                        const drawWidth = Math.min(20, cellWidth);
-                                        const drawHeight = Math.min(15, cellHeight);
-                                        const x = data.cell.x + (cellWidth - drawWidth) / 2;
-                                        const y = data.cell.y + (cellHeight - drawHeight) / 2;
-
-                                        doc.addImage(resizedDataUrl, 'JPEG', x, y, drawWidth, drawHeight, undefined, 'FAST');
-                                    };
-                                    img.src = imgData;
-                                } catch (e) {
-                                    console.warn('Gagal render gambar:', e);
-                                    doc.setFontSize(7);
-                                    doc.text('[Gambar error]', data.cell.x + 3, data.cell.y + 10);
-                                }
-                            } else {
+                                doc.addImage(resizedDataUrl, 'JPEG', x, y, drawWidth, drawHeight, undefined, 'FAST');
+                            } catch (e) {
+                                console.warn('Gagal render gambar:', e);
                                 doc.setFontSize(7);
-                                doc.text('[Tidak ada]', data.cell.x + 3, data.cell.y + 10);
+                                doc.text('[Gambar error]', data.cell.x + 3, data.cell.y + 10);
                             }
-                        }
+                        };
+                    } else {
+                        doc.setFontSize(7);
+                        doc.text('[Tidak ada gambar]', data.cell.x + 3, data.cell.y + 10);
                     }
-                });
-
-                yPosition = doc.lastAutoTable.finalY + 15;
-                if (yPosition > 180) {
-                    doc.addPage();
-                    yPosition = 30;
                 }
             }
+        });
 
-            // Tabel Instansi
-            const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
-            const stylesInstansi = {
-                0: { cellWidth: 10, halign: 'center' },
-                1: { cellWidth: 28 },
-                2: { cellWidth: 35 },
-                3: { cellWidth: 22 },
-                4: { cellWidth: 25 },
-                5: { cellWidth: 45 },
-                6: { cellWidth: 20 },
-                7: { cellWidth: 20 },
-                8: { cellWidth: 22 },
-                9: { cellWidth: 22 },
-                10: { cellWidth: 22 }
-            };
-
-            if (dataInstansi.length > 0) {
-                buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA', stylesInstansi);
-            }
-
-            // Tabel Masyarakat
-            const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
-            const stylesMasyarakat = {
-                0: { cellWidth: 10, halign: 'center' },
-                1: { cellWidth: 28 },
-                2: { cellWidth: 25 },
-                3: { cellWidth: 30 },
-                4: { cellWidth: 22 },
-                5: { cellWidth: 25 },
-                6: { cellWidth: 45 },
-                7: { cellWidth: 20 },
-                8: { cellWidth: 20 },
-                9: { cellWidth: 22 },
-                10: { cellWidth: 22 },
-                11: { cellWidth: 22 }
-            };
-
-            if (dataMasyarakat.length > 0) {
-                buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT', stylesMasyarakat);
-            }
-
-            const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0, 10) + '.pdf';
-            doc.save(filename);
-            alert('PDF berhasil diekspor!\nFile: ' + filename);
+        yPosition = doc.lastAutoTable.finalY + 15;
+        if (yPosition > 180) {
+            doc.addPage();
+            yPosition = 30;
         }
+    }
+
+    // Kolom untuk Instansi
+    const headerInstansi = ['No', 'Nama', 'Instansi', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
+    const stylesInstansi = {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 28 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 40, overflow: 'linebreak' },
+        6: { cellWidth: 22 },
+        7: { cellWidth: 22 },
+        8: { cellWidth: 22 },
+        9: { cellWidth: 22 },
+        10: { cellWidth: 22 }
+    };
+
+    if (dataInstansi.length > 0) {
+        buatTabel(dataInstansi, headerInstansi, 'TAMU DARI INSTANSI / UNIT KERJA', stylesInstansi);
+    }
+
+    // Kolom untuk Masyarakat
+    const headerMasyarakat = ['No', 'Nama', 'Kecamatan', 'Desa', 'Pihak Ditemui', 'Jenis Layanan', 'Uraian', 'No HP', 'Waktu', 'TTD', 'Foto Depan', 'Foto Belakang'];
+    const stylesMasyarakat = {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 40, overflow: 'linebreak' },
+        7: { cellWidth: 22 },
+        8: { cellWidth: 22 },
+        9: { cellWidth: 22 },
+        10: { cellWidth: 22 },
+        11: { cellWidth: 22 }
+    };
+
+    if (dataMasyarakat.length > 0) {
+        buatTabel(dataMasyarakat, headerMasyarakat, 'TAMU DARI MASYARAKAT', stylesMasyarakat);
+    }
+
+    const filename = 'Buku_Tamu_Inspektorat_Tubaba_' + new Date().toISOString().slice(0, 10) + '.pdf';
+    doc.save(filename);
+    alert('PDF berhasil diekspor!\nFoto depan & belakang sudah masuk ke kolom yang sesuai.');
+}
 
         function autoResize(textarea) {
             textarea.style.height = 'auto';
