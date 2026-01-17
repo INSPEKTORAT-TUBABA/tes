@@ -926,8 +926,10 @@
         }
 
         function showForm() {
-            // Refresh halaman untuk reset form
-            location.reload();
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('dataSection').style.display = 'none';
+            document.getElementById('btnForm').style.background = '#007bff';
+            document.getElementById('btnData').style.background = '#6c757d';
         }
 
         function showData() {
