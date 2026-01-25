@@ -36,8 +36,7 @@
             height: 100%;
         }
         
-        ./* Container Konten */
-/* Container Konten */
+        ./* Container Utama Intro */
 .intro-content {
     position: relative;
     z-index: 10001;
@@ -46,36 +45,37 @@
     align-items: center;
     text-align: center;
     width: 100%;
+    perspective: 1000px;
 }
 
-/* Efek Huruf 3D & Shadow */
-.reflective-text {
-    font-size: 2.8rem;
+/* Tipografi 3D dengan Ukuran Seragam */
+.text-3d {
+    font-size: 2.4rem; /* Ukuran sama untuk semua baris */
     font-weight: 900;
-    margin: 10px 0;
+    margin: 12px 0;
     letter-spacing: 3px;
     text-transform: uppercase;
     color: #ffffff;
-    /* Layered Shadow untuk Efek 3D */
+    
+    /* Layered Shadow untuk Ketebalan 3D */
     text-shadow: 
         0 1px 0 #ccc, 
         0 2px 0 #c9c9c9, 
         0 3px 0 #bbb, 
         0 4px 0 #b9b9b9, 
         0 5px 0 #aaa, 
-        0 6px 1px rgba(0,0,0,.1), 
-        0 0 5px rgba(0,0,0,.1), 
-        0 1px 3px rgba(0,0,0,.3), 
-        0 3px 5px rgba(0,0,0,.2), 
-        0 5px 10px rgba(0,0,0,.25), 
-        0 10px 10px rgba(0,0,0,.2), 
-        0 20px 20px rgba(0,0,0,.15);
-    /* Refleksi dihapus sesuai permintaan */
-    -webkit-box-reflect: none !important;
+        0 6px 1px rgba(0,0,0,0.1), 
+        0 0 5px rgba(0,0,0,0.1), 
+        0 1px 3px rgba(0,0,0,0.3), 
+        0 3px 5px rgba(0,0,0,0.2), 
+        0 5px 10px rgba(0,0,0,0.25), 
+        0 10px 10px rgba(0,0,0,0.2);
+    
+    -webkit-box-reflect: none !important; /* Refleksi dihapus */
 }
 
-/* Warna Biru 3D Khusus Inspektorat */
-.blue-text {
+/* Variasi Warna Biru 3D */
+.blue-3d {
     color: #00d2ff;
     text-shadow: 
         0 1px 0 #0099cc, 
@@ -83,66 +83,26 @@
         0 3px 0 #0077aa, 
         0 4px 0 #006699, 
         0 5px 0 #005588, 
-        0 6px 1px rgba(0,0,0,.1), 
-        0 0 20px rgba(0, 210, 255, 0.5), /* Cahaya biru */
+        0 0 20px rgba(0, 210, 255, 0.4), 
         0 10px 15px rgba(0,0,0,0.4);
 }
 
-/* Gerakan Melayang Sangat Lambat (Slower Animation) */
-@keyframes slowFloat {
+/* Gerakan Melayang Sangat Lambat */
+@keyframes superSlowFloat {
     0% { transform: translateY(0px) rotateX(0deg); }
-    50% { transform: translateY(-10px) rotateX(5deg); } /* Sedikit rotasi 3D */
+    50% { transform: translateY(-15px) rotateX(4deg); }
     100% { transform: translateY(0px) rotateX(0deg); }
 }
 
-.floating-1 { animation: slowFloat 6s ease-in-out infinite; }
-.floating-2 { animation: slowFloat 7s ease-in-out infinite; animation-delay: 0.8s; }
-.floating-3 { animation: slowFloat 8s ease-in-out infinite; animation-delay: 1.5s; }
+.float-1 { animation: superSlowFloat 7s ease-in-out infinite; }
+.float-2 { animation: superSlowFloat 8s ease-in-out infinite; animation-delay: 1s; }
+.float-3 { animation: superSlowFloat 9s ease-in-out infinite; animation-delay: 2s; }
 
-/* Responsive HP */
+/* Responsif Mobile */
 @media (max-width: 600px) {
-    .reflective-text {
-        font-size: 1.6rem;
-        text-shadow: 0 1px 0 #ccc, 0 2px 0 #bbb, 0 5px 10px rgba(0,0,0,0.3);
-    }
-}
-
-/* Base Style untuk Teks Reflektif */
-.reflective-text {
-    font-size: 2.8rem; 
-    font-weight: 900;
-    margin: 5px 0;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #ffffff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    /* Efek Refleksi */
-    -webkit-box-reflect: below -10px linear-gradient(transparent, rgba(255, 255, 255, 0.1));
-}
-
-/* Variasi Warna Biru untuk Inspektorat */
-.blue-text {
-    color: #00d2ff;
-    text-shadow: 0 0 25px rgba(0, 210, 255, 0.7);
-    -webkit-box-reflect: below -10px linear-gradient(transparent, rgba(0, 210, 255, 0.2));
-}
-
-/* Animasi Melayang (Floating) */
-@keyframes float {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(0.5deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
-}
-
-.floating-1 { animation: float 4s ease-in-out infinite; }
-.floating-2 { animation: float 4.5s ease-in-out infinite; animation-delay: 0.5s; }
-.floating-3 { animation: float 5s ease-in-out infinite; animation-delay: 1s; }
-
-/* Responsive untuk HP */
-@media (max-width: 600px) {
-    .reflective-text {
-        font-size: 1.5rem;
-        letter-spacing: 1px;
+    .text-3d {
+        font-size: 1.3rem; /* Ukuran tetap seragam di HP */
+        margin: 8px 0;
     }
 }
         
@@ -155,9 +115,9 @@
         }
         
         .intro-subtitle {
-            font-size: 1.2rem;
+            font-size: 2.2rem;
             margin-bottom: 40px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             animation: fadeInUp 1.5s ease-out;
         }
         
@@ -382,20 +342,14 @@
 </head>
 <body>
     <!-- Intro Page with 3D Particle Animation -->
-   <div id="introPage" style="perspective: 1000px;">
-    <canvas id="particleCanvas"></canvas>
-    <div class="intro-content">
-        <h1 class="reflective-text floating-1">SELAMAT DATANG</h1>
-        
-        <h1 class="reflective-text blue-text floating-2">INSPEKTORAT DAERAH</h1>
-        <h1 class="reflective-text blue-text floating-3">KABUPATEN TULANG BAWANG BARAT</h1>
-        
-        <br><br>
-        <button class="btn-3d" onclick="startApp()">
-            📝 ISI BUKU TAMU
-        </button>
+    <div id="introPage">
+        <canvas id="particleCanvas"></canvas>
+        <div class="intro-content">
+            <h2 class="intro-title">SELAMAT DATANG</h2>
+            <h1 class="intro-subtitle">DI INSPEKTORAT DAERAH<br>KABUPATEN TULANG BAWANG BARAT</h1>
+            <button class="btn-start" onclick="startApp()">📝 ISI BUKU TAMU</button>
+        </div>
     </div>
-</div>
 
     <!-- Main App (Hidden Initially) -->
     <div id="mainApp" style="display: none;">
@@ -1824,121 +1778,88 @@ function startApp() {
 (function() {
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
-    let stars = [];
-    let shootingStars = [];
-    let mouse = { x: null, y: null, radius: 120 };
-
-    function resize() {
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.x;
-        mouse.y = e.y;
     });
-    // Reset mouse saat meninggalkan layar agar bintang kembali ke asal
-    window.addEventListener('mouseout', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
-    resize();
-
-    // 1. Partikel Bintang Kecil (Bergerak Otomatis + Interaktif)
-    class Star {
+    
+    const particles = [];
+    const particleCount = 150;
+    
+    class Particle {
         constructor() {
             this.x = Math.random() * canvas.width;
             this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 1.8;
-            // Kecepatan gerak otomatis acak
-            this.vx = (Math.random() - 0.5) * 0.5; 
+            this.z = Math.random() * 1000;
+            this.vx = (Math.random() - 0.5) * 0.5;
             this.vy = (Math.random() - 0.5) * 0.5;
-            this.density = (Math.random() * 30) + 1;
+            this.vz = (Math.random() - 0.5) * 2;
+            this.radius = Math.random() * 2 + 1;
         }
-        draw() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        
         update() {
-            // Gerakan Otomatis
             this.x += this.vx;
             this.y += this.vy;
-
-            // Memantul jika kena batas layar
+            this.z += this.vz;
+            
             if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
             if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
-            // Interaksi Menghindar dari Mouse
-            if (mouse.x != null) {
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < mouse.radius) {
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    let dirX = dx / distance;
-                    let dirY = dy / distance;
-                    this.x -= dirX * force * 5;
-                    this.y -= dirY * force * 5;
+            if (this.z < 0 || this.z > 1000) this.vz *= -1;
+        }
+        
+        draw() {
+            const scale = 1000 / (1000 + this.z);
+            const x2d = (this.x - canvas.width / 2) * scale + canvas.width / 2;
+            const y2d = (this.y - canvas.height / 2) * scale + canvas.height / 2;
+            const r = this.radius * scale;
+            
+            ctx.beginPath();
+            ctx.arc(x2d, y2d, r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * scale})`;
+            ctx.fill();
+        }
+    }
+    
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(particle => {
+            particle.update();
+            particle.draw();
+        });
+        
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 * (1 - distance / 100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
                 }
             }
         }
-    }
-
-    // 2. Bintang Berekor Emas (Mengorbit Lambat)
-    class GoldOrbit {
-        constructor() {
-            this.angle = Math.random() * Math.PI * 2;
-            this.radius = 180 + Math.random() * 120;
-            this.speed = 0.003 + Math.random() * 0.005; // Lebih lambat & elegan
-            this.color = '#ffd700';
-        }
-        draw() {
-            let cx = canvas.width / 2;
-            let cy = canvas.height / 2;
-            
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = 'gold';
-
-            for (let i = 0; i < 20; i++) {
-                let alpha = 1 - (i / 20);
-                let currentAngle = this.angle - (i * 0.015);
-                let x = cx + Math.cos(currentAngle) * this.radius;
-                let y = cy + Math.sin(currentAngle) * this.radius;
-                
-                ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
-                ctx.beginPath();
-                ctx.arc(x, y, 2 - (i * 0.1), 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.shadowBlur = 0; // Reset shadow agar tidak berat
-        }
-        update() {
-            this.angle += this.speed;
-        }
-    }
-
-    function init() {
-        stars = [];
-        shootingStars = [];
-        for (let i = 0; i < 350; i++) stars.push(new Star());
-        for (let i = 0; i < 5; i++) shootingStars.push(new GoldOrbit());
-    }
-
-    function animate() {
-        ctx.fillStyle = 'rgba(9, 9, 18, 0.2)'; // Efek trail
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        stars.forEach(s => { s.update(); s.draw(); });
-        shootingStars.forEach(ss => { ss.update(); ss.draw(); });
-
         requestAnimationFrame(animate);
     }
-
-    init();
+    
     animate();
 })();
+
     </script>
     </div> <!-- Close mainApp -->
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c0482160a024ab2',t:'MTc2ODgwNjU4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
