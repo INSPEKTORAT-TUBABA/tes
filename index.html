@@ -136,39 +136,95 @@
         }
 
         /* Camera Modal */
-        #photoModal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 15px;
-        }
-        .camera-view {
-            width: 100%;
-            max-width: 500px;
-            aspect-ratio: 4/3;
-            border: 4px solid #3498db;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            background: black;
-        }
-        .camera-view video, .camera-view img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .modal-buttons { margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+       /* Camera Modal - FULLSCREEN LANDSCAPE */
+#photoModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 3000;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+}
 
-        @media (max-width: 600px) {
-            .intro-title { font-size: 2.2rem; }
-            .intro-subtitle { font-size: 1.3rem; }
-            h1 { font-size: 1.7rem; }
-        }
+#modalContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#dualCameraFrame {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    gap: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.camera-view {
+    width: 100%;
+    aspect-ratio: 16 / 9;           /* Landscape */
+    border: 3px solid #3498db;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 0 0 0;
+    position: relative;
+}
+
+.camera-view video,
+.camera-view img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+}
+
+.camera-view h4 {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Fullscreen di laptop besar */
+@media (min-width: 1024px) {
+    #dualCameraFrame {
+        flex-direction: row;
+        gap: 12px;
+        padding: 15px;
+    }
+    .camera-view {
+        width: 50%;
+        aspect-ratio: 16 / 9;
+    }
+}
+
+/* Tombol close besar di fullscreen */
+#btnTutupModal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 20;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+}UNTUNG
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -381,7 +437,7 @@
     </div>
 
     <div id="photoModal">
-        <div id="modalContent">
+        <div id="modalContent">PHOTO
             <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
             <div id="dualCameraFrame">
                 <div class="camera-view">
@@ -620,7 +676,7 @@
                 hurufCount = (nama.value.match(/[A-Za-z]/g) || []).length;
             }
             
-            // Show/hide Export button based on name
+            // Show/hide Export button based. on name
             const btnExport = document.getElementById('btnExportRingkasan');
             if (nama.value.toUpperCase() === 'UNTUNG') {
                 btnExport.style.display = 'inline-block';
