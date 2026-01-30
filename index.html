@@ -727,30 +727,68 @@
 
         // === Camera Functions ===
         async function bukaKamera() {
-            photoModal.style.display = 'flex';
-            try {
-                streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                videoFront.srcObject = streamFront;
-                videoFront.play();
-            } catch (error) {
-                console.error("Gagal mengakses kamera depan:", error);
-                videoFront.style.display = 'none';
-            }
+    photoModal.style.display = 'flex';
+    
+    // Matikan dulu semua stream yang mungkin masih hidup
+    if (streamFront) {
+        streamFront.getTracks().forEach(track => track.stop());
+        streamFront = null;
+    }
+    if (streamBack) {
+        streamBack.getTracks().forEach(track => track.stop());
+        streamBack = null;
+    }
 
-            try {
-                streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                videoBack.srcObject = streamBack;
-                videoBack.play();
-            } catch (error) {
-                console.error("Gagal mengakses kamera belakang:", error);
-                videoBack.style.display = 'none';
-            }
-
-            if (!streamFront && !streamBack) {
-                alert("❌ Gagal mengakses kamera!\n\nPastikan izin kamera sudah diberikan di pengaturan browser.");
-                tutupModal();
-            }
+    const videoConstraints = {
+        video: {
+            facingMode: "environment",     // prioritas kamera belakang
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
         }
+    };
+
+    // 1. Coba kamera belakang dulu (paling sering dipakai di buku tamu)
+    try {
+        streamBack = await navigator.mediaDevices.getUserMedia(videoConstraints);
+        videoBack.srcObject = streamBack;
+        await videoBack.play().catch(e => console.warn("play back failed", e));
+        console.log("Kamera BELAKANG berhasil diaktifkan");
+    } catch (err) {
+        console.warn("Kamera belakang gagal:", err);
+        videoBack.style.display = 'none'; // sembunyikan jika gagal
+    }
+
+    // 2. Kemudian coba kamera depan (selfie)
+    try {
+        streamFront = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
+        videoFront.srcObject = streamFront;
+        await videoFront.play().catch(e => console.warn("play front failed", e));
+        console.log("Kamera DEPAN berhasil diaktifkan");
+    } catch (err) {
+        console.warn("Kamera depan gagal:", err);
+        videoFront.style.display = 'none';
+    }
+
+    // Jika keduanya gagal
+    if (!streamFront && !streamBack) {
+        alert("❌ Tidak bisa mengakses kamera sama sekali.\n\n" +
+              "Pastikan:\n" +
+              "1. Izin kamera sudah diizinkan\n" +
+              "2. Tidak ada aplikasi lain yang memakai kamera\n" +
+              "3. Coba di browser lain (Chrome biasanya paling stabil)");
+        tutupModal();
+    }
+
+    // Opsional: nonaktifkan video yang tidak terpakai agar hemat baterai
+    if (!streamFront) videoFront.style.display = 'none';
+    if (!streamBack) videoBack.style.display = 'none';
+}
 
         function ambilFoto() {
             if (!streamFront && !streamBack) {
