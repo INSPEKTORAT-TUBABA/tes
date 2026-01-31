@@ -129,23 +129,19 @@
             font-size: 14px;
         }
         
-        #photoModal { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.85); 
-            z-index: 10000; 
-            justify-content: center; 
-            align-items: center; 
-            padding: 10px; 
-        }
-        #modalContent {
-            background:#fff; 
-            padding:20px; 
-            border-radius:12px; 
-            max-width:90%; 
-            width:420px; 
-            text-align:center;
+        #photoModal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 10px;
         }
 
         #signature-pad { 
@@ -206,7 +202,6 @@
             .detail-row { flex-direction: column; }
             .detail-label { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; }
         }
- 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -342,18 +337,18 @@
             <div id="field-uraian" class="hidden">
                 <label>URAIAN: <span class="required">*</span></label>
                 <textarea id="uraian" required rows="3" 
-          oninput="validateUraian(); autoResize(this);"></textarea>
+                    oninput="validateUraian(); autoResize(this);"></textarea>
             </div>
 
             <div id="field-nomorHp" class="hidden">
                 <label>Nomor WhatsApp: <span class="required">*</span></label>
                 <input id="nomorHp" 
-       required 
-       type="tel" 
-       placeholder="08xxxxxxxxxx (minimal 11 digit, hanya angka)" 
-       pattern="[0-9]{11,13}" 
-       maxlength="13" 
-       oninput="validateNomorHp(this); checkAndShowNext('nomorHp', 'field-tandaTangan');"/>
+                    required 
+                    type="tel" 
+                    placeholder="08xxxxxxxxxx (minimal 11 digit, hanya angka)" 
+                    pattern="[0-9]{11,13}" 
+                    maxlength="13" 
+                    oninput="validateNomorHp(this); checkAndShowNext('nomorHp', 'field-tandaTangan');"/>
             </div>
 
             <div id="field-tandaTangan" class="hidden">
@@ -367,16 +362,6 @@
                 <label>Foto: <span class="required">*</span></label>
                 <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
                 <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
-                <div id="previewFoto" style="margin-top:16px; display:flex; flex-wrap:wrap; gap:16px; justify-content:center;">
-                    <div id="boxD" class="hidden" style="text-align:center;">
-                        <small style="color:#555;">Foto Depan</small><br>
-                        <img id="resD" style="max-width:160px; border:2px solid #28a745; border-radius:6px;">
-                    </div>
-                    <div id="boxB" class="hidden" style="text-align:center;">
-                        <small style="color:#555;">Foto Belakang / Objek</small><br>
-                        <img id="resB" style="max-width:160px; border:2px solid #007bff; border-radius:6px;">
-                    </div>
-                </div>
                 <br/><br/>
                 <button type="button" id="btnSimpanData" onclick="simpanDataDanTutupForm()" style="display: none; font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">✅ Simpan & Lihat Data</button>
             </div>
@@ -411,13 +396,25 @@
         <div id="dataContainer"></div>
     </div>
 
+    <!-- === KAMERA BARU: SINGLE VIDEO + STEP BY STEP === -->
     <div id="photoModal">
-        <div id="modalContent">
-            <h3 style="color: black;">Ambil Foto</h3>
-            <div id="infoKamera" class="cam-info">Foto Depan (Selfie)</div>
-            <video id="video" autoplay playsinline muted></video>
-            <button type="button" class="btn-capture" onclick="capture()">FOTO</button>
-            <button type="button" class="btn-cancel" onclick="stopAll()">Batal</button>
+        <div style="background:#fff; padding:20px; border-radius:12px; max-width:95%; width:100%; max-height:95vh; overflow-y:auto; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+            <h3 style="margin:0 0 15px; color:#333;">Ambil Dokumentasi Foto</h3>
+            
+            <div id="infoKamera" style="font-size:1.1em; font-weight:bold; margin-bottom:12px; color:#007bff;">
+                1. Foto Depan (Selfie)
+            </div>
+
+            <video id="video" autoplay playsinline muted style="width:100%; max-width:420px; background:#000; border-radius:8px; margin-bottom:15px;"></video>
+
+            <div style="margin:15px 0;">
+                <button type="button" class="btn-capture" onclick="capture()" style="background:#28a745; color:white; border:none; padding:12px 28px; font-size:1.1em; border-radius:50px; cursor:pointer; margin:0 8px; box-shadow:0 4px 12px rgba(40,167,69,0.4);">
+                    📸 FOTO
+                </button>
+                <button type="button" class="btn-cancel" onclick="stopAll()" style="background:#dc3545; color:white; border:none; padding:12px 28px; font-size:1.1em; border-radius:50px; cursor:pointer; margin:0 8px;">
+                    ❌ Batal
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -517,7 +514,8 @@ let dataBukuTamu = [];
 let signatureCanvas, ctx2, isDrawing = false, totalStrokeLength = 0;
 let hasSignature = false, hasPhoto = false;
 let fotoDataURLFront = null, fotoDataURLBack = null;
-let streamFront = null, streamBack = null;
+let stream = null;
+let step = 1; // 1 = depan, 2 = belakang
 let editingIndex = -1, originalEditData = null;
 
 const PIXELS_PER_CM = 37.7952755906;
@@ -634,11 +632,11 @@ function validateNama() {
         hideFieldsAfter('field-asal');
     }
 }
+
 function validateNomorHp(input) {
     const value = input.value.trim();
-    const onlyDigits = value.replace(/[^0-9]/g, '');  // hapus semua selain angka
+    const onlyDigits = value.replace(/[^0-9]/g, '');
     
-    // Sinkronkan kembali ke input (hapus huruf/spasi/tanda secara otomatis)
     input.value = onlyDigits;
     
     const isValid = onlyDigits.length >= 11 && onlyDigits.length <= 13 && /^[0-9]+$/.test(onlyDigits);
@@ -646,15 +644,12 @@ function validateNomorHp(input) {
     if (isValid) {
         input.classList.remove('error');
         input.classList.add('success');
-        // lanjutkan ke field berikutnya (sudah dihandle oleh checkAndShowNext)
     } else {
         input.classList.remove('success');
         input.classList.add('error');
-        // sembunyikan field berikutnya jika invalid
         hideFieldsAfter('field-nomorHp');
     }
     
-    // Tampilkan pesan bantuan (opsional tapi sangat membantu user)
     let info = document.getElementById('nomorHpInfo');
     if (!info) {
         info = document.createElement('small');
@@ -673,6 +668,7 @@ function validateNomorHp(input) {
         info.textContent = '';
     }
 }
+
 function asalChanged() {
     const asal = document.getElementById('asal').value;
     const daftarInstansi = document.getElementById('daftarInstansi');
@@ -780,15 +776,17 @@ function hideAllFields() {
                     'field-nomorHp', 'field-tandaTangan', 'field-aksi'];
     fields.forEach(id => document.getElementById(id).classList.add('hidden'));
 }
+
 function countWords(str) {
     if (!str.trim()) return 0;
-    // hitung kata: pisah spasi, hapus tanda baca berlebih, abaikan enter ganda
     return str.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
+
 function autoResize(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
+
 function validateUraian() {
     const uraian = document.getElementById('uraian');
     const kata = countWords(uraian.value);
@@ -800,10 +798,9 @@ function validateUraian() {
     } else {
         uraian.classList.remove('success');
         uraian.classList.add('error');
-        hideFieldsAfter('field-uraian');   // sembunyikan field berikutnya
+        hideFieldsAfter('field-uraian');
     }
     
-    // Optional: tampilkan info berapa kata lagi yang dibutuhkan
     let info = document.getElementById('uraianInfo');
     if (!info) {
         info = document.createElement('small');
@@ -818,34 +815,26 @@ function validateUraian() {
     }
 }
 
-// ================== KAMERA BARU - SEQUENTIAL ==================
-
-let stream = null;
-let step = 1;           // 1 = depan, 2 = belakang
-let fotoDataURLFront = null;
-let fotoDataURLBack = null;
-
+// ===== CAMERA FUNCTIONS BARU =====
 async function bukaKamera() {
     step = 1;
     document.getElementById('infoKamera').innerText = "1. Foto Depan (Selfie)";
     document.getElementById('photoModal').style.display = 'flex';
-    document.getElementById('boxD').classList.add('hidden');
-    document.getElementById('boxB').classList.add('hidden');
-    // document.getElementById('btnSimpan').classList.add('hidden'); // Tidak ada btnSimpan di modal, tapi di form
-    
     await initCamera('user');
 }
 
 async function initCamera(facing) {
-    // Matikan stream sebelumnya
-    stopAll();
+    if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+    }
 
     try {
         stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: facing },
             audio: false
         });
-        
+
         const video = document.getElementById('video');
         video.srcObject = stream;
         video.onloadedmetadata = () => video.play().catch(e => console.log("play error:", e));
@@ -858,45 +847,37 @@ async function initCamera(facing) {
 
 function capture() {
     const video = document.getElementById('video');
-    if (!video.videoWidth) {
-        alert("Kamera belum siap. Tunggu beberapa detik atau coba lagi.");
-        return;
-    }
+    if (!video.srcObject) return;
 
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    const data = canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL('image/png');
 
     if (step === 1) {
-        fotoDataURLFront = data;
-        document.getElementById('resD').src = data;
-        document.getElementById('boxD').classList.remove('hidden');
-
+        fotoDataURLFront = dataUrl;
         step = 2;
-        document.getElementById('infoKamera').innerText = "2. Foto Belakang (Objek / Lokasi)";
+        document.getElementById('infoKamera').innerText = "2. Foto Belakang (Objek/KTP/Surat dll)";
         initCamera('environment');
     } else {
-        fotoDataURLBack = data;
-        document.getElementById('resB').src = data;
-        document.getElementById('boxB').classList.remove('hidden');
-        
-        stopAll();  // matikan kamera setelah foto kedua
-        alert("Kedua foto berhasil diambil!");
+        fotoDataURLBack = dataUrl;
         hasPhoto = true;
+        stopAll();
         document.getElementById('btnSimpanData').style.display = 'inline-block';
         document.getElementById('photoWarning').style.display = 'none';
+        alert("✅ Kedua foto berhasil diambil!\nAnda bisa menyimpan data sekarang.");
     }
 }
 
 function stopAll() {
     if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(t => t.stop());
         stream = null;
     }
     document.getElementById('photoModal').style.display = 'none';
+    document.getElementById('video').srcObject = null;
 }
 
 // ===== DATA MANAGEMENT =====
@@ -908,14 +889,15 @@ function simpanData() {
     document.getElementById('photoWarning').style.display = 'none';
     
     if (!form.reportValidity()) isValid = false;
-const uraianValue = document.getElementById('uraian').value.trim();
-const jumlahKata = countWords(uraianValue);
 
-if (jumlahKata < 10) {
-    document.getElementById('uraian').classList.add('error');
-    isValid = false;
-    alert('Uraian keperluan minimal harus 10 kata!\nSaat ini hanya ' + jumlahKata + ' kata.');
-}
+    const uraianValue = document.getElementById('uraian').value.trim();
+    const jumlahKata = countWords(uraianValue);
+
+    if (jumlahKata < 10) {
+        document.getElementById('uraian').classList.add('error');
+        isValid = false;
+        alert('Uraian keperluan minimal harus 10 kata!\nSaat ini hanya ' + jumlahKata + ' kata.');
+    }
     
     const namaInput = document.getElementById('nama');
     let hurufCount = 0;
@@ -941,20 +923,21 @@ if (jumlahKata < 10) {
         document.getElementById('photoWarning').style.display = 'block';
         isValid = false;
     }
-    // Pengecekan nomor HP
-const nomorHpInput = document.getElementById('nomorHp');
-const nomorValue = nomorHpInput.value.trim().replace(/[^0-9]/g, '');
-const panjangNomor = nomorValue.length;
 
-if (panjangNomor < 11) {
-    nomorHpInput.classList.add('error');
-    isValid = false;
-    alert(`Nomor WhatsApp harus berisi minimal 11 angka!\nSaat ini: ${panjangNomor} digit`);
-}
-else if (/[^0-9]/.test(nomorValue)) {  // seharusnya sudah dibersihkan, tapi safety check
-    isValid = false;
-    alert('Nomor WhatsApp hanya boleh berisi angka!');
-}
+    const nomorHpInput = document.getElementById('nomorHp');
+    const nomorValue = nomorHpInput.value.trim().replace(/[^0-9]/g, '');
+    const panjangNomor = nomorValue.length;
+
+    if (panjangNomor < 11) {
+        nomorHpInput.classList.add('error');
+        isValid = false;
+        alert(`Nomor WhatsApp harus berisi minimal 11 angka!\nSaat ini: ${panjangNomor} digit`);
+    }
+    else if (/[^0-9]/.test(nomorValue)) {
+        isValid = false;
+        alert('Nomor WhatsApp hanya boleh berisi angka!');
+    }
+
     if (isValid) {
         const asal = document.getElementById('asal').value;
         const formData = {
