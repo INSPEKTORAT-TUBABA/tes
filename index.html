@@ -437,29 +437,30 @@
     </div>
 
     <div id="photoModal">
-        <div id="modalContent">PHOTO
-            <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
-            <div id="dualCameraFrame">
-                <div class="camera-view">
-                    <h4>Kamera Depan (Selfie)</h4>
-                    <video id="videoFront" autoplay muted playsinline></video>
-                    <img id="capturedFrontPhoto" alt="Foto Selfie" style="display:none;">
-                </div>
-                <div class="camera-view">
-                    <h4>Kamera Belakang</h4>
-                    <video id="videoBack" autoplay muted playsinline></video>
-                    <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
-                </div>
+    <div id="modalContent">
+        <h3 style="color: white; text-align:center;">Pengambilan Foto</h3>
+        <div id="dualCameraFrame">
+            <div class="camera-view">
+                <h4>Kamera Depan (Selfie)</h4>
+                <video id="videoFront" autoplay muted playsinline></video>
+                <img id="capturedFrontPhoto" alt="Foto Selfie" style="display:none;">
             </div>
-            <canvas id="canvasFront" style="display:none;"></canvas>
-            <canvas id="canvasBack" style="display:none;"></canvas>
-            <div id="modalButtons">
-                <button type="button" class="btn-camera" onclick="ambilFoto()">📸 Ambil Foto</button>
-                <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
-                <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
+            <div class="camera-view">
+                <h4>Kamera Belakang</h4>
+                <video id="videoBack" autoplay muted playsinline></video>
+                <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
             </div>
         </div>
+        <canvas id="canvasFront" style="display:none;"></canvas>
+        <canvas id="canvasBack" style="display:none;"></canvas>
+        <div id="modalButtons">
+            <button type="button" class="btn-camera" onclick="ambilFotoDepan()">📸 Ambil Foto Depan</button>
+            <button type="button" class="btn-camera" onclick="ambilFotoBelakang()" id="btnAmbilBelakang" style="display:none;">📸 Ambil Foto Belakang</button>
+            <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()" style="display:none;">✅ Simpan & Lanjut</button>
+            <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
+        </div>
     </div>
+</div>
 
     <script>
         const signatureCanvas = document.getElementById('signature-pad');
