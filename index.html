@@ -437,47 +437,29 @@
     </div>
 
     <div id="photoModal">
-    <div id="modalContent">
-        <h3 style="color: white; text-align:center;">Pengambilan Foto</h3>
-        <div id="dualCameraFrame">
-            <div class="camera-view">
-                <h4>Kamera Depan (Selfie)</h4>
-                <video id="videoFront" autoplay muted playsinline></video>
-                <img id="capturedFrontPhoto" alt="Foto Selfie" style="display:none;">
+        <div id="modalContent">PHOTO
+            <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
+            <div id="dualCameraFrame">
+                <div class="camera-view">
+                    <h4>Kamera Depan (Selfie)</h4>
+                    <video id="videoFront" autoplay muted playsinline></video>
+                    <img id="capturedFrontPhoto" alt="Foto Selfie" style="display:none;">
+                </div>
+                <div class="camera-view">
+                    <h4>Kamera Belakang</h4>
+                    <video id="videoBack" autoplay muted playsinline></video>
+                    <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
+                </div>
             </div>
-            <div class="camera-view">
-                <h4>Kamera Belakang</h4>
-                <video id="videoBack" autoplay muted playsinline></video>
-                <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
+            <canvas id="canvasFront" style="display:none;"></canvas>
+            <canvas id="canvasBack" style="display:none;"></canvas>
+            <div id="modalButtons">
+                <button type="button" class="btn-camera" onclick="ambilFoto()">📸 Ambil Foto</button>
+                <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
+                <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
             </div>
-        </div>
-        <canvas id="canvasFront" style="display:none;"></canvas>
-        <canvas id="canvasBack" style="display:none;"></canvas>
-        <div id="modalButtons">
-            <button type="button" class="btn-camera" onclick="ambilFotoDepan()">📸 Ambil Foto Depan</button>
-            <button type="button" class="btn-camera" onclick="ambilFotoBelakang()" id="btnAmbilBelakang" style="display:none;">📸 Ambil Foto Belakang</button>
-            <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()" style="display:none;">✅ Simpan & Lanjut</button>
-            <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
         </div>
     </div>
-</div>
-
-        <div id="cameraStatus" style="color:white; margin:10px 0; font-weight:bold;">
-            Langkah 1 dari 2: Foto Depan
-        </div>
-
-        <div id="modalButtons">
-            <button type="button" id="btnCapture" onclick="captureCurrentPhoto()">📸 Ambil Foto</button>
-            <button type="button" id="btnNextStep" onclick="switchToBackCamera()" style="display:none; background:#28a745;">
-                ➡️ Lanjut Foto Belakang
-            </button>
-            <button type="button" id="btnSaveAndClose" onclick="simpanFotoLangsung()" style="display:none; background:#17a745;">
-                ✅ Simpan & Selesai
-            </button>
-            <button type="button" id="btnTutupModal" onclick="tutupModal()">❌ Tutup</button>
-        </div>
-    </div>
-</div>
 
     <script>
         const signatureCanvas = document.getElementById('signature-pad');
@@ -871,52 +853,6 @@ function simpanFotoLangsung() {
     document.getElementById('field-simpan').style.display = 'block';
     alert("✅ Foto berhasil diambil!\nSilakan klik 'Simpan Data' untuk menyimpan.");
 }
-
-        function tutupModal() {
-            photoModal.style.display = 'none';
-            if (streamFront) {
-                streamFront.getTracks().forEach(track => track.stop());
-                streamFront = null;
-            }
-            if (streamBack) {
-                streamBack.getTracks().forEach(track => track.stop());
-                streamBack = null;
-            }
-            capturedFrontPhoto.style.display = 'none';
-            capturedBackPhoto.style.display = 'none';
-            videoFront.style.display = 'block';
-            videoBack.style.display = 'block';
-            fotoDataURLFront = null;
-            fotoDataURLBack = null;
-            hasPhoto = false;
-        }
-
-        function simpanFotoLangsung() {
-            if (!hasPhoto) {
-                alert("❌ Harap ambil foto terlebih dahulu!");
-                return;
-            }
-            
-            // Tutup modal dan tampilkan tombol Simpan Data
-            photoModal.style.display = 'none';
-            if (streamFront) {
-                streamFront.getTracks().forEach(track => track.stop());
-                streamFront = null;
-            }
-            if (streamBack) {
-                streamBack.getTracks().forEach(track => track.stop());
-                streamBack = null;
-            }
-            capturedFrontPhoto.style.display = 'none';
-            capturedBackPhoto.style.display = 'none';
-            videoFront.style.display = 'block';
-            videoBack.style.display = 'block';
-            
-            // Tampilkan tombol Simpan Data
-            document.getElementById('field-simpan').style.display = 'block';
-            
-            alert("✅ Foto berhasil diambil!\nSilakan klik tombol 'Simpan Data' untuk menyimpan.");
-        }
 
         // === Data Handling ===
         function hideFieldsAfter(startFieldId) {
