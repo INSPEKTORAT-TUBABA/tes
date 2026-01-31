@@ -890,32 +890,36 @@ function validateUraian() {
 }// ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
-    
+
     const videoFront = document.getElementById('videoFront');
     const videoBack  = document.getElementById('videoBack');
-    const labelFront = document.querySelector('#dualCameraFrame .camera-view:first-child h4');
-    const labelBack  = document.querySelector('#dualCameraFrame .camera-view:last-child h4');
 
-    // Reset dulu
+    // Tampilkan keduanya dulu (reset visibility)
+    document.querySelector('#dualCameraFrame .camera-view:first-child').style.display = 'block';
+    document.querySelector('#dualCameraFrame .camera-view:last-child').style.display = 'block';
+
+    // Reset label dan srcObject
     videoFront.srcObject = null;
     videoBack.srcObject  = null;
     fotoDataURLFront = null;
     fotoDataURLBack  = null;
 
-    let streamFrontSuccess = false;
-    let streamBackSuccess  = false;
+    let hasFront = false;
+    let hasBack  = false;
 
-    // 1. Coba kamera belakang dulu (lebih umum di HP)
+    // 1. Coba kamera belakang dulu (lebih sering dipakai di HP)
     try {
         streamBack = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'environment' }
         });
         videoBack.srcObject = streamBack;
-        streamBackSuccess = true;
+        hasBack = true;
     } catch (err) {
-        console.warn('Kamera belakang tidak tersedia:', err);
-        labelBack.textContent = "Kamera Belakang Tidak Tersedia";
+        console.warn('Kamera belakang gagal:', err);
     }
+
+    // Tunggu sebentar supaya permission tidak bentrok
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // 2. Coba kamera depan
     try {
@@ -923,25 +927,32 @@ async function bukaKamera() {
             video: { facingMode: 'user' }
         });
         videoFront.srcObject = streamFront;
-        streamFrontSuccess = true;
+        hasFront = true;
     } catch (err) {
-        console.warn('Kamera depan tidak tersedia:', err);
-        labelFront.textContent = "Kamera Depan Tidak Tersedia";
+        console.warn('Kamera depan gagal:', err);
     }
 
-    // Jika keduanya gagal
-    if (!streamFrontSuccess && !streamBackSuccess) {
-        alert('Tidak dapat mengakses kamera sama sekali. Pastikan izin kamera sudah diizinkan.');
+    // Jika keduanya gagal → beri tahu user
+    if (!hasFront && !hasBack) {
+        alert('Tidak bisa membuka kamera.\nPastikan izin kamera sudah diizinkan di browser.');
         tutupKamera();
         return;
     }
 
-    // Jika hanya satu kamera yang berhasil, sembunyikan yang lain
-    if (!streamBackSuccess) {
+    // Sembunyikan kamera yang gagal
+    if (!hasBack) {
         document.querySelector('#dualCameraFrame .camera-view:last-child').style.display = 'none';
     }
-    if (!streamFrontSuccess) {
+    if (!hasFront) {
         document.querySelector('#dualCameraFrame .camera-view:first-child').style.display = 'none';
+    }
+
+    // Update label jika perlu
+    if (!hasBack) {
+        document.querySelector('#dualCameraFrame .camera-view:last-child h4').textContent = 'Kamera Belakang Tidak Tersedia';
+    }
+    if (!hasFront) {
+        document.querySelector('#dualCameraFrame .camera-view:first-child h4').textContent = 'Kamera Depan Tidak Tersedia';
     }
 }
 function ambilFoto() {
@@ -981,22 +992,24 @@ function simpanFoto() {
 }
 
 function tutupKamera() {
-    if (streamFront) {
-        streamFront.getTracks().forEach(track => track.stop());
-        streamFront = null;
-    }
-    if (streamBack) {
-        streamBack.getTracks().forEach(track => track.stop());
-        streamBack = null;
-    }
-    
+    [streamFront, streamBack].forEach(stream => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+    streamFront = streamBack = null;
+
+    const videoFront = document.getElementById('videoFront');
+    const videoBack  = document.getElementById('videoBack');
+    if (videoFront) videoFront.srcObject = null;
+    if (videoBack)  videoBack.srcObject  = null;
+
     document.getElementById('photoModal').style.display = 'none';
-    document.getElementById('videoFront').style.display = 'block';
-    document.getElementById('videoBack').style.display = 'block';
     document.getElementById('capturedFrontPhoto').style.display = 'none';
     document.getElementById('capturedBackPhoto').style.display = 'none';
+    document.getElementById('videoFront').style.display = 'block';
+    document.getElementById('videoBack').style.display = 'block';
 }
-
 // ===== DATA MANAGEMENT =====
 function simpanData() {
     const form = document.getElementById('bukuTamuForm');
