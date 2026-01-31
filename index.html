@@ -57,11 +57,19 @@
             border: 3px solid #ffc107; border-radius: 12px;
         }
 
-        #signature-pad {
-            background: white; border: 3px solid #007bff; border-radius: 8px;
-            cursor: crosshair; touch-action: none; display: block; margin: 10px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        #signature-pad { 
+    background: white; 
+    border: 3px solid #007bff;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none;          /* penting untuk HP */
+    display: block;
+    margin: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 100% !important;      /* tambahkan ini */
+    max-width: 600px;
+    height: 200px;
+}
 
         .detail-container {
             max-width: 900px; margin: 20px auto; background: white; border: 1px solid #ddd;
@@ -359,82 +367,142 @@ const MIN_STROKE_LENGTH_CM = 2;
 let cameraStream = null;
 let captureStep = 1;
 
-// ===== INITIALIZATION =====
+// ===== INITIALIZATION & SIGNATURE PAD =====
+let signatureCanvas, sigCtx, isDrawing = false, totalStrokeLength = 0;
+let hasSignature = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     signatureCanvas = document.getElementById('signature-pad');
-    ctx2 = signatureCanvas.getContext('2d');
-    ctx2.lineWidth = 2;
-    ctx2.lineCap = 'round';
-    ctx2.strokeStyle = '#00008B';
-    setupSignature();
-    window.addEventListener('resize', resizeCanvas);
+    if (!signatureCanvas) {
+        console.error("Canvas tanda tangan tidak ditemukan!");
+        return;
+    }
+    
+    sigCtx = signatureCanvas.getContext('2d');
+    sigCtx.lineWidth = 3;                // lebih tebal agar mudah dilihat
+    sigCtx.lineCap = 'round';
+    sigCtx.lineJoin = 'round';
+    sigCtx.strokeStyle = '#00008B';      // biru tua
+    
+    setupSignatureEvents();
+    window.addEventListener('resize', resizeSignatureCanvas);
+    resizeSignatureCanvas();             // panggil awal
 });
 
-function resizeCanvas() {
+function resizeSignatureCanvas() {
     if (document.getElementById('field-tandaTangan').classList.contains('hidden')) return;
-    const w = Math.min(signatureCanvas.parentElement.offsetWidth, 600);
-    const temp = document.createElement('canvas');
-    temp.width = signatureCanvas.width; temp.height = signatureCanvas.height;
-    temp.getContext('2d').drawImage(signatureCanvas, 0, 0);
-    signatureCanvas.width = w; signatureCanvas.height = 200;
-    ctx2.drawImage(temp, 0, 0);
+    
+    const container = signatureCanvas.parentElement;
+    const rect = container.getBoundingClientRect();
+    
+    // Simpan gambar sementara
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = signatureCanvas.width;
+    tempCanvas.height = signatureCanvas.height;
+    tempCanvas.getContext('2d').drawImage(signatureCanvas, 0, 0);
+    
+    // Sesuaikan ukuran
+    signatureCanvas.width = Math.min(rect.width - 20, 600);  // margin aman
+    signatureCanvas.height = 200;
+    
+    // Kembalikan gambar
+    sigCtx.drawImage(tempCanvas, 0, 0, signatureCanvas.width, signatureCanvas.height);
+    
+    // Reset style setelah resize
+    sigCtx.lineWidth = 3;
+    sigCtx.lineCap = 'round';
+    sigCtx.lineJoin = 'round';
+    sigCtx.strokeStyle = '#00008B';
 }
 
-function setupSignature() {
-    const events = {
-        mousedown: startDrawing,
-        mousemove: draw,
-        mouseup: stopDrawing,
-        mouseout: stopDrawing,
-        touchstart: handleTouch,
-        touchmove: handleTouch,
-        touchend: stopDrawing
+function setupSignatureEvents() {
+    // Mouse events
+    signatureCanvas.addEventListener('mousedown', startDrawing);
+    signatureCanvas.addEventListener('mousemove', draw);
+    signatureCanvas.addEventListener('mouseup', stopDrawing);
+    signatureCanvas.addEventListener('mouseout', stopDrawing);
+    
+    // Touch events (penting untuk HP)
+    signatureCanvas.addEventListener('touchstart', startDrawingTouch, { passive: false });
+    signatureCanvas.addEventListener('touchmove', drawTouch, { passive: false });
+    signatureCanvas.addEventListener('touchend', stopDrawing);
+    signatureCanvas.addEventListener('touchcancel', stopDrawing);
+}
+
+function getPointerPos(e) {
+    const rect = signatureCanvas.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
     };
-    Object.entries(events).forEach(([ev, fn]) => signatureCanvas.addEventListener(ev, fn));
 }
 
 function startDrawing(e) {
+    if (e.button !== 0 && !e.touches) return; // hanya tombol kiri mouse
+    e.preventDefault();
     isDrawing = true;
-    const rect = signatureCanvas.getBoundingClientRect();
-    ctx2.beginPath();
-    ctx2.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    
+    const pos = getPointerPos(e);
+    sigCtx.beginPath();
+    sigCtx.moveTo(pos.x, pos.y);
 }
 
 function draw(e) {
     if (!isDrawing) return;
-    const rect = signatureCanvas.getBoundingClientRect();
-    ctx2.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx2.stroke();
+    e.preventDefault();
+    
+    const pos = getPointerPos(e);
+    sigCtx.lineTo(pos.x, pos.y);
+    sigCtx.stroke();
+    
+    totalStrokeLength += 2; // perkiraan panjang garis
+    hasSignature = true;
+}
+
+function drawTouch(e) {
+    if (!isDrawing) return;
+    e.preventDefault(); // cegah scroll halaman
+    
+    const pos = getPointerPos(e);
+    sigCtx.lineTo(pos.x, pos.y);
+    sigCtx.stroke();
+    
     totalStrokeLength += 2;
     hasSignature = true;
 }
 
-function stopDrawing() {
+function stopDrawing(e) {
+    if (!isDrawing) return;
     isDrawing = false;
+    
     const lenCm = totalStrokeLength / PIXELS_PER_CM;
     if (lenCm >= MIN_STROKE_LENGTH_CM) {
         document.getElementById('field-aksi').classList.remove('hidden');
         signatureCanvas.classList.remove('error');
         document.getElementById('signatureWarning').style.display = 'none';
+    } else if (hasSignature) {
+        // Jika sudah ada coretan tapi terlalu pendek
+        document.getElementById('signatureWarning').style.display = 'block';
     }
 }
 
-function handleTouch(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const mouseEv = new MouseEvent(e.type.replace('touch', 'mouse'), {
-        clientX: touch.clientX, clientY: touch.clientY
-    });
-    signatureCanvas.dispatchEvent(mouseEv);
-}
-
 function clearSignature() {
-    ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-    hasSignature = false; totalStrokeLength = 0;
+    sigCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    hasSignature = false;
+    totalStrokeLength = 0;
     document.getElementById('signatureWarning').style.display = 'none';
     document.getElementById('field-aksi').classList.add('hidden');
 }
-
 // ===== VALIDASI & NAVIGASI =====
 function validateNama() {
     const input = document.getElementById('nama');
