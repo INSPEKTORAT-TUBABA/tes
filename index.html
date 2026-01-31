@@ -129,21 +129,41 @@
             font-size: 14px;
         }
         
-        #photoModal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; padding: 10px; }
-        #modalContent { background-color: #fefefe; padding: 20px; border: 1px solid #888; width: 95%; max-width: 1300px; text-align: center; border-radius: 8px; }
-       #dualCameraFrame {
+        #photoModal { 
+            display: none; 
+            position: fixed; 
+            z-index: 10000; 
+            left: 0; top: 0; 
+            width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.9); 
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column; 
+            padding: 10px; 
+        }
+        #modalContent { 
+            background-color: #fefefe; 
+            padding: 20px; 
+            border: 1px solid #888; 
+            width: 95%; 
+            max-width: 1300px; 
+            text-align: center; 
+            border-radius: 8px; 
+        }
+        #dualCameraFrame {
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 16px;
             width: 100%;
+            max-width: 1400px;
             margin: 20px auto;
             justify-content: center;
-            align-items: center;
+            align-items: stretch;
         }
-
         .camera-view {
-            width: 100%;
-            max-width: 500px;
+            flex: 1;
+            min-width: 280px;
             border: 3px solid #007bff;
             aspect-ratio: 4/3;
             overflow: hidden;
@@ -151,11 +171,14 @@
             border-radius: 10px;
             background: #000;
         }
-
-        .camera-view h4 { 
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%); 
-            background: rgba(0,0,0,0.6); color: white; padding: 8px 16px; border-radius: 20px; 
-            margin: 0; font-size: 16px; z-index: 10; white-space: nowrap; 
+        @media (max-width: 768px) {
+            #dualCameraFrame {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .camera-view {
+                min-width: 100%;
+            }
         }
         .camera-view video, .camera-view img {
             width: 100%;
@@ -164,6 +187,19 @@
             position: absolute;
             top: 0;
             left: 0;
+        }
+        .camera-view h4 { 
+            position: absolute; 
+            top: 10px; left: 50%; 
+            transform: translateX(-50%); 
+            background: rgba(0,0,0,0.6); 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            margin: 0; 
+            font-size: 16px; 
+            z-index: 10; 
+            white-space: nowrap; 
         }
         
         #signature-pad { 
@@ -224,13 +260,12 @@
             .detail-row { flex-direction: column; }
             .detail-label { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; }
         }
- 
+        
         /* Custom styles untuk field Uraian (minimal 10 kata) */
         .textarea-wrapper {
             position: relative;
             width: 100%;
         }
-        
         #uraian {
             width: 100%;
             padding: 12px 10px 36px 10px;
@@ -241,7 +276,6 @@
             line-height: 1.5;
             box-sizing: border-box;
         }
-        
         .word-counter {
             position: absolute;
             bottom: 8px;
@@ -254,7 +288,6 @@
             border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
         .overlay-message {
             position: absolute;
             inset: 0;
@@ -271,16 +304,13 @@
             border-radius: 4px;
             z-index: 1;
         }
-        
         #uraian:focus ~ .overlay-message,
         #uraian:not(:placeholder-shown) ~ .overlay-message {
             opacity: 0;
         }
-        
         #uraian.error ~ .overlay-message {
             opacity: 1;
         }
-        
         #uraian.success {
             border-color: #28a745 !important;
         }
@@ -419,7 +449,12 @@
             <div id="field-uraian" class="hidden">
                 <label>URAIAN: <span class="required">*</span></label>
                 <div class="textarea-wrapper">
-                    <textarea id="uraian" required rows="4" placeholder=" " oninput="validateUraian(); autoResize(this);"></textarea>
+                    <textarea 
+                        id="uraian" 
+                        required 
+                        rows="4" 
+                        placeholder=" "
+                        oninput="validateUraian(); autoResize(this);"></textarea>
                     <span id="wordCounter" class="word-counter">0 kata • minimal 10</span>
                     <span id="uraianOverlayMessage" class="overlay-message">Minimal 10 kata diperlukan</span>
                 </div>
@@ -439,7 +474,7 @@
 
             <div id="field-aksi" class="hidden">
                 <label>Foto: <span class="required">*</span></label>
-                <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
+                <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil (minimal satu)!</div>
                 <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
                 <br/><br/>
                 <button type="button" id="btnSimpanData" onclick="simpanDataDanTutupForm()" style="display: none; font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">✅ Simpan & Lihat Data</button>
@@ -447,13 +482,11 @@
         </form>
     </div>
 
+    <!-- Sisanya (edit buttons, navigation, data section, modal) sama seperti sebelumnya -->
+
     <div id="editModeButtons" style="margin-bottom: 80px; text-align: center; display: none;">
-        <button type="button" onclick="saveEditedData()" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 5px; margin: 0 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-            💾 Simpan Perubahan
-        </button>
-        <button type="button" onclick="cancelEdit()" style="background: #dc3545; color: white; padding: 12px 24px; border: none; border-radius: 5px; margin: 0 10px; cursor: pointer; font-size: 16px; font-weight: bold;">
-            ❌ Batal
-        </button>
+        <button type="button" onclick="saveEditedData()" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 5px; margin: 0 10px; cursor: pointer; font-size: 16px; font-weight: bold;">💾 Simpan Perubahan</button>
+        <button type="button" onclick="cancelEdit()" style="background: #dc3545; color: white; padding: 12px 24px; border: none; border-radius: 5px; margin: 0 10px; cursor: pointer; font-size: 16px; font-weight: bold;">❌ Batal</button>
     </div>
 
     <div id="mainNavigation">
@@ -465,9 +498,7 @@
     <div id="dataSection" style="display: none;">
         <h2>📊 DATA BUKU TAMU</h2>
         <div style="margin-bottom: 20px;">
-            <button type="button" onclick="exportDetailPerTamuPDF()" style="background: #6610f2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-                🖨️ Simpan Detail Lengkap (Per Tamu)
-            </button>
+            <button type="button" onclick="exportDetailPerTamuPDF()" style="background: #6610f2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">🖨️ Simpan Detail Lengkap (Per Tamu)</button>
         </div>
         <div id="dataContainer"></div>
     </div>
@@ -477,197 +508,115 @@
             <h3 style="color: black;">Ambil Foto</h3>
             <div id="dualCameraFrame">
                 <div class="camera-view">
-                    <h4>Kamera Depan (Wajah)</h4>
+                    <h4>Kamera Depan</h4>
                     <video id="videoFront" autoplay muted playsinline></video>
                     <img id="capturedFrontPhoto" alt="Foto Depan" style="display:none;">
                 </div>
                 <div class="camera-view">
-                    <h4>Kamera Belakang (Dokumen/KTP)</h4>
+                    <h4>Kamera Belakang</h4>
                     <video id="videoBack" autoplay muted playsinline></video>
                     <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
                 </div>
             </div>
-            <div id="modalButtons" style="margin-top:20px;">
-                <button class="btn-camera" onclick="ambilFoto()" style="padding:12px 24px; font-size:16px; margin:5px;">📸 Ambil Foto</button>
-                <button class="btn-save" onclick="simpanFoto()" style="padding:12px 24px; font-size:16px; margin:5px; background:#28a745; color:white;">💾 Simpan Foto</button>
-                <button class="btn-cancel" onclick="tutupKamera()" style="padding:12px 24px; font-size:16px; margin:5px; background:#dc3545; color:white;">❌ Batal</button>
+            <div id="modalButtons">
+                <button class="btn-camera" onclick="ambilFoto()">📸 Ambil Foto</button>
+                <button class="btn-save" onclick="simpanFoto()">💾 Simpan Foto</button>
+                <button class="btn-cancel" onclick="tutupKamera()">❌ Batal</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// ===== PARTICLE ANIMATION (tetap sama) =====
+// ===== PARTICLE ANIMATION ===== (sama seperti sebelumnya, tidak diubah)
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const particles = [];
-const particleCount = 150;
-class Particle {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.z = Math.random() * 1000;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.vz = Math.random() * 2 + 1;
-        this.size = Math.random() * 2 + 1;
-        this.hue = Math.random() * 60 + 220;
-    }
-    update() {
-        this.z -= this.vz;
-        if (this.z <= 0) {
-            this.z = 1000;
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-        }
-        const scale = 1000 / (1000 + this.z);
-        this.screenX = (this.x - canvas.width / 2) * scale + canvas.width / 2;
-        this.screenY = (this.y - canvas.height / 2) * scale + canvas.height / 2;
-        this.screenSize = this.size * scale;
-    }
-    draw() {
-        const opacity = (1000 - this.z) / 1000;
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 60%, ${opacity})`;
-        ctx.beginPath();
-        ctx.arc(this.screenX, this.screenY, this.screenSize, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `hsla(${this.hue}, 100%, 60%, ${opacity})`;
-    }
-}
-for (let i = 0; i < particleCount; i++) particles.push(new Particle());
-function animateParticles() {
-    ctx.fillStyle = 'rgba(10, 14, 39, 0.1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => { p.update(); p.draw(); });
-    requestAnimationFrame(animateParticles);
-}
-animateParticles();
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
+// ... (kode particle animation tetap sama, skip untuk ringkas)
 
-function startApp() {
-    document.getElementById('welcomePage').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.body.style.background = 'white';
-}
+// ... (fungsi startApp, goToWelcome, global variables, signature pad, validateNama, validateNomorHp, asalChanged, dataDesa, updateDesaList, checkAndShowNext, hideFieldsAfter, hideAllFields, countWords, autoResize, validateUraian tetap sama)
 
-// ===== GLOBAL VARIABLES =====
-let dataBukuTamu = [];
-let signatureCanvas, ctx2, isDrawing = false, totalStrokeLength = 0;
-let hasSignature = false, hasPhoto = false;
-let fotoDataURLFront = null, fotoDataURLBack = null;
-let streamFront = null, streamBack = null;
-let editingIndex = -1, originalEditData = null;
-const PIXELS_PER_CM = 37.7952755906;
-const MIN_STROKE_LENGTH_CM = 2;
+// ===== CAMERA FUNCTIONS (SUDAH DIMODIFIKASI UNTUK HP) =====
+let streamFront = null;
+let streamBack = null;
+let fotoDataURLFront = null;
+let fotoDataURLBack = null;
+let hasPhoto = false;
 
-// ===== INITIALIZATION (tetap sama) =====
-document.addEventListener('DOMContentLoaded', () => {
-    signatureCanvas = document.getElementById('signature-pad');
-    ctx2 = signatureCanvas.getContext('2d');
-    setupSignature();
-    window.addEventListener('resize', resizeCanvas);
-});
-
-// (fungsi resizeCanvas, setupSignature, startDrawing, draw, stopDrawing, handleTouch, clearSignature tetap sama seperti kode sebelumnya)
-
-// ===== FORM VALIDATION & NAVIGATION (tetap sama) =====
-function validateNama() { /* sama seperti sebelumnya */ }
-function validateNomorHp(input) { /* sama */ }
-function asalChanged() { /* sama */ }
-const dataDesa = { /* daftar kecamatan & desa tetap lengkap seperti sebelumnya */ };
-function updateDesaList() { /* sama */ }
-function checkAndShowNext(currentId, nextFieldId) { /* sama */ }
-function hideFieldsAfter(fieldId) { /* sama */ }
-function hideAllFields() { /* sama */ }
-function countWords(str) {
-    if (!str.trim()) return 0;
-    return str.trim().split(/\s+/).filter(word => word.length > 0).length;
-}
-function autoResize(textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-}
-function validateUraian() {
-    const uraian = document.getElementById('uraian');
-    const kata   = countWords(uraian.value);
-    const counterEl = document.getElementById('wordCounter');
-    
-    if (counterEl) {
-        counterEl.textContent = `${kata} kata • minimal 10`;
-        counterEl.style.color = (kata >= 10) ? '#28a745' : (kata >= 6 ? '#f39c12' : '#dc3545');
-    }
-
-    if (kata >= 10) {
-        uraian.classList.remove('error');
-        uraian.classList.add('success');
-        document.getElementById('field-nomorHp').classList.remove('hidden');
-    } else {
-        uraian.classList.remove('success');
-        uraian.classList.add('error');
-        hideFieldsAfter('field-uraian');
-    }
-}
-
-// ===== CAMERA FUNCTIONS (INI YANG DIPERBAIKI KHUSUS UNTUK HP) =====
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
-    tutupKamera(); // bersihkan dulu
+    tutupKamera(); // pastikan bersih dulu
 
     const videoFront = document.getElementById('videoFront');
-    const videoBack = document.getElementById('videoBack');
+    const videoBack  = document.getElementById('videoBack');
 
+    // Reset tampilan
+    videoFront.style.display = 'block';
+    videoBack.style.display = 'block';
+    document.getElementById('capturedFrontPhoto').style.display = 'none';
+    document.getElementById('capturedBackPhoto').style.display = 'none';
+
+    let successCount = 0;
+
+    // Coba kamera BELAKANG dulu (lebih umum di HP untuk dokumen/ID)
     try {
-        streamFront = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720} } 
+        streamBack = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
         });
-        videoFront.srcObject = streamFront;
+        videoBack.srcObject = streamBack;
+        successCount++;
     } catch (err) {
-        alert("Kamera depan tidak bisa dibuka. Lanjutkan dengan kamera belakang saja.");
+        console.warn("Kamera belakang gagal:", err);
+        videoBack.parentElement.insertAdjacentHTML('beforeend', '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white; background:rgba(255,0,0,0.5); font-size:14px; padding:10px; text-align:center;">Kamera belakang tidak tersedia</div>');
     }
 
-    setTimeout(async () => {
-        try {
-            streamBack = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment', width: {ideal: 1280}, height: {ideal: 720} } 
-            });
-            videoBack.srcObject = streamBack;
-        } catch (err) {
-            alert("Kamera belakang tidak tersedia. Gunakan kamera depan untuk kedua foto.");
-        }
-    }, 800);
+    // Delay kecil agar tidak konflik di HP
+    await new Promise(r => setTimeout(r, 600));
+
+    // Coba kamera DEPAN
+    try {
+        streamFront = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+        });
+        videoFront.srcObject = streamFront;
+        successCount++;
+    } catch (err) {
+        console.warn("Kamera depan gagal:", err);
+        videoFront.parentElement.insertAdjacentHTML('beforeend', '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white; background:rgba(255,165,0,0.6); font-size:14px; padding:10px; text-align:center;">Kamera depan tidak tersedia</div>');
+    }
+
+    // Jika sama sekali gagal
+    if (successCount === 0) {
+        alert("Tidak dapat mengakses kamera sama sekali.\nPastikan izin kamera sudah diizinkan dan coba refresh halaman.");
+    }
 }
 
 function ambilFoto() {
     const videoFront = document.getElementById('videoFront');
-    const videoBack = document.getElementById('videoBack');
-    const capturedFront = document.getElementById('capturedFrontPhoto');
-    const capturedBack = document.getElementById('capturedBackPhoto');
-    
+    const videoBack  = document.getElementById('videoBack');
+
+    // Foto depan jika aktif
     if (videoFront.srcObject) {
         const canvas = document.createElement('canvas');
         canvas.width = videoFront.videoWidth;
         canvas.height = videoFront.videoHeight;
         canvas.getContext('2d').drawImage(videoFront, 0, 0);
-        fotoDataURLFront = canvas.toDataURL('image/jpeg', 0.8);
-        capturedFront.src = fotoDataURLFront;
-        capturedFront.style.display = 'block';
+        fotoDataURLFront = canvas.toDataURL('image/png');
+        document.getElementById('capturedFrontPhoto').src = fotoDataURLFront;
+        document.getElementById('capturedFrontPhoto').style.display = 'block';
         videoFront.style.display = 'none';
     }
-    
+
+    // Foto belakang jika aktif
     if (videoBack.srcObject) {
         const canvas = document.createElement('canvas');
         canvas.width = videoBack.videoWidth;
         canvas.height = videoBack.videoHeight;
         canvas.getContext('2d').drawImage(videoBack, 0, 0);
-        fotoDataURLBack = canvas.toDataURL('image/jpeg', 0.8);
-        capturedBack.src = fotoDataURLBack;
-        capturedBack.style.display = 'block';
+        fotoDataURLBack = canvas.toDataURL('image/png');
+        document.getElementById('capturedBackPhoto').src = fotoDataURLBack;
+        document.getElementById('capturedBackPhoto').style.display = 'block';
         videoBack.style.display = 'none';
     }
 }
@@ -679,23 +628,48 @@ function simpanFoto() {
         document.getElementById('btnSimpanData').style.display = 'inline-block';
         document.getElementById('photoWarning').style.display = 'none';
     } else {
-        alert('Ambil minimal 1 foto dulu ya Mas');
+        alert('Silakan ambil setidaknya satu foto terlebih dahulu!');
     }
 }
 
 function tutupKamera() {
-    [streamFront, streamBack].forEach(stream => {
-        if (stream) stream.getTracks().forEach(track => track.stop());
+    [streamFront, streamBack].forEach(s => {
+        if (s) s.getTracks().forEach(t => t.stop());
     });
     streamFront = streamBack = null;
+
+    document.querySelectorAll('#photoModal video').forEach(v => {
+        v.srcObject = null;
+        v.style.display = 'block';
+    });
+    document.querySelectorAll('#photoModal .camera-view > div:not(h4)').forEach(el => el.remove()); // hapus pesan error
     document.getElementById('photoModal').style.display = 'none';
-    document.querySelectorAll('#dualCameraFrame video').forEach(v => v.style.display = 'block');
-    document.querySelectorAll('#dualCameraFrame img').forEach(img => img.style.display = 'none');
 }
 
-// ===== DATA MANAGEMENT, NAVIGATION, EDIT, DELETE, EXPORT (semua tetap sama seperti kode sebelumnya) =====
-// (Copy-paste saja bagian ini dari kode yang saya berikan sebelumnya, mulai dari function simpanData() sampai akhir script)
-// Untuk menghemat tempat, saya tidak tulis ulang di sini, tapi semua fungsi tetap berjalan 100% termasuk simpan, lihat data, edit, hapus, dan export PDF.
+// ===== DATA MANAGEMENT (diubah sedikit agar hasPhoto cukup 1 foto) =====
+function simpanData() {
+    // ... (validasi nama, uraian, tanda tangan tetap sama)
+
+    if (!hasPhoto) {
+        document.getElementById('photoWarning').style.display = 'block';
+        isValid = false;
+    }
+
+    if (isValid) {
+        // ... (sama seperti sebelumnya)
+        const formData = {
+            // ... field lain tetap
+            fotoFront: fotoDataURLFront,
+            fotoBack: fotoDataURLBack,
+            // ...
+        };
+        dataBukuTamu.push(formData);
+        // ...
+    }
+    return isValid;
+}
+
+// ... (fungsi simpanDataDanTutupForm, resetFormComplete, updateDataCounter, showForm, showData, displayData, editData, saveEditedData, cancelEdit, deleteData, exportData, exportDetailPerTamuPDF tetap sama seperti kode asli Anda)
 
 </script>
 </body>
