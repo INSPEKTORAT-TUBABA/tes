@@ -38,41 +38,7 @@
             text-align: center;
             padding: 20px;
         }
-        #uraian {
-    position: relative;           /* penting agar ::after bisa diposisikan relatif terhadap textarea */
-    padding-bottom: 32px;         /* memberi ruang ekstra di bagian bawah textarea agar pesan overlay tidak menutupi teks yang diketik */
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    resize: vertical;             /* opsional: biar user bisa resize vertikal */
-    min-height: 80px;             /* minimal tinggi supaya nyaman */
-}
-
-/* Pesan overlay muncul di pojok kanan bawah textarea */
-#uraian::after {
-    content: attr(data-warning) " ";
-    position: absolute;
-    bottom: 6px;
-    right: 12px;
-    font-size: 12px;
-    color: #dc3545;
-    background: rgba(255, 255, 255, 0.85);
-    padding: 4px 10px;
-    border-radius: 6px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    z-index: 5;
-    white-space: nowrap;
-}
-
-/* Tampilkan pesan hanya saat ada class error */
-#uraian.error::after {
-    opacity: 1;
-}
+        
         .welcome-title {
             font-size: 2.5em;
             font-weight: bold;
@@ -279,7 +245,69 @@
         min-width: unset;
     }
 }
- 
+ /* ────────────────────────────────────────────────
+   Custom styles untuk field Uraian (minimal 10 kata)
+   ──────────────────────────────────────────────── */
+
+.textarea-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+#uraian {
+    width: 100%;
+    padding: 12px 10px 36px 10px;   /* ruang bawah lebih besar agar counter tidak tertutup */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    font-size: 15px;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+.word-counter {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 12px;
+    color: #666;
+    pointer-events: none;
+    background: rgba(255,255,255,0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.overlay-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc3545;
+    font-size: 15px;
+    font-weight: 500;
+    background: rgba(255, 240, 240, 0.93);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+#uraian:focus ~ .overlay-message,
+#uraian:not(:placeholder-shown) ~ .overlay-message {
+    opacity: 0;
+}
+
+#uraian.error ~ .overlay-message {
+    opacity: 1;
+}
+
+/* Optional: saat sudah valid, ubah warna border */
+#uraian.success {
+    border-color: #28a745 !important;
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -415,14 +443,16 @@
 
             <div id="field-uraian" class="hidden">
     <label>URAIAN: <span class="required">*</span></label>
-    
-    <!-- Tambahkan elemen warning kotak di sini -->
-    <div id="uraianWarningBox" class="warning" style="display:none; margin: 8px 0; padding: 10px 14px; font-size: 14px; line-height: 1.4;">
-        Minimal 10 kata (saat ini: <span id="wordCountDisplay">0</span> kata)
+    <div class="textarea-wrapper" style="position: relative;">
+        <textarea 
+            id="uraian" 
+            required 
+            rows="4" 
+            placeholder=" "
+            oninput="validateUraian(); autoResize(this);"></textarea>
+        <span id="wordCounter" class="word-counter">0 kata • minimal 10</span>
+        <span id="uraianOverlayMessage" class="overlay-message">Minimal 10 kata diperlukan</span>
     </div>
-    
-    <textarea id="uraian" required rows="3" 
-              oninput="validateUraian(); autoResize(this);"></textarea>
 </div>
 
             <div id="field-nomorHp" class="hidden">
@@ -485,14 +515,11 @@
         <div id="modalContent">
             <h3 style="color: black;">Ambil Foto</h3>
             <div id="dualCameraFrame">
-    <div class="camera-view">
-        <h4>Kamera Utama (Belakang)</h4>
-        <video id="videoMain" autoplay muted playsinline></video>  <!-- GANTI JADI SATU VIDEO SAJA -->
-        <img id="capturedPhoto" alt="Foto Diambil" style="display:none;">
-    </div>
-    <!-- Hapus atau komentari kamera kedua sementara -->
-    <!-- <div class="camera-view"> ... kamera depan ... </div> -->
-</div>
+                <div class="camera-view">
+                    <h4>Kamera Depan</h4>
+                    <video id="videoFront" autoplay muted playsinline></video>
+                    <img id="capturedFrontPhoto" alt="Foto Depan" style="display:none;">
+                </div>
                 <div class="camera-view">
                     <h4>Kamera Belakang</h4>
                     <video id="videoBack" autoplay muted playsinline></video>
@@ -877,100 +904,123 @@ function autoResize(textarea) {
 }
 function validateUraian() {
     const uraian = document.getElementById('uraian');
-    const kata = countWords(uraian.value.trim());
+    const kata   = countWords(uraian.value);
+    const counterEl = document.getElementById('wordCounter');
     
+    if (counterEl) {
+        counterEl.textContent = `${kata} kata • minimal 10`;
+        counterEl.style.color = (kata >= 10) ? '#28a745' : (kata >= 6 ? '#f39c12' : '#dc3545');
+    }
+
     if (kata >= 10) {
         uraian.classList.remove('error');
         uraian.classList.add('success');
-        uraian.setAttribute('data-warning', '');   // kosongkan pesan
         document.getElementById('field-nomorHp').classList.remove('hidden');
     } else {
         uraian.classList.remove('success');
         uraian.classList.add('error');
-        uraian.setAttribute('data-warning', `Minimal 10 kata (saat ini: ${kata} kata)`);
         hideFieldsAfter('field-uraian');
     }
 }// ===== CAMERA FUNCTIONS =====
-let currentStream = null;  // global untuk stop stream nanti
-
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
 
-    const video = document.getElementById('videoMain');
-    const captured = document.getElementById('capturedPhoto');
+    // Matikan semua stream sebelumnya (penting!)
+    tutupKamera();
 
-    // Reset
-    if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
+    const videoFront = document.getElementById('videoFront');
+    const videoBack  = document.getElementById('videoBack');
+
+    // --- Kamera Depan (user) ---
+    try {
+        streamFront = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+        });
+        videoFront.srcObject = streamFront;
+        videoFront.style.display = 'block';
+    } catch (err) {
+        console.warn("Kamera depan gagal:", err);
+        videoFront.parentElement.innerHTML += '<div style="color:white; padding:10px; background:rgba(255,0,0,0.5);">Kamera depan tidak tersedia</div>';
     }
-    video.srcObject = null;
-    captured.style.display = 'none';
-    video.style.display = 'block';
+
+    // --- Kamera Belakang (environment) --- dengan delay kecil agar tidak konflik
+    await new Promise(r => setTimeout(r, 800)); // beri waktu ~0.8 detik
 
     try {
-        // Prioritas belakang (environment) - paling umum di HP
-        currentStream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                facingMode: 'environment',  // back camera
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
+        streamBack = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
         });
+        videoBack.srcObject = streamBack;
+        videoBack.style.display = 'block';
     } catch (err) {
-        console.warn('Belakang gagal, coba depan:', err);
-        try {
-            currentStream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    facingMode: 'user',  // front camera fallback
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            });
-        } catch (err2) {
-            alert('Gagal membuka kamera.\nPastikan izin kamera diizinkan di Safari Settings > [Nama Situs] > Camera = Allow');
-            tutupKamera();
-            return;
+        console.warn("Kamera belakang gagal:", err);
+        // Tampilkan pesan fallback
+        videoBack.parentElement.innerHTML += '<div style="color:white; padding:10px; background:rgba(255,165,0,0.6);">Kamera belakang tidak tersedia atau sedang digunakan</div>';
+        
+        // Jika benar-benar tidak ada kamera belakang, gunakan kamera depan lagi sebagai fallback
+        if (!streamBack && !streamFront) {
+            try {
+                streamFront = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoFront.srcObject = streamFront;
+                videoBack.parentElement.querySelector('h4').textContent = "Kamera Tunggal (Fallback)";
+            } catch (e2) {}
         }
     }
-
-    video.srcObject = currentStream;
-    // Force play untuk iOS
-    video.play().catch(e => console.warn('Video play error:', e));
 }
 function ambilFoto() {
-    const video = document.getElementById('videoMain');
-    const captured = document.getElementById('capturedPhoto');
-
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    fotoDataURL = canvas.toDataURL('image/png');  // ganti jadi satu variabel fotoDataURL
-
-    captured.src = fotoDataURL;
-    captured.style.display = 'block';
-    video.style.display = 'none';
+    const videoFront = document.getElementById('videoFront');
+    const videoBack = document.getElementById('videoBack');
+    const capturedFront = document.getElementById('capturedFrontPhoto');
+    const capturedBack = document.getElementById('capturedBackPhoto');
+    
+    const canvasFront = document.createElement('canvas');
+    canvasFront.width = videoFront.videoWidth;
+    canvasFront.height = videoFront.videoHeight;
+    canvasFront.getContext('2d').drawImage(videoFront, 0, 0);
+    fotoDataURLFront = canvasFront.toDataURL('image/png');
+    capturedFront.src = fotoDataURLFront;
+    capturedFront.style.display = 'block';
+    videoFront.style.display = 'none';
+    
+    const canvasBack = document.createElement('canvas');
+    canvasBack.width = videoBack.videoWidth;
+    canvasBack.height = videoBack.videoHeight;
+    canvasBack.getContext('2d').drawImage(videoBack, 0, 0);
+    fotoDataURLBack = canvasBack.toDataURL('image/png');
+    capturedBack.src = fotoDataURLBack;
+    capturedBack.style.display = 'block';
+    videoBack.style.display = 'none';
 }
 
 function simpanFoto() {
-    if (fotoDataURL) {
+    if (fotoDataURLFront && fotoDataURLBack) {
         hasPhoto = true;
         tutupKamera();
         document.getElementById('btnSimpanData').style.display = 'inline-block';
         document.getElementById('photoWarning').style.display = 'none';
     } else {
-        alert('Silakan ambil foto terlebih dahulu!');
+        alert('Silakan ambil kedua foto terlebih dahulu!');
     }
 }
+
 function tutupKamera() {
-    if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
-    }
-    document.getElementById('videoMain').srcObject = null;
+    [streamFront, streamBack].forEach(stream => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+    streamFront = streamBack = null;
+
+    const videos = document.querySelectorAll('#photoModal video');
+    videos.forEach(v => {
+        v.srcObject = null;
+        v.style.display = 'block';
+    });
+
+    document.querySelectorAll('#photoModal .camera-view > div:not(h4)').forEach(el => el.remove()); // hapus pesan error sebelumnya
     document.getElementById('photoModal').style.display = 'none';
 }
+
 // ===== DATA MANAGEMENT =====
 function simpanData() {
     const form = document.getElementById('bukuTamuForm');
