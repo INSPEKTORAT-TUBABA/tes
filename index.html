@@ -58,31 +58,19 @@
         }
 
         #signature-pad {
-            background: white; border: 3px solid #007bff; border-radius: 8px;
-            cursor: crosshair; touch-action: none; display: block; margin: 10px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .detail-container {
-            max-width: 900px; margin: 20px auto; background: white; border: 1px solid #ddd;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
-        }
-        .detail-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
-            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .detail-row { display: flex; border-bottom: 1px solid #e0e0e0; min-height: 50px; }
-        .detail-label {
-            width: 200px; padding: 15px 20px; background: #f8f9fa; border-right: 1px solid #e0e0e0;
-            font-weight: 600; font-size: 14px; color: #495057; display: flex; align-items: center;
-        }
-        .detail-value { flex: 1; padding: 15px 20px; font-size: 14px; color: #212529; display: flex; align-items: center; }
-
-        @media (max-width: 768px) {
-            .welcome-title { font-size: 1.8em; }
-            .detail-row { flex-direction: column; }
-            .detail-label { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; }
-        }
+    background: white;
+    border: 3px solid #007bff;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none !important;     /* super penting untuk blok scroll */
+    user-select: none;                 /* cegah select teks saat sentuh */
+    display: block;
+    margin: 10px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 100% !important;
+    max-width: 600px;
+    height: 200px;
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
