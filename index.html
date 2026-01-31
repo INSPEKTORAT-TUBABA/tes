@@ -863,86 +863,62 @@ function validateUraian() {
 // ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
-    
-    // Reset status foto sebelumnya
+    stepKamera = 1; // Mulai dari langkah 1 (Kamera Depan)
     fotoDataURLFront = null;
     fotoDataURLBack = null;
+    
+    // Reset tampilan preview
     document.getElementById('capturedFrontPhoto').style.display = 'none';
     document.getElementById('capturedBackPhoto').style.display = 'none';
     document.getElementById('videoFront').style.display = 'block';
     document.getElementById('videoBack').style.display = 'block';
 
+    // Cukup aktifkan kamera depan saja dulu
+    await aktifkanSatuKamera('user', 'videoFront');
+}
+
+async function aktifkanSatuKamera(mode, elementId) {
+    // Matikan stream lama jika ada agar hardware terlepas
+    if (streamFront) streamFront.getTracks().forEach(t => t.stop());
+    if (streamBack) streamBack.getTracks().forEach(t => t.stop());
+
     try {
-        // Coba buka kamera depan dulu
-        streamFront = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user' } 
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: mode } 
         });
-        document.getElementById('videoFront').srcObject = streamFront;
-        
-        // Untuk HP, kita tidak membuka kamera belakang di sini 
-        // agar tidak terjadi konflik resource hardware.
-        // Kamera belakang akan dipicu setelah foto depan diambil.
+        document.getElementById(elementId).srcObject = stream;
+        if (mode === 'user') streamFront = stream;
+        else streamBack = stream;
     } catch (err) {
-        console.warn('Gagal akses kamera depan, mencoba kamera yang tersedia: ', err);
-        // Fallback jika gagal
-        streamFront = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('videoFront').srcObject = streamFront;
+        alert("Gagal akses kamera: " + err.message);
     }
 }
 
-async function ambilFoto() {
-    const vFront = document.getElementById('videoFront');
-    const vBack = document.getElementById('videoBack');
+function ambilFoto() {
+    const videoFront = document.getElementById('videoFront');
+    const videoBack = document.getElementById('videoBack');
+    const capturedFront = document.getElementById('capturedFrontPhoto');
+    const capturedBack = document.getElementById('capturedBackPhoto');
     
-    // JIKA FOTO DEPAN BELUM ADA, AMBIL FOTO DEPAN
-    if (!fotoDataURLFront) {
-        const canvasFront = document.createElement('canvas');
-        canvasFront.width = vFront.videoWidth;
-        canvasFront.height = vFront.videoHeight;
-        canvasFront.getContext('2d').drawImage(vFront, 0, 0);
-        fotoDataURLFront = canvasFront.toDataURL('image/png');
-        
-        document.getElementById('capturedFrontPhoto').src = fotoDataURLFront;
-        document.getElementById('capturedFrontPhoto').style.display = 'block';
-        vFront.style.display = 'none';
-
-        // Matikan kamera depan agar hardware kamera bebas
-        if (streamFront) {
-            streamFront.getTracks().forEach(track => track.stop());
-        }
-
-        // SEKARANG AKTIFKAN KAMERA BELAKANG
-        try {
-            streamBack = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
-            vBack.srcObject = streamBack;
-        } catch (err) {
-            alert("Gagal membuka kamera belakang: " + err.message);
-        }
-        
-        alert("Foto Depan Berhasil! Sekarang arahkan kamera ke objek untuk Foto Belakang.");
-    } 
-    // JIKA FOTO DEPAN SUDAH ADA, AMBIL FOTO BELAKANG
-    else if (!fotoDataURLBack) {
-        const canvasBack = document.createElement('canvas');
-        canvasBack.width = vBack.videoWidth;
-        canvasBack.height = vBack.videoHeight;
-        canvasBack.getContext('2d').drawImage(vBack, 0, 0);
-        fotoDataURLBack = canvasBack.toDataURL('image/png');
-        
-        document.getElementById('capturedBackPhoto').src = fotoDataURLBack;
-        document.getElementById('capturedBackPhoto').style.display = 'block';
-        vBack.style.display = 'none';
-        
-        // Matikan kamera belakang
-        if (streamBack) {
-            streamBack.getTracks().forEach(track => track.stop());
-        }
-        
-        alert("Semua foto berhasil diambil!");
-    }
+    const canvasFront = document.createElement('canvas');
+    canvasFront.width = videoFront.videoWidth;
+    canvasFront.height = videoFront.videoHeight;
+    canvasFront.getContext('2d').drawImage(videoFront, 0, 0);
+    fotoDataURLFront = canvasFront.toDataURL('image/png');
+    capturedFront.src = fotoDataURLFront;
+    capturedFront.style.display = 'block';
+    videoFront.style.display = 'none';
+    
+    const canvasBack = document.createElement('canvas');
+    canvasBack.width = videoBack.videoWidth;
+    canvasBack.height = videoBack.videoHeight;
+    canvasBack.getContext('2d').drawImage(videoBack, 0, 0);
+    fotoDataURLBack = canvasBack.toDataURL('image/png');
+    capturedBack.src = fotoDataURLBack;
+    capturedBack.style.display = 'block';
+    videoBack.style.display = 'none';
 }
+
 function simpanFoto() {
     if (fotoDataURLFront && fotoDataURLBack) {
         hasPhoto = true;
