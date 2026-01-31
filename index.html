@@ -6,263 +6,189 @@
     <title>Buku Tamu Digital - Inspektorat Tubaba</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; background: #0a0e27; font-family: 'Arial', sans-serif; }
+        body { font-family: sans-serif; margin: 0; background: #f4f4f9; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .logo { width: 60px; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        select, input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
         
-        /* Welcome Page */
-        #welcomePage { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a2f4a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; color: white; text-align: center; }
-        .btn-start { padding: 15px 40px; font-size: 1.2em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(102,126,234,0.4); margin-top: 20px; }
-
-        /* Main Form */
-        #mainApp { display: none; max-width: 600px; margin: auto; padding: 20px; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .header-logo { display: flex; justify-content: center; margin-bottom: 20px; }
-        .logo { width: 70px; height: auto; }
+        /* Modal Kamera */
+        #photoModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: black; flex-direction: column; align-items: center; justify-content: center; }
+        #video { width: 90%; max-width: 400px; border: 2px solid white; border-radius: 10px; background: #333; }
+        .btn-capture { background: #007bff; color: white; border: none; padding: 20px; border-radius: 50%; width: 80px; height: 80px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        .btn-cancel { color: white; background: none; border: none; margin-top: 20px; text-decoration: underline; }
+        .cam-info { color: white; margin-bottom: 10px; font-size: 18px; }
         
-        label { font-weight: bold; display: block; margin-top: 15px; color: #333; }
-        select, input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        .hidden { display: none !important; }
-        
-        /* Camera Modal */
-        #photoModal { display: none; position: fixed; z-index: 20000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; }
-        #modalContent { background: white; padding: 20px; width: 90%; max-width: 450px; border-radius: 12px; text-align: center; }
-        .cam-preview { width: 100%; aspect-ratio: 3/4; background: #000; position: relative; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .cam-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 4px 12px; border-radius: 15px; font-size: 12px; }
-
-        /* Signature */
-        #signature-pad { border: 2px solid #667eea; border-radius: 8px; width: 100%; height: 180px; touch-action: none; background: #fefefe; }
-        .btn-submit { background: #28a745; color: white; padding: 15px; width: 100%; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        #previewResult { display: flex; gap: 10px; margin-top: 10px; }
+        .prev-box { flex: 1; text-align: center; font-size: 12px; }
+        .prev-box img { width: 100%; border: 1px solid #ddd; border-radius: 5px; }
+        .hidden { display: none; }
+        #signature-pad { border: 2px solid #007bff; border-radius: 5px; width: 100%; height: 150px; background: #fcfcfc; }
     </style>
 </head>
 <body>
 
-<div id="welcomePage">
-    <h1>SELAMAT DATANG</h1>
-    <p>INSPEKTORAT DAERAH KAB. TUBABA</p>
-    <button class="btn-start" onclick="startApp()">📝 MULAI ISI DATA</button>
-</div>
-
-<div id="mainApp">
-    <div class="header-logo">
+<div class="container">
+    <div class="header">
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lambang_Kabupaten_Tulang_Bawang_Barat.png/150px-Lambang_Kabupaten_Tulang_Bawang_Barat.png" class="logo">
+        <h3>BUKU TAMU DIGITAL</h3>
+        <p>Inspektorat Kab. Tubaba</p>
     </div>
-    <h2 style="text-align:center; color:#1a1f3a;">BUKU TAMU DIGITAL</h2>
 
-    <form id="guestForm">
-        <label>Nama Lengkap: <span style="color:red">*</span></label>
-        <input type="text" id="nama" placeholder="Masukkan nama sesuai KTP" required oninput="cekNama()">
+    <form id="mainForm">
+        <label>Nama Lengkap:</label>
+        <input type="text" id="nama" placeholder="Isi nama Anda..." required>
 
-        <div id="divAsal" class="hidden">
-            <label>Asal Tamu:</label>
-            <select id="asalTamu" onchange="pilihAsal()">
-                <option value="">-- Pilih Asal --</option>
-                <option value="INSTANSI">INSTANSI PEMERINTAH</option>
-                <option value="MASYARAKAT">MASYARAKAT UMUM / DESA</option>
-            </select>
-        </div>
+        <label>Asal Instansi/Desa:</label>
+        <select id="asal" onchange="toggleFields()">
+            <option value="">-- Pilih --</option>
+            <option value="DINAS">DINAS / INSTANSI</option>
+            <option value="DESA">DESA / TIYUH</option>
+        </select>
 
-        <div id="divDinas" class="hidden">
-            <label>Pilih Instansi/Dinas:</label>
-            <select id="selectDinas">
-                <option value="">-- Pilih Dinas --</option>
+        <div id="fieldDinas" class="hidden">
+            <label>Nama Dinas:</label>
+            <select id="dinas">
                 <option value="Dinas Pendidikan">Dinas Pendidikan</option>
                 <option value="Dinas Kesehatan">Dinas Kesehatan</option>
-                <option value="Dinas Pekerjaan Umum">Dinas Pekerjaan Umum</option>
-                <option value="Dinas Sosial">Dinas Sosial</option>
-                <option value="Dinas Perhubungan">Dinas Perhubungan</option>
-                <option value="Dinas Komunikasi dan Informatika">Dinas Komunikasi dan Informatika</option>
-                <option value="Dinas Kependudukan dan Catatan Sipil">Dinas Kependudukan dan Catatan Sipil</option>
-                <option value="Dinas Penanaman Modal">Dinas Penanaman Modal</option>
-                <option value="Sekretariat Daerah">Sekretariat Daerah</option>
                 <option value="Bappeda">Bappeda</option>
-                <option value="BPKAD">BPKAD</option>
-                <option value="Lainnya">Instansi Lainnya...</option>
+                <option value="Lainnya">Lainnya...</option>
             </select>
         </div>
 
-        <div id="divMasyarakat" class="hidden">
-            <label>Kecamatan:</label>
-            <select id="kecamatan" onchange="updateDesa()">
-                <option value="">-- Pilih Kecamatan --</option>
-                <option value="Tulang Bawang Tengah">Tulang Bawang Tengah</option>
-                <option value="Tumijajar">Tumijajar</option>
-                <option value="Tulang Bawang Udik">Tulang Bawang Udik</option>
-                <option value="Pagar Dewa">Pagar Dewa</option>
-                <option value="Lambu Kibang">Lambu Kibang</option>
-                <option value="Way Kenanga">Way Kenanga</option>
-                <option value="Gunung Terang">Gunung Terang</option>
-                <option value="Gunung Agung">Gunung Agung</option>
-                <option value="Batu Putih">Batu Putih</option>
-            </select>
-
-            <label>Desa/Tiyuh:</label>
-            <select id="desa">
-                <option value="">-- Pilih Desa --</option>
-            </select>
+        <div id="fieldDesa" class="hidden">
+            <label>Kecamatan & Desa:</label>
+            <input type="text" placeholder="Contoh: Tulang Bawang Tengah - Panaragan">
         </div>
 
-        <label>Uraian Keperluan:</label>
-        <textarea id="uraian" rows="3" placeholder="Tuliskan tujuan kunjungan Anda..."></textarea>
+        <label>Keperluan:</label>
+        <textarea id="keperluan" rows="2"></textarea>
 
         <label>Tanda Tangan:</label>
         <canvas id="signature-pad"></canvas>
-        <button type="button" onclick="clearSig()" style="margin-top:5px; font-size:12px;">Hapus Tanda Tangan</button>
+        <button type="button" onclick="clearPad()">Hapus</button>
 
-        <div style="margin-top:25px;">
-            <button type="button" onclick="mulaiAlurKamera()" style="background:#ffc107; border:none; padding:12px; width:100%; border-radius:6px; font-weight:bold;">📸 AMBIL FOTO (WAJIB)</button>
-            
-            <div id="previewHasil" style="display:flex; gap:10px; margin-top:10px;">
-                <div id="boxPrevDepan" style="flex:1; display:none; text-align:center;">
-                    <img id="imgDepan" style="width:100%; border-radius:4px; border:1px solid #ddd;">
-                    <small>Foto Depan</small>
-                </div>
-                <div id="boxPrevBelakang" style="flex:1; display:none; text-align:center;">
-                    <img id="imgBelakang" style="width:100%; border-radius:4px; border:1px solid #ddd;">
-                    <small>Foto Belakang</small>
-                </div>
-            </div>
-
-            <button type="button" id="btnSimpan" class="btn-submit hidden" onclick="simpanSemua()">✅ SIMPAN DATA GUEST</button>
+        <div style="margin-top: 20px;">
+            <button type="button" onclick="startCameraFlow()" style="width: 100%; padding: 15px; background: #ffc107; font-weight: bold; border: none; border-radius: 5px;">📸 AMBIL FOTO (2x)</button>
         </div>
+
+        <div id="previewResult">
+            <div id="boxD" class="prev-box hidden">
+                <img id="resD"><br>Depan
+            </div>
+            <div id="boxB" class="prev-box hidden">
+                <img id="resB"><br>Belakang
+            </div>
+        </div>
+
+        <button type="submit" id="btnSimpan" class="hidden" style="width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; margin-top: 15px; font-weight: bold;">SIMPAN DATA</button>
     </form>
 </div>
 
 <div id="photoModal">
-    <div id="modalContent">
-        <h3 id="txtInstruksi">Foto Depan (Selfie)</h3>
-        <div class="cam-preview">
-            <div class="cam-tag" id="tagLensa">KAMERA DEPAN</div>
-            <video id="video" autoplay playsinline muted></video>
-        </div>
-        <button onclick="takeSnap()" style="background:#007bff; color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold;">📸 AMBIL FOTO</button>
-        <button onclick="stopKamera()" style="margin-top:15px; background:none; border:none; color:red; cursor:pointer;">Batalkan</button>
-    </div>
+    <div id="infoKamera" class="cam-info">Foto Depan (Selfie)</div>
+    <video id="video" autoplay playsinline muted></video>
+    <button type="button" class="btn-capture" onclick="capture()">FOTO</button>
+    <button type="button" class="btn-cancel" onclick="stopAll()">Batal</button>
 </div>
 
 <script>
-    let streamMedia = null;
-    let fotoDepanBase64 = null;
-    let fotoBelakangBase64 = null;
-    let step = 1; // 1 = Depan, 2 = Belakang
+    let stream = null;
+    let step = 1; // 1: Depan, 2: Belakang
 
-    const dataDesa = {
-        "Tulang Bawang Tengah": ["Panaragan", "Menggala Mas", "Mulya Kencana", "Tirta Makmur", "Pulung Kencana"],
-        "Tumijajar": ["Dayamurni", "Makarti", "Margo Mulyo", "Murni Jaya"],
-        "Tulang Bawang Udik": ["Karta", "Karta Raharja", "Margo Kencana"],
-        "Lambu Kibang": ["Kibang Budi Jaya", "Kibang Mulya Jaya"]
-        // ... Tambahkan desa lainnya sesuai kebutuhan
-    };
-
-    function startApp() {
-        document.getElementById('welcomePage').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
+    function toggleFields() {
+        const val = document.getElementById('asal').value;
+        document.getElementById('fieldDinas').classList.toggle('hidden', val !== 'DINAS');
+        document.getElementById('fieldDesa').classList.toggle('hidden', val !== 'DESA');
     }
 
-    function cekNama() {
-        if(document.getElementById('nama').value.length > 2) {
-            document.getElementById('divAsal').classList.remove('hidden');
-        }
-    }
-
-    function pilihAsal() {
-        const val = document.getElementById('asalTamu').value;
-        document.getElementById('divDinas').classList.add('hidden');
-        document.getElementById('divMasyarakat').classList.add('hidden');
-        
-        if(val === 'INSTANSI') document.getElementById('divDinas').classList.remove('hidden');
-        if(val === 'MASYARAKAT') document.getElementById('divMasyarakat').classList.remove('hidden');
-    }
-
-    function updateDesa() {
-        const kec = document.getElementById('kecamatan').value;
-        const desaSelect = document.getElementById('desa');
-        desaSelect.innerHTML = '<option value="">-- Pilih Desa --</option>';
-        if(dataDesa[kec]) {
-            dataDesa[kec].forEach(d => {
-                let opt = document.createElement('option');
-                opt.value = d; opt.innerHTML = d;
-                desaSelect.appendChild(opt);
-            });
-        }
-    }
-
-    // --- LOGIKA KAMERA STABIL ---
-    async function mulaiAlurKamera() {
+    async function startCameraFlow() {
         step = 1;
-        fotoDepanBase64 = null;
-        fotoBelakangBase64 = null;
+        document.getElementById('infoKamera').innerText = "1. FOTO DEPAN (SELFIE)";
         document.getElementById('photoModal').style.display = 'flex';
-        await jalankanKamera('user'); 
+        await initCamera('user');
     }
 
-    async function jalankanKamera(lensa) {
-        if (streamMedia) {
-            streamMedia.getTracks().forEach(t => t.stop());
+    async function initCamera(facing) {
+        // MATIKAN KAMERA SEBELUMNYA (WAJIB)
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
         }
+
         try {
-            streamMedia = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: lensa, width: 640, height: 480 }
+            // Gunakan setting paling basic agar HP tidak menolak
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    facingMode: facing
+                },
+                audio: false
             });
-            document.getElementById('video').srcObject = streamMedia;
-        } catch (e) {
-            alert("Kamera Error: Gunakan HTTPS atau izinkan akses kamera.");
-            stopKamera();
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+            
+            // Fix untuk beberapa browser HP yang butuh trigger play
+            video.onloadedmetadata = () => {
+                video.play();
+            };
+        } catch (err) {
+            console.error(err);
+            alert("Kamera Error: Pastikan memberikan izin kamera di browser. Jika muncul layar hitam, refresh halaman.");
+            stopAll();
         }
     }
 
-    async function takeSnap() {
-        const v = document.getElementById('video');
-        const c = document.createElement('canvas');
-        c.width = v.videoWidth; c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
-        const imgData = c.toDataURL('image/png');
+    function capture() {
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const data = canvas.toDataURL('image/png');
 
         if (step === 1) {
-            fotoDepanBase64 = imgData;
-            document.getElementById('imgDepan').src = imgData;
-            document.getElementById('boxPrevDepan').style.display = 'block';
+            document.getElementById('resD').src = data;
+            document.getElementById('boxD').classList.remove('hidden');
             
-            // Pindah ke belakang
+            // Lanjut ke kamera belakang
             step = 2;
-            document.getElementById('txtInstruksi').innerText = "Foto Belakang (Objek)";
-            document.getElementById('tagLensa').innerText = "KAMERA BELAKANG";
-            await jalankanKamera('environment');
+            document.getElementById('infoKamera').innerText = "2. FOTO BELAKANG (OBJEK)";
+            initCamera('environment');
         } else {
-            fotoBelakangBase64 = imgData;
-            document.getElementById('imgBelakang').src = imgData;
-            document.getElementById('boxPrevBelakang').style.display = 'block';
-            
-            stopKamera();
+            document.getElementById('resB').src = data;
+            document.getElementById('boxB').classList.remove('hidden');
             document.getElementById('btnSimpan').classList.remove('hidden');
-            alert("Foto Lengkap! Silakan tekan Simpan Data.");
+            stopAll();
+            alert("Foto berhasil diambil!");
         }
     }
 
-    function stopKamera() {
-        if (streamMedia) streamMedia.getTracks().forEach(t => t.stop());
+    function stopAll() {
+        if (stream) stream.getTracks().forEach(t => t.stop());
         document.getElementById('photoModal').style.display = 'none';
     }
 
-    // --- SIGNATURE PAD ---
+    // Tanda Tangan
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
     let drawing = false;
 
-    canvas.addEventListener('touchstart', (e) => { drawing = true; e.preventDefault(); });
-    canvas.addEventListener('touchend', () => { drawing = false; ctx.beginPath(); });
-    canvas.addEventListener('touchmove', (e) => {
-        if(!drawing) return;
+    function getPos(e) {
         const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        ctx.lineWidth = 2;
-        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    canvas.addEventListener('touchstart', (e) => { drawing = true; e.preventDefault(); ctx.beginPath(); });
+    canvas.addEventListener('touchmove', (e) => {
+        if (!drawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
     });
-    function clearSig() { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.beginPath(); }
-
-    function simpanSemua() {
-        alert("Data Berhasil Terkirim ke Sistem Inspektorat!");
-        location.reload();
-    }
+    canvas.addEventListener('touchend', () => drawing = false);
+    function clearPad() { ctx.clearRect(0,0,canvas.width,canvas.height); }
 </script>
 
 </body>
