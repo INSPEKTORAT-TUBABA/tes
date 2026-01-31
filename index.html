@@ -437,29 +437,31 @@
     </div>
 
     <div id="photoModal">
-        <div id="modalContent">PHOTO
-            <h3 style="color: black;">Bingkai Pengambilan Foto</h3>
-            <div id="dualCameraFrame">
-                <div class="camera-view">
-                    <h4>Kamera Depan (Selfie)</h4>
-                    <video id="videoFront" autoplay muted playsinline></video>
-                    <img id="capturedFrontPhoto" alt="Foto Selfie" style="display:none;">
-                </div>
-                <div class="camera-view">
-                    <h4>Kamera Belakang</h4>
-                    <video id="videoBack" autoplay muted playsinline></video>
-                    <img id="capturedBackPhoto" alt="Foto Belakang" style="display:none;">
-                </div>
-            </div>
-            <canvas id="canvasFront" style="display:none;"></canvas>
-            <canvas id="canvasBack" style="display:none;"></canvas>
-            <div id="modalButtons">
-                <button type="button" class="btn-camera" onclick="ambilFoto()">📸 Ambil Foto</button>
-                <button type="button" id="btnSimpanLihatData" class="btn-save" onclick="simpanFotoLangsung()">✅ Simpan & Lihat Data</button>
-                <button type="button" id="btnTutupModal" class="btn-cancel" onclick="tutupModal()">❌ Tutup</button>
+    <div id="modalContent">
+        <h3 id="cameraTitle">Pengambilan Foto Depan (Selfie)</h3>
+        <div id="dualCameraFrame">
+            <div class="camera-view" id="activeCameraView">
+                <video id="videoActive" autoplay muted playsinline></video>
+                <img id="previewActive" alt="Foto Terambil" style="display:none;">
             </div>
         </div>
+
+        <div id="cameraStatus" style="color:white; margin:10px 0; font-weight:bold;">
+            Langkah 1 dari 2: Foto Depan
+        </div>
+
+        <div id="modalButtons">
+            <button type="button" id="btnCapture" onclick="captureCurrentPhoto()">📸 Ambil Foto</button>
+            <button type="button" id="btnNextStep" onclick="switchToBackCamera()" style="display:none; background:#28a745;">
+                ➡️ Lanjut Foto Belakang
+            </button>
+            <button type="button" id="btnSaveAndClose" onclick="simpanFotoLangsung()" style="display:none; background:#17a745;">
+                ✅ Simpan & Selesai
+            </button>
+            <button type="button" id="btnTutupModal" onclick="tutupModal()">❌ Tutup</button>
+        </div>
     </div>
+</div>
 
     <script>
         const signatureCanvas = document.getElementById('signature-pad');
@@ -474,18 +476,156 @@
         const instansi = document.getElementById("instansi");
         const fieldDesa = document.getElementById("field-desa");
         const photoModal = document.getElementById('photoModal');
-        const videoFront = document.getElementById('videoFront');
-        const videoBack = document.getElementById('videoBack');
-        const canvasFront = document.getElementById('canvasFront');
-        const canvasBack = document.getElementById('canvasBack');
-        const capturedFrontPhoto = document.getElementById('capturedFrontPhoto');
-        const capturedBackPhoto = document.getElementById('capturedBackPhoto');
+// Variabel global baru
+let currentStep = 'front';          // 'front' atau 'back'
+let streamActive = null;
+let fotoDataURLFront = null;
+let fotoDataURLBack = null;
+let hasPhotoFront = false;
+let hasPhotoBack = false;
 
-        let streamFront = null;
-        let streamBack = null;
-        let fotoDataURLFront = null;
-        let fotoDataURLBack = null;
-        let hasPhoto = false;
+const videoActive   = document.getElementById('videoActive');
+const previewActive = document.getElementById('previewActive');
+const cameraTitle   = document.getElementById('cameraTitle');
+const cameraStatus  = document.getElementById('cameraStatus');
+const btnCapture    = document.getElementById('btnCapture');
+const btnNextStep   = document.getElementById('btnNextStep');
+const btnSaveClose  = document.getElementById('btnSaveAndClose');
+
+async function bukaKamera() {
+    photoModal.style.display = 'flex';
+    currentStep = 'front';
+    await startCamera('user');   // mulai dengan kamera depan
+}
+
+async function startCamera(facingMode) {
+    // Matikan stream sebelumnya jika ada
+    if (streamActive) {
+        streamActive.getTracks().forEach(t => t.stop());
+        streamActive = null;
+    }
+
+    try {
+        streamActive = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode }
+        });
+        videoActive.srcObject = streamActive;
+        videoActive.play();
+
+        // Update UI
+        if (facingMode === 'user') {
+            cameraTitle.textContent = "Pengambilan Foto Depan (Selfie)";
+            cameraStatus.textContent = "Langkah 1 dari 2: Foto Depan";
+            btnNextStep.style.display = 'none';
+        } else {
+            cameraTitle.textContent = "Pengambilan Foto Belakang";
+            cameraStatus.textContent = "Langkah 2 dari 2: Foto Belakang";
+            btnNextStep.style.display = 'none';
+            btnSaveClose.style.display = 'inline-block';
+        }
+
+        btnCapture.style.display = 'inline-block';
+        previewActive.style.display = 'none';
+        videoActive.style.display = 'block';
+
+    } catch (err) {
+        console.error("Gagal akses kamera:", err);
+        alert("Gagal mengakses kamera " + (facingMode==='user'?'depan':'belakang') + ".\nPastikan izin kamera diizinkan.");
+    }
+}
+
+function captureCurrentPhoto() {
+    if (!streamActive) {
+        alert("Kamera belum aktif!");
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoActive.videoWidth;
+    canvas.height = videoActive.videoHeight;
+    canvas.getContext('2d').drawImage(videoActive, 0, 0);
+
+    const dataUrl = canvas.toDataURL('image/png');
+
+    if (currentStep === 'front') {
+        fotoDataURLFront = dataUrl;
+        hasPhotoFront = true;
+    } else {
+        fotoDataURLBack = dataUrl;
+        hasPhotoBack = true;
+    }
+
+    // Tampilkan preview
+    previewActive.src = dataUrl;
+    previewActive.style.display = 'block';
+    videoActive.style.display = 'none';
+
+    // Matikan stream setelah capture (hemat resource)
+    if (streamActive) {
+        streamActive.getTracks().forEach(t => t.stop());
+        streamActive = null;
+    }
+
+    // Update tombol
+    btnCapture.style.display = 'none';
+
+    if (currentStep === 'front') {
+        btnNextStep.style.display = 'inline-block';
+        btnNextStep.textContent = "➡️ Lanjut Foto Belakang";
+    } else {
+        btnSaveClose.style.display = 'inline-block';
+    }
+}
+
+function switchToBackCamera() {
+    currentStep = 'back';
+    startCamera('environment');
+    btnNextStep.style.display = 'none';
+    btnCapture.style.display = 'inline-block';
+}
+
+function tutupModal() {
+    photoModal.style.display = 'none';
+
+    // Stop semua stream
+    if (streamActive) {
+        streamActive.getTracks().forEach(t => t.stop());
+        streamActive = null;
+    }
+
+    // Reset UI
+    currentStep = 'front';
+    fotoDataURLFront = null;
+    fotoDataURLBack = null;
+    hasPhotoFront = false;
+    hasPhotoBack = false;
+
+    videoActive.srcObject = null;
+    previewActive.style.display = 'none';
+    videoActive.style.display = 'block';
+    btnCapture.style.display = 'inline-block';
+    btnNextStep.style.display = 'none';
+    btnSaveClose.style.display = 'none';
+}
+
+function simpanFotoLangsung() {
+    hasPhoto = hasPhotoFront || hasPhotoBack;  // minimal salah satu boleh
+
+    if (!hasPhoto) {
+        alert("Belum ada foto yang diambil!");
+        return;
+    }
+
+    tutupModal();
+
+    // Tampilkan tombol simpan data
+    document.getElementById('field-simpan').style.display = 'block';
+
+    let msg = "Foto berhasil disimpan:\n";
+    if (hasPhotoFront) msg += "• Foto depan OK\n";
+    if (hasPhotoBack)  msg += "• Foto belakang OK\n";
+    alert(msg + "\nSilakan klik 'Simpan Data' untuk menyimpan formulir.");
+}
         let drawing = false;
         let hasSignature = false;
         let dataBukuTamu = [];
