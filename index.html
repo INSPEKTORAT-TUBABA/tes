@@ -38,7 +38,41 @@
             text-align: center;
             padding: 20px;
         }
-        
+        #uraian {
+    position: relative;           /* penting agar ::after bisa diposisikan relatif terhadap textarea */
+    padding-bottom: 32px;         /* memberi ruang ekstra di bagian bawah textarea agar pesan overlay tidak menutupi teks yang diketik */
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;             /* opsional: biar user bisa resize vertikal */
+    min-height: 80px;             /* minimal tinggi supaya nyaman */
+}
+
+/* Pesan overlay muncul di pojok kanan bawah textarea */
+#uraian::after {
+    content: attr(data-warning) " ";
+    position: absolute;
+    bottom: 6px;
+    right: 12px;
+    font-size: 12px;
+    color: #dc3545;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 4px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    z-index: 5;
+    white-space: nowrap;
+}
+
+/* Tampilkan pesan hanya saat ada class error */
+#uraian.error::after {
+    opacity: 1;
+}
         .welcome-title {
             font-size: 2.5em;
             font-weight: bold;
@@ -380,10 +414,16 @@
             </div>
 
             <div id="field-uraian" class="hidden">
-                <label>URAIAN: <span class="required">*</span></label>
-                <textarea id="uraian" required rows="3" 
-          oninput="validateUraian(); autoResize(this);"></textarea>
-            </div>
+    <label>URAIAN: <span class="required">*</span></label>
+    
+    <!-- Tambahkan elemen warning kotak di sini -->
+    <div id="uraianWarningBox" class="warning" style="display:none; margin: 8px 0; padding: 10px 14px; font-size: 14px; line-height: 1.4;">
+        Minimal 10 kata (saat ini: <span id="wordCountDisplay">0</span> kata)
+    </div>
+    
+    <textarea id="uraian" required rows="3" 
+              oninput="validateUraian(); autoResize(this);"></textarea>
+</div>
 
             <div id="field-nomorHp" class="hidden">
                 <label>Nomor WhatsApp: <span class="required">*</span></label>
@@ -834,47 +874,76 @@ function autoResize(textarea) {
 }
 function validateUraian() {
     const uraian = document.getElementById('uraian');
-    const kata = countWords(uraian.value);
+    const kata = countWords(uraian.value.trim());
     
     if (kata >= 10) {
         uraian.classList.remove('error');
         uraian.classList.add('success');
+        uraian.setAttribute('data-warning', '');   // kosongkan pesan
         document.getElementById('field-nomorHp').classList.remove('hidden');
     } else {
         uraian.classList.remove('success');
         uraian.classList.add('error');
-        hideFieldsAfter('field-uraian');   // sembunyikan field berikutnya
+        uraian.setAttribute('data-warning', `Minimal 10 kata (saat ini: ${kata} kata)`);
+        hideFieldsAfter('field-uraian');
     }
-    
-    // Optional: tampilkan info berapa kata lagi yang dibutuhkan
-    let info = document.getElementById('uraianInfo');
-    if (!info) {
-        info = document.createElement('small');
-        info.id = 'uraianInfo';
-        info.style.color = '#dc3545';
-        uraian.parentNode.appendChild(info);
-    }
-    if (kata < 10) {
-        info.textContent = `Minimal 10 kata (saat ini: ${kata} kata)`;
-    } else {
-        info.textContent = '';
-    }
-}
-// ===== CAMERA FUNCTIONS =====
+}// ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
     
+    const videoFront = document.getElementById('videoFront');
+    const videoBack  = document.getElementById('videoBack');
+    const labelFront = document.querySelector('#dualCameraFrame .camera-view:first-child h4');
+    const labelBack  = document.querySelector('#dualCameraFrame .camera-view:last-child h4');
+
+    // Reset dulu
+    videoFront.srcObject = null;
+    videoBack.srcObject  = null;
+    fotoDataURLFront = null;
+    fotoDataURLBack  = null;
+
+    let streamFrontSuccess = false;
+    let streamBackSuccess  = false;
+
+    // 1. Coba kamera belakang dulu (lebih umum di HP)
     try {
-        streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-        document.getElementById('videoFront').srcObject = streamFront;
-        
-        streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        document.getElementById('videoBack').srcObject = streamBack;
+        streamBack = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
+        videoBack.srcObject = streamBack;
+        streamBackSuccess = true;
     } catch (err) {
-        alert('Gagal mengakses kamera: ' + err.message);
+        console.warn('Kamera belakang tidak tersedia:', err);
+        labelBack.textContent = "Kamera Belakang Tidak Tersedia";
+    }
+
+    // 2. Coba kamera depan
+    try {
+        streamFront = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+        });
+        videoFront.srcObject = streamFront;
+        streamFrontSuccess = true;
+    } catch (err) {
+        console.warn('Kamera depan tidak tersedia:', err);
+        labelFront.textContent = "Kamera Depan Tidak Tersedia";
+    }
+
+    // Jika keduanya gagal
+    if (!streamFrontSuccess && !streamBackSuccess) {
+        alert('Tidak dapat mengakses kamera sama sekali. Pastikan izin kamera sudah diizinkan.');
+        tutupKamera();
+        return;
+    }
+
+    // Jika hanya satu kamera yang berhasil, sembunyikan yang lain
+    if (!streamBackSuccess) {
+        document.querySelector('#dualCameraFrame .camera-view:last-child').style.display = 'none';
+    }
+    if (!streamFrontSuccess) {
+        document.querySelector('#dualCameraFrame .camera-view:first-child').style.display = 'none';
     }
 }
-
 function ambilFoto() {
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
