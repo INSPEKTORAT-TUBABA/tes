@@ -245,69 +245,73 @@
         min-width: unset;
     }
 }
- /* ────────────────────────────────────────────────
-   Custom styles untuk field Uraian (minimal 10 kata)
-   ──────────────────────────────────────────────── */
+ 
+    }
+        
+        /* ────────────────────────────────────────────────
+           Custom styles untuk field Uraian (minimal 10 kata)
+           ──────────────────────────────────────────────── */
+        
+        .textarea-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        #uraian {
+            width: 100%;
+            padding: 12px 10px 36px 10px;   /* ruang bawah lebih besar agar counter tidak tertutup */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 15px;
+            line-height: 1.5;
+            box-sizing: border-box;
+        }
+        
+        .word-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 12px;
+            color: #666;
+            pointer-events: none;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .overlay-message {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dc3545;
+            font-size: 15px;
+            font-weight: 500;
+            background: rgba(255, 240, 240, 0.93);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 4px;
+            z-index: 1;
+        }
+        
+        #uraian:focus ~ .overlay-message,
+        #uraian:not(:placeholder-shown) ~ .overlay-message {
+            opacity: 0;
+        }
+        
+        #uraian.error ~ .overlay-message {
+            opacity: 1;
+        }
+        
+        /* Optional: saat sudah valid, ubah warna border */
+        #uraian.success {
+            border-color: #28a745 !important;
+        }
 
-.textarea-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-#uraian {
-    width: 100%;
-    padding: 12px 10px 36px 10px;   /* ruang bawah lebih besar agar counter tidak tertutup */
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    resize: vertical;
-    font-size: 15px;
-    line-height: 1.5;
-    box-sizing: border-box;
-}
-
-.word-counter {
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 12px;
-    color: #666;
-    pointer-events: none;
-    background: rgba(255,255,255,0.9);
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.overlay-message {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #dc3545;
-    font-size: 15px;
-    font-weight: 500;
-    background: rgba(255, 240, 240, 0.93);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 4px;
-    z-index: 1;
-}
-
-#uraian:focus ~ .overlay-message,
-#uraian:not(:placeholder-shown) ~ .overlay-message {
-    opacity: 0;
-}
-
-#uraian.error ~ .overlay-message {
-    opacity: 1;
-}
-
-/* Optional: saat sudah valid, ubah warna border */
-#uraian.success {
-    border-color: #28a745 !important;
-}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -442,18 +446,18 @@
             </div>
 
             <div id="field-uraian" class="hidden">
-    <label>URAIAN: <span class="required">*</span></label>
-    <div class="textarea-wrapper" style="position: relative;">
-        <textarea 
-            id="uraian" 
-            required 
-            rows="4" 
-            placeholder=" "
-            oninput="validateUraian(); autoResize(this);"></textarea>
-        <span id="wordCounter" class="word-counter">0 kata • minimal 10</span>
-        <span id="uraianOverlayMessage" class="overlay-message">Minimal 10 kata diperlukan</span>
-    </div>
-</div>
+                <label>URAIAN: <span class="required">*</span></label>
+                <div class="textarea-wrapper" style="position: relative;">
+                    <textarea 
+                        id="uraian" 
+                        required 
+                        rows="4" 
+                        placeholder=" "
+                        oninput="validateUraian(); autoResize(this);"></textarea>
+                    <span id="wordCounter" class="word-counter">0 kata • minimal 10</span>
+                    <span id="uraianOverlayMessage" class="overlay-message">Minimal 10 kata diperlukan</span>
+                </div>
+            </div>
 
             <div id="field-nomorHp" class="hidden">
                 <label>Nomor WhatsApp: <span class="required">*</span></label>
@@ -921,52 +925,22 @@ function validateUraian() {
         uraian.classList.add('error');
         hideFieldsAfter('field-uraian');
     }
-}// ===== CAMERA FUNCTIONS =====
+}
+// ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     document.getElementById('photoModal').style.display = 'flex';
-
-    // Matikan semua stream sebelumnya (penting!)
-    tutupKamera();
-
-    const videoFront = document.getElementById('videoFront');
-    const videoBack  = document.getElementById('videoBack');
-
-    // --- Kamera Depan (user) ---
+    
     try {
-        streamFront = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' }
-        });
-        videoFront.srcObject = streamFront;
-        videoFront.style.display = 'block';
-    } catch (err) {
-        console.warn("Kamera depan gagal:", err);
-        videoFront.parentElement.innerHTML += '<div style="color:white; padding:10px; background:rgba(255,0,0,0.5);">Kamera depan tidak tersedia</div>';
-    }
-
-    // --- Kamera Belakang (environment) --- dengan delay kecil agar tidak konflik
-    await new Promise(r => setTimeout(r, 800)); // beri waktu ~0.8 detik
-
-    try {
-        streamBack = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
-        });
-        videoBack.srcObject = streamBack;
-        videoBack.style.display = 'block';
-    } catch (err) {
-        console.warn("Kamera belakang gagal:", err);
-        // Tampilkan pesan fallback
-        videoBack.parentElement.innerHTML += '<div style="color:white; padding:10px; background:rgba(255,165,0,0.6);">Kamera belakang tidak tersedia atau sedang digunakan</div>';
+        streamFront = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        document.getElementById('videoFront').srcObject = streamFront;
         
-        // Jika benar-benar tidak ada kamera belakang, gunakan kamera depan lagi sebagai fallback
-        if (!streamBack && !streamFront) {
-            try {
-                streamFront = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoFront.srcObject = streamFront;
-                videoBack.parentElement.querySelector('h4').textContent = "Kamera Tunggal (Fallback)";
-            } catch (e2) {}
-        }
+        streamBack = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        document.getElementById('videoBack').srcObject = streamBack;
+    } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message);
     }
 }
+
 function ambilFoto() {
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
@@ -1004,21 +978,20 @@ function simpanFoto() {
 }
 
 function tutupKamera() {
-    [streamFront, streamBack].forEach(stream => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-    });
-    streamFront = streamBack = null;
-
-    const videos = document.querySelectorAll('#photoModal video');
-    videos.forEach(v => {
-        v.srcObject = null;
-        v.style.display = 'block';
-    });
-
-    document.querySelectorAll('#photoModal .camera-view > div:not(h4)').forEach(el => el.remove()); // hapus pesan error sebelumnya
+    if (streamFront) {
+        streamFront.getTracks().forEach(track => track.stop());
+        streamFront = null;
+    }
+    if (streamBack) {
+        streamBack.getTracks().forEach(track => track.stop());
+        streamBack = null;
+    }
+    
     document.getElementById('photoModal').style.display = 'none';
+    document.getElementById('videoFront').style.display = 'block';
+    document.getElementById('videoBack').style.display = 'block';
+    document.getElementById('capturedFrontPhoto').style.display = 'none';
+    document.getElementById('capturedBackPhoto').style.display = 'none';
 }
 
 // ===== DATA MANAGEMENT =====
