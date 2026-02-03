@@ -516,6 +516,7 @@ let fotoDataURLFront = null, fotoDataURLBack = null;
 let stream = null;
 let step = 1; // 1 = depan, 2 = belakang
 let editingIndex = -1, originalEditData = null;
+let isEditMode = false;  // ← KUNCI UTAMA PERBAIKAN
 
 const PIXELS_PER_CM = 37.7952755906;
 const MIN_STROKE_LENGTH_CM = 2;
@@ -607,6 +608,8 @@ function clearSignature() {
 
 // ===== FORM VALIDATION & NAVIGATION =====
 function validateNama() {
+    if (isEditMode) return;   // ← PERBAIKAN: jangan validasi ketat saat edit
+
     const namaInput = document.getElementById('nama');
     const namaValue = namaInput.value.trim();
     
@@ -633,6 +636,8 @@ function validateNama() {
 }
 
 function validateNomorHp(input) {
+    if (isEditMode) return;
+
     const value = input.value.trim();
     const onlyDigits = value.replace(/[^0-9]/g, '');
     
@@ -669,6 +674,26 @@ function validateNomorHp(input) {
 }
 
 function asalChanged() {
+    if (isEditMode) {
+        // tetap jalankan logic tampil field, tapi jangan hide
+        const asal = document.getElementById('asal').value;
+        const daftarInstansi = document.getElementById('daftarInstansi');
+        const daftarMasyarakat = document.getElementById('daftarMasyarakat');
+        
+        if (asal === 'INSTANSI') {
+            daftarInstansi.classList.remove('hidden');
+            daftarMasyarakat.classList.add('hidden');
+        } else if (asal === 'MASYARAKAT') {
+            daftarMasyarakat.classList.remove('hidden');
+            daftarInstansi.classList.add('hidden');
+        } else {
+            daftarInstansi.classList.add('hidden');
+            daftarMasyarakat.classList.add('hidden');
+        }
+        return;
+    }
+
+    // mode normal (input baru)
     const asal = document.getElementById('asal').value;
     const daftarInstansi = document.getElementById('daftarInstansi');
     const daftarMasyarakat = document.getElementById('daftarMasyarakat');
@@ -749,6 +774,8 @@ function updateDesaList() {
 }
 
 function checkAndShowNext(currentId, nextFieldId) {
+    if (isEditMode) return;  // jangan kontrol show/hide di mode edit
+
     const currentElement = document.getElementById(currentId);
     if (currentElement && currentElement.value.trim() !== '') {
         document.getElementById(nextFieldId).classList.remove('hidden');
@@ -759,6 +786,8 @@ function checkAndShowNext(currentId, nextFieldId) {
 }
 
 function hideFieldsAfter(fieldId) {
+    if (isEditMode) return;  // ← KUNCI UTAMA: JANGAN SEMBUNYIKAN APA PUN SAAT EDIT
+
     const fields = ['field-asal', 'daftarInstansi', 'daftarMasyarakat', 'fieldDesa', 
                     'field-pihakDitemui', 'field-jenisLayanan', 'field-uraian', 
                     'field-nomorHp', 'field-tandaTangan', 'field-aksi'];
@@ -787,6 +816,8 @@ function autoResize(textarea) {
 }
 
 function validateUraian() {
+    if (isEditMode) return;
+
     const uraian = document.getElementById('uraian');
     const kata = countWords(uraian.value);
     
@@ -814,7 +845,7 @@ function validateUraian() {
     }
 }
 
-// ===== CAMERA FUNCTIONS BARU =====
+// ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     step = 1;
     document.getElementById('infoKamera').innerText = "1. Foto Depan (Selfie)";
@@ -866,7 +897,6 @@ function capture() {
         stopAll();
         document.getElementById('photoWarning').style.display = 'none';
         alert("✅ Kedua foto berhasil diambil!");
-        // Pindah fungsi simpan data di sini (saat ambil foto belakang berhasil)
         if (simpanData()) {
             alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
             showData();
@@ -885,6 +915,25 @@ function stopAll() {
     document.getElementById('video').srcObject = null;
 }
 
+// ===== FORCE SHOW FIELDS SAAT EDIT =====
+function forceShowEditFields() {
+    const fieldsToShow = [
+        'field-asal', 'field-pihakDitemui', 'field-jenisLayanan',
+        'field-uraian', 'field-nomorHp', 'field-tandaTangan', 'field-aksi'
+    ];
+    
+    fieldsToShow.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('hidden');
+    });
+
+    asalChanged();  // trigger tampilan daftar instansi / masyarakat
+    
+    if (document.getElementById('asal').value === 'MASYARAKAT') {
+        document.getElementById('fieldDesa').classList.remove('hidden');
+    }
+}
+
 // ===== DATA MANAGEMENT =====
 function simpanData() {
     const form = document.getElementById('bukuTamuForm');
@@ -901,7 +950,7 @@ function simpanData() {
     if (jumlahKata < 10) {
         document.getElementById('uraian').classList.add('error');
         isValid = false;
-        alert('Uraian keperluan minimal harus 10 kata!\nSaat ini hanya ' + jumlahKata + ' kata.');
+        if (!isEditMode) alert('Uraian keperluan minimal harus 10 kata!\nSaat ini hanya ' + jumlahKata + ' kata.');
     }
     
     const namaInput = document.getElementById('nama');
@@ -915,6 +964,7 @@ function simpanData() {
     if (hurufCount < 5) {
         namaInput.classList.add('error');
         isValid = false;
+        if (!isEditMode) alert('Nama minimal 5 huruf!');
     }
     
     const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
@@ -936,11 +986,11 @@ function simpanData() {
     if (panjangNomor < 11) {
         nomorHpInput.classList.add('error');
         isValid = false;
-        alert(`Nomor WhatsApp harus berisi minimal 11 angka!\nSaat ini: ${panjangNomor} digit`);
+        if (!isEditMode) alert(`Nomor WhatsApp harus minimal 11 angka!\nSaat ini: ${panjangNomor} digit`);
     }
     else if (/[^0-9]/.test(nomorValue)) {
         isValid = false;
-        alert('Nomor WhatsApp hanya boleh berisi angka!');
+        if (!isEditMode) alert('Nomor WhatsApp hanya boleh angka!');
     }
 
     if (isValid) {
@@ -960,7 +1010,11 @@ function simpanData() {
             fotoBack: fotoDataURLBack,
             timestamp: new Date().toLocaleString('id-ID')
         };
-        dataBukuTamu.push(formData);
+        if (editingIndex >= 0) {
+            dataBukuTamu[editingIndex] = formData;
+        } else {
+            dataBukuTamu.push(formData);
+        }
         updateDataCounter();
         resetFormComplete();
         return true;
@@ -977,10 +1031,8 @@ function resetFormComplete() {
     totalStrokeLength = 0;
     clearSignature();
     hideAllFields();
-}
-
-function updateDataCounter() {
-    document.getElementById('dataCount').textContent = dataBukuTamu.length;
+    isEditMode = false;
+    editingIndex = -1;
 }
 
 // ===== NAVIGATION =====
@@ -1076,6 +1128,7 @@ function editData(index) {
         
         editingIndex = index;
         originalEditData = JSON.parse(JSON.stringify(data));
+        isEditMode = true;  // AKTIFKAN MODE EDIT
         
         document.getElementById('mainNavigation').style.display = 'none';
         document.getElementById('editModeButtons').style.display = 'block';
@@ -1126,13 +1179,12 @@ function editData(index) {
         fotoDataURLBack = data.fotoBack;
         hasPhoto = !!(data.fotoFront || data.fotoBack);
         
-        dataBukuTamu.splice(index, 1);
-        updateDataCounter();
+        forceShowEditFields();  // PASTIKAN SEMUA FIELD TETAP TERLIHAT
         
         document.getElementById('formSection').style.display = 'block';
         document.getElementById('dataSection').style.display = 'none';
         
-        alert('Data telah dimuat ke form.\nSilakan lakukan perubahan lalu simpan.');
+        alert('Data telah dimuat ke form.\nAnda bebas mengedit tanpa field hilang.\nSimpan setelah selesai.');
     }
 }
 
@@ -1141,6 +1193,7 @@ function saveEditedData() {
         alert("✅ Perubahan berhasil disimpan!");
         editingIndex = -1;
         originalEditData = null;
+        isEditMode = false;
         document.getElementById('mainNavigation').style.display = 'block';
         document.getElementById('editModeButtons').style.display = 'none';
         showData();
@@ -1151,12 +1204,13 @@ function saveEditedData() {
 
 function cancelEdit() {
     if (originalEditData && editingIndex >= 0) {
-        dataBukuTamu.splice(editingIndex, 0, originalEditData);
+        dataBukuTamu[editingIndex] = originalEditData;
         updateDataCounter();
     }
     
     editingIndex = -1;
     originalEditData = null;
+    isEditMode = false;
     
     document.getElementById('mainNavigation').style.display = 'block';
     document.getElementById('editModeButtons').style.display = 'none';
@@ -1342,6 +1396,10 @@ function exportDetailPerTamuPDF() {
         goToWelcome();
     }, 1000);
 }
+
+function updateDataCounter() {
+    document.getElementById('dataCount').textContent = dataBukuTamu.length;
+}
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c82c63b6e632ce1',t:'MTc3MDEzMDU4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
