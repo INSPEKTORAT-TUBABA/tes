@@ -363,7 +363,6 @@
                 <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
                 <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
                 <br/><br/>
-                <button type="button" id="btnSimpanData" onclick="simpanDataDanTutupForm()" style="display: none; font-size: 18px; background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer;">✅ Simpan & Lihat Data</button>
             </div>
         </form>
     </div>
@@ -865,9 +864,15 @@ function capture() {
         fotoDataURLBack = dataUrl;
         hasPhoto = true;
         stopAll();
-        document.getElementById('btnSimpanData').style.display = 'inline-block';
         document.getElementById('photoWarning').style.display = 'none';
-        alert("✅ Kedua foto berhasil diambil!\nAnda bisa menyimpan data sekarang.");
+        alert("✅ Kedua foto berhasil diambil!");
+        // Pindah fungsi simpan data di sini (saat ambil foto belakang berhasil)
+        if (simpanData()) {
+            alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+            showData();
+        } else {
+            alert("❌ Mohon lengkapi semua data yang diperlukan");
+        }
     }
 }
 
@@ -963,15 +968,6 @@ function simpanData() {
     return false;
 }
 
-function simpanDataDanTutupForm() {
-    if (simpanData()) {
-        alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
-        showData();
-    } else {
-        alert("❌ Mohon lengkapi semua data yang diperlukan");
-    }
-}
-
 function resetFormComplete() {
     document.getElementById('bukuTamuForm').reset();
     hasSignature = false;
@@ -981,7 +977,6 @@ function resetFormComplete() {
     totalStrokeLength = 0;
     clearSignature();
     hideAllFields();
-    document.getElementById('btnSimpanData').style.display = 'none';
 }
 
 function updateDataCounter() {
@@ -1084,7 +1079,6 @@ function editData(index) {
         
         document.getElementById('mainNavigation').style.display = 'none';
         document.getElementById('editModeButtons').style.display = 'block';
-        document.getElementById('btnSimpanData').style.display = 'none';
         
         document.getElementById('nama').value = data.nama;
         document.getElementById('field-asal').classList.remove('hidden');
@@ -1138,7 +1132,7 @@ function editData(index) {
         document.getElementById('formSection').style.display = 'block';
         document.getElementById('dataSection').style.display = 'none';
         
-        alert('Data telah dimuat ke form.\nSilakan lakukan perubahan lalu tekan "Simpan Perubahan"');
+        alert('Data telah dimuat ke form.\nSilakan lakukan perubahan lalu simpan.');
     }
 }
 
@@ -1149,7 +1143,6 @@ function saveEditedData() {
         originalEditData = null;
         document.getElementById('mainNavigation').style.display = 'block';
         document.getElementById('editModeButtons').style.display = 'none';
-        document.getElementById('btnSimpanData').style.display = 'inline-block';
         showData();
     } else {
         alert("❌ Data belum lengkap atau tidak valid.");
@@ -1167,7 +1160,6 @@ function cancelEdit() {
     
     document.getElementById('mainNavigation').style.display = 'block';
     document.getElementById('editModeButtons').style.display = 'none';
-    document.getElementById('btnSimpanData').style.display = 'inline-block';
     
     showData();
     alert('Edit dibatalkan. Data asli dikembalikan.');
@@ -1351,5 +1343,5 @@ function exportDetailPerTamuPDF() {
     }, 1000);
 }
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c82c63b6e632ce1',t:'MTc3MDEzMDU4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
