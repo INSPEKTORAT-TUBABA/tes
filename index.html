@@ -145,19 +145,19 @@
         }
 
         #signature-pad { 
-    background: white; 
-    border: 3px solid #007bff;
-    border-radius: 8px;
-    cursor: crosshair;
-    touch-action: none;
-    display: block !important;          /* paksa tampil */
-    margin: 10px auto;                  /* center sedikit */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 300px;                   /* minimal lebar biar tidak hilang */
-    width: 100% !important;             /* ambil lebar parent penuh */
-    max-width: 600px;
-    height: 200px !important;           /* paksa tinggi */
-}
+            background: white; 
+            border: 3px solid #007bff;
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block !important;          /* paksa tampil */
+            margin: 10px auto;                  /* center sedikit */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 300px;                   /* minimal lebar biar tidak hilang */
+            width: 100% !important;             /* ambil lebar parent penuh */
+            max-width: 600px;
+            height: 200px !important;           /* paksa tinggi */
+        }
         
         .detail-container {
             max-width: 900px;
@@ -346,45 +346,55 @@
 
             <div id="field-nomorHp" class="hidden">
                 <label>Nomor WhatsApp: <span class="required">*</span></label>
-                <input id="nomorHp" 
+                <small style="color:#555; display:block; margin-bottom:4px;">
+                    Harus diawali dengan <strong>08</strong> (contoh: 081234567890)
+                </small>
+                <input 
+                    id="nomorHp" 
                     required 
                     type="tel" 
-                    placeholder="08xxxxxxxxxx (minimal 11 digit, hanya angka)" 
-                    pattern="[0-9]{11,13}" 
+                    placeholder="08xxxxxxxxxx" 
+                    pattern="08[0-9]{9,11}" 
                     maxlength="13" 
-                    oninput="validateNomorHp(this); checkAndShowNext('nomorHp', 'field-tandaTangan');"/>
+                    minlength="11"
+                    oninput="validateNomorHp(this); checkAndShowNext('nomorHp', 'field-tandaTangan');"
+                />
+                <small id="nomorHpInfo" style="color:#dc3545; display:block; min-height:1.2em;"></small>
             </div>
 
+            <!-- Tanda Tangan -->
             <div id="field-tandaTangan" class="hidden">
                 <label>Tanda Tangan: <span class="required">*</span></label>
                 <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan terlalu pendek (min 2 cm)</div>
                 <canvas id="signature-pad" width="600" height="200"></canvas>
-                <button type="button" onclick="clearSignature()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">🗑️ Hapus Tanda Tangan</button>
             </div>
 
-            <div id="field-aksi" class="hidden">
-                <label>Foto: <span class="required">*</span></label>
-                <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
-                <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
-<div id="field-aksi" class="hidden">
-    <label>Foto: <span class="required">*</span></label>
-    <div class="warning" id="photoWarning" style="display:none;">⚠️ Foto wajib diambil!</div>
-    <button type="button" onclick="bukaKamera()" style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📸 Ambil Foto</button>
-    
-    <!-- PREVIEW FOTO -->
-    <div id="photoPreview" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
-        <div id="previewFront" style="text-align:center;">
-            <small>Foto Depan</small><br>
-            <img id="imgFront" style="max-width:180px; border:1px solid #ccc; border-radius:6px; display:none;" alt="Foto Depan">
-        </div>
-        <div id="previewBack" style="text-align:center;">
-            <small>Foto Belakang</small><br>
-            <img id="imgBack" style="max-width:180px; border:1px solid #ccc; border-radius:6px; display:none;" alt="Foto Belakang">
-        </div>
-    </div>
-    <br/>
-</div>
-                <br/><br/>
+            <!-- Tombol Aksi (Ambil Foto + Hapus Tanda Tangan) -->
+            <div id="field-aksi" class="hidden" style="margin-top: 15px; text-align: center;">
+                <div style="margin-bottom: 15px;">
+                    <button type="button" onclick="bukaKamera()" 
+                            style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 0 10px;">
+                        📸 Ambil Foto
+                    </button>
+                    
+                    <button type="button" onclick="clearSignature()" 
+                            style="font-size: 16px; background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 0 10px;">
+                        🗑️ Hapus Tanda Tangan
+                    </button>
+                </div>
+
+                <!-- Warning foto -->
+                <div class="warning" id="photoWarning" style="display:none; margin: 10px 0;">⚠️ Foto wajib diambil!</div>
+
+                <!-- Preview foto (tanpa label Depan/Belakang) -->
+                <div id="photoPreview" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                    <div style="text-align:center;">
+                        <img id="imgFront" style="max-width:220px; border:1px solid #ccc; border-radius:8px; display:none;" alt="Foto 1">
+                    </div>
+                    <div style="text-align:center;">
+                        <img id="imgBack" style="max-width:220px; border:1px solid #ccc; border-radius:8px; display:none;" alt="Foto 2">
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -409,30 +419,28 @@
     <div id="dataSection" style="display: none;">
         <h2>📊 DATA BUKU TAMU</h2>
         <div style="margin-bottom: 20px;">
-            <button type="button" onclick="exportDetailPerTamuPDF()" 
-                    style="background: #6610f2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-                🖨️ Simpan Detail Lengkap (Per Tamu)
-            </button>
         </div>
         <div id="dataContainer"></div>
     </div>
 
-    <!-- === KAMERA BARU: SINGLE VIDEO + STEP BY STEP === -->
+    <!-- MODAL KAMERA -->
     <div id="photoModal">
         <div style="background:#fff; padding:20px; border-radius:12px; max-width:95%; width:100%; max-height:95vh; overflow-y:auto; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
             <h3 style="margin:0 0 15px; color:#333;">Ambil Dokumentasi Foto</h3>
             
-            <div id="infoKamera" style="font-size:1.1em; font-weight:bold; margin-bottom:12px; color:#007bff;">
-                1. Foto Depan (Selfie)
+            <div id="infoKamera" style="font-size:1.1em; font-weight:bold; margin-bottom:15px; color:#007bff;">
+                Ambil foto pertama
             </div>
 
-            <video id="video" autoplay playsinline muted style="width:100%; max-width:420px; background:#000; border-radius:8px; margin-bottom:15px;"></video>
+            <video id="video" autoplay playsinline muted style="width:100%; max-width:420px; background:#000; border-radius:8px; margin-bottom:20px;"></video>
 
-            <div style="margin:15px 0;">
-                <button type="button" class="btn-capture" onclick="capture()" style="background:#28a745; color:white; border:none; padding:12px 28px; font-size:1.1em; border-radius:50px; cursor:pointer; margin:0 8px; box-shadow:0 4px 12px rgba(40,167,69,0.4);">
-                    📸 FOTO
+            <div style="margin:20px 0;">
+                <button type="button" class="btn-capture" onclick="capture()" 
+                        style="background:#28a745; color:white; border:none; padding:14px 32px; font-size:1.2em; border-radius:50px; cursor:pointer; margin:0 10px; box-shadow:0 4px 12px rgba(40,167,69,0.4);">
+                    📸 Ambil Foto
                 </button>
-                <button type="button" class="btn-cancel" onclick="stopAll()" style="background:#dc3545; color:white; border:none; padding:12px 28px; font-size:1.1em; border-radius:50px; cursor:pointer; margin:0 8px;">
+                <button type="button" class="btn-cancel" onclick="stopAll()" 
+                        style="background:#dc3545; color:white; border:none; padding:14px 32px; font-size:1.2em; border-radius:50px; cursor:pointer; margin:0 10px;">
                     ❌ Batal
                 </button>
             </div>
@@ -674,40 +682,60 @@ function validateNama() {
 }
 
 function validateNomorHp(input) {
-    if (isEditMode) return;
+    if (isEditMode) return; // tetap longgar saat edit
 
-    const value = input.value.trim();
+    let value = input.value.trim();
+    
+    // Hapus semua karakter non-angka kecuali awalan
     const onlyDigits = value.replace(/[^0-9]/g, '');
     
-    input.value = onlyDigits;
-    
-    const isValid = onlyDigits.length >= 11 && onlyDigits.length <= 13 && /^[0-9]+$/.test(onlyDigits);
-    
-    if (isValid) {
+    // Paksa awalan 08 jika user mulai ketik
+    if (onlyDigits.length > 0 && !onlyDigits.startsWith('08')) {
+        if (onlyDigits.startsWith('8')) {
+            input.value = '0' + onlyDigits; // tambah 0 di depan jika mulai dengan 8
+        } else if (onlyDigits.startsWith('62')) {
+            input.value = '0' + onlyDigits.substring(2); // ganti 62 → 08
+        } else {
+            input.value = '08' + onlyDigits; // paksa awalan 08
+        }
+    } else {
+        input.value = onlyDigits;
+    }
+
+    const cleaned = input.value.trim();
+    const isValidFormat = cleaned.startsWith('08') && 
+                         cleaned.length >= 11 && 
+                         cleaned.length <= 13 && 
+                         /^[0-9]+$/.test(cleaned);
+
+    // Update visual feedback
+    if (isValidFormat) {
         input.classList.remove('error');
         input.classList.add('success');
+        document.getElementById('nomorHpInfo').textContent = '';
     } else {
         input.classList.remove('success');
         input.classList.add('error');
-        hideFieldsAfter('field-nomorHp');
+        
+        let msg = '';
+        if (cleaned.length === 0) {
+            msg = '';
+        } else if (!cleaned.startsWith('08')) {
+            msg = 'Harus diawali dengan 08';
+        } else if (cleaned.length < 11) {
+            msg = `Minimal 11 digit (saat ini: ${cleaned.length})`;
+        } else if (cleaned.length > 13) {
+            msg = `Maksimal 13 digit (saat ini: ${cleaned.length})`;
+        }
+        document.getElementById('nomorHpInfo').textContent = msg;
     }
-    
-    let info = document.getElementById('nomorHpInfo');
-    if (!info) {
-        info = document.createElement('small');
-        info.id = 'nomorHpInfo';
-        info.style.color = '#dc3545';
-        input.parentNode.appendChild(info);
-    }
-    
-    if (onlyDigits.length === 0) {
-        info.textContent = '';
-    } else if (onlyDigits.length < 11) {
-        info.textContent = `Minimal 11 digit (saat ini: ${onlyDigits.length})`;
-    } else if (onlyDigits.length > 13) {
-        info.textContent = `Maksimal 13 digit (saat ini: ${onlyDigits.length})`;
+
+    // Jika valid → lanjut ke field berikutnya
+    if (isValidFormat) {
+        document.getElementById('field-tandaTangan').classList.remove('hidden');
+        resizeCanvas();
     } else {
-        info.textContent = '';
+        hideFieldsAfter('field-nomorHp');
     }
 }
 
@@ -884,7 +912,7 @@ function validateUraian() {
 // ===== CAMERA FUNCTIONS =====
 async function bukaKamera() {
     step = 1;
-    document.getElementById('infoKamera').innerText = "1. Foto Depan (Selfie)";
+    document.getElementById('infoKamera').innerText = "Ambil foto pertama";
     document.getElementById('photoModal').style.display = 'flex';
     await initCamera('user');
 }
@@ -924,20 +952,25 @@ function capture() {
 
     if (step === 1) {
         fotoDataURLFront = dataUrl;
+        document.getElementById('imgFront').src = dataUrl;
+        document.getElementById('imgFront').style.display = 'block';
+        
         step = 2;
-        document.getElementById('infoKamera').innerText = "2. Foto Belakang (Objek/KTP/Surat dll)";
+        document.getElementById('infoKamera').innerText = 'Ambil foto kedua';
         initCamera('environment');
     } else {
         fotoDataURLBack = dataUrl;
+        document.getElementById('imgBack').src = dataUrl;
+        document.getElementById('imgBack').style.display = 'block';
+        
         hasPhoto = true;
         stopAll();
         document.getElementById('photoWarning').style.display = 'none';
         alert("✅ Kedua foto berhasil diambil!");
+        
         if (simpanData()) {
-            alert("✅ Data berhasil disimpan!\n\nTotal data: " + dataBukuTamu.length);
+            alert("✅ Data berhasil disimpan!\nTotal data: " + dataBukuTamu.length);
             showData();
-        } else {
-            alert("❌ Mohon lengkapi semua data yang diperlukan");
         }
     }
 }
@@ -1068,6 +1101,7 @@ function simpanData() {
     resetFormComplete();
     return true;
 }
+
 function resetFormComplete() {
     document.getElementById('bukuTamuForm').reset();
     hasSignature = false;
@@ -1109,7 +1143,11 @@ function displayData() {
                 <h3>Data Tamu #${index + 1}</h3>
                 <div>
                     <button onclick="editData(${index})" style="background: #ffc107; color: black; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 5px;">✏️ Edit</button>
-                    <button onclick="deleteData(${index})" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🗑️ Hapus</button>
+                    
+                    <button type="button" onclick="exportDetailPerTamuPDF(${index})" 
+                            style="background: #6610f2; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">
+                        🖨️ Simpan Detail Lengkap (Per Tamu)
+                    </button>
                 </div>
             </div>
             
@@ -1148,20 +1186,21 @@ function displayData() {
                 <div class="detail-value">${data.timestamp}</div>
             </div>
 
-            <div class="detail-row">
+              <div class="detail-row">
+                <div class="detail-label">Dokumentasi Foto</div>
+                <div class="detail-value">
+                    ${data.fotoFront ? `<img src="${data.fotoFront}" style="width: 150px; margin-right: 10px; border: 1px solid #ddd;" alt="Foto 1">` : ''}
+                    ${data.fotoBack ? `<img src="${data.fotoBack}" style="width: 150px; border: 1px solid #ddd;" alt="Foto 2">` : ''}
+                </div>
+</div>
+
+<div class="detail-row">
                 <div class="detail-label">Tanda Tangan</div>
                 <div class="detail-value">
                     <img src="${data.tandaTangan}" style="max-width: 200px; border: 1px solid #ddd;" alt="TTD">
                 </div>
-            </div>
+           </div>
 
-            <div class="detail-row">
-                <div class="detail-label">Dokumentasi Foto</div>
-                <div class="detail-value">
-                    ${data.fotoFront ? `<img src="${data.fotoFront}" style="width: 150px; margin-right: 10px; border: 1px solid #ddd;" alt="Foto Depan">` : ''}
-                    ${data.fotoBack ? `<img src="${data.fotoBack}" style="width: 150px; border: 1px solid #ddd;" alt="Foto Belakang">` : ''}
-                </div>
-            </div>
         </div>`;
     });
     container.innerHTML = html;
@@ -1215,17 +1254,17 @@ function editData(index) {
         if (data.tandaTangan) {
             const img = new Image();
             img.onload = function() {
-    ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-    ctx2.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
-    hasSignature = true;
-    totalStrokeLength = 100;
+                ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                ctx2.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
+                hasSignature = true;
+                totalStrokeLength = 100;
 
-    attachSignatureEvents();
-    
-    // Panggil resize 2x dengan delay
-    resizeCanvas();
-    setTimeout(resizeCanvas, 300);  // panggil lagi setelah 300ms
-};
+                attachSignatureEvents();
+                
+                // Panggil resize 2x dengan delay
+                resizeCanvas();
+                setTimeout(resizeCanvas, 300);  // panggil lagi setelah 300ms
+            };
             img.src = data.tandaTangan;
         } else {
             attachSignatureEvents();
@@ -1295,167 +1334,174 @@ function exportData() {
     alert('Export tabel ringkasan - Fitur dalam pengembangan');
 }
 
-function exportDetailPerTamuPDF() {
-    if (dataBukuTamu.length === 0) {
-        alert('Tidak ada data untuk di-export!');
+function exportDetailPerTamuPDF(index) {
+    if (dataBukuTamu.length === 0 || index < 0 || index >= dataBukuTamu.length) {
+        alert('Tidak ada data untuk tamu ini!');
         return;
     }
 
+    const data = dataBukuTamu[index];
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 12;
+    const margin = 15;
     const contentWidth = pageWidth - (margin * 2);
+    let y = 12;
 
-    dataBukuTamu.forEach((data, index) => {
-        if (index > 0) doc.addPage();
+    // Header
+    doc.setFillColor(102, 126, 234);
+    doc.rect(margin, y, contentWidth, 28, 'F');
+    doc.setFillColor(118, 75, 162);
+    doc.setGState(doc.GState({ opacity: 0.4 }));
+    doc.rect(margin, y, contentWidth, 28, 'F');
+    doc.setGState(doc.GState({ opacity: 1 }));
 
-        let y = 8;
+    doc.setFontSize(14);
+    doc.setTextColor(255);
+    doc.setFont("helvetica", "bold");
+    doc.text('BUKU TAMU DIGITAL', pageWidth/2, y+10, { align: 'center' });
 
-        doc.setFillColor(102, 126, 234);
-        doc.rect(margin, y, contentWidth, 22, 'F');
-        
-        doc.setFillColor(118, 75, 162);
-        doc.setGState(doc.GState({ opacity: 0.5 }));
-        doc.rect(margin, y, contentWidth, 22, 'F');
-        doc.setGState(doc.GState({ opacity: 1 }));
+    doc.setFontSize(10);
+    doc.text('INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth/2, y+17, { align: 'center' });
 
-        doc.setFontSize(12);
-        doc.setTextColor(255);
-        doc.setFont("helvetica", "bold");
-        doc.text('BUKU TAMU DIGITAL', pageWidth/2, y+8, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setTextColor(220, 220, 255);
+    doc.text(`Data Tamu #${index + 1} • ${data.timestamp}`, pageWidth/2, y+24, { align: 'center' });
 
-        doc.setFontSize(8);
-        doc.text('INSPEKTORAT KAB. TULANG BAWANG BARAT', pageWidth/2, y+13, { align: 'center' });
+    y += 35;
 
-        doc.setFontSize(7);
-        doc.setTextColor(220, 220, 255);
-        doc.text(`Tamu #${index + 1} • ${data.timestamp}`, pageWidth/2, y+18, { align: 'center' });
+    // Informasi utama (sama seperti tampilan web)
+    const fields = [
+        { label: "Nama Lengkap", value: data.nama || '-' },
+        { label: "Asal / Instansi", value: data.instansi || (data.kecamatan ? `${data.kecamatan}${data.desa ? ', ' + data.desa : ''}` : data.asal || '-') },
+        { label: "Pihak yang Ditemui", value: data.pihakDitemui || '-' },
+        { label: "Jenis Layanan", value: data.jenisLayanan || '-' },
+        { label: "Uraian Keperluan", value: data.uraian || '-' },
+        { label: "Nomor WhatsApp", value: data.nomorHp || '-' },
+        { label: "Waktu Kunjungan", value: data.timestamp || '-' }
+    ];
 
-        y += 25;
+    const labelWidth = 55;
+    const rowHeightBase = 8;
 
-        const labelWidth = 50;
-        const rowHeight = 7;
+    doc.setFontSize(10);
+    fields.forEach(field => {
+        const valueLines = doc.splitTextToSize(field.value, contentWidth - labelWidth - 6);
+        const rowHeight = Math.max(rowHeightBase, valueLines.length * 5 + 2);
 
-        const fields = [
-            { label: "Nama Lengkap", value: data.nama },
-            { label: "Asal / Instansi", value: data.instansi || (data.kecamatan ? `${data.kecamatan}${data.desa ? ', ' + data.desa : ''}` : '-') },
-            { label: "Pihak Ditemui", value: data.pihakDitemui || '-' },
-            { label: "Jenis Layanan", value: data.jenisLayanan || '-' },
-            { label: "Uraian Keperluan", value: data.uraian || '-' },
-            { label: "Nomor WhatsApp", value: data.nomorHp || '-' }
-        ];
+        // Background label
+        doc.setFillColor(248, 249, 250);
+        doc.rect(margin, y, labelWidth, rowHeight, 'F');
 
-        doc.setFontSize(8);
+        // Background value
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin + labelWidth, y, contentWidth - labelWidth, rowHeight, 'F');
 
-        fields.forEach((field) => {
-            const maxWidth = contentWidth - labelWidth - 4;
-            const lines = doc.splitTextToSize(field.value, maxWidth);
-            const currentRowHeight = Math.max(rowHeight, lines.length * 4 + 2);
-            
-            doc.setFillColor(248, 249, 250);
-            doc.rect(margin, y, labelWidth, currentRowHeight, 'F');
-            
-            doc.setFillColor(255, 255, 255);
-            doc.rect(margin + labelWidth, y, contentWidth - labelWidth, currentRowHeight, 'F');
-            
-            doc.setDrawColor(224, 224, 224);
-            doc.setLineWidth(0.2);
-            doc.rect(margin, y, contentWidth, currentRowHeight);
-            doc.line(margin + labelWidth, y, margin + labelWidth, y + currentRowHeight);
+        // Border
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.3);
+        doc.rect(margin, y, contentWidth, rowHeight);
 
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(73, 80, 87);
-            doc.text(field.label, margin + 2, y + 4.5);
+        // Garis pemisah kolom
+        doc.line(margin + labelWidth, y, margin + labelWidth, y + rowHeight);
 
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(33, 37, 41);
-            doc.text(lines, margin + labelWidth + 2, y + 4.5);
-
-            y += currentRowHeight;
-        });
-
-        y += 4;
-
-        const leftColumnX = margin;
-        const rightColumnX = margin + 65;
-        const startY = y;
-
-        doc.setFontSize(8);
+        // Label
         doc.setFont("helvetica", "bold");
         doc.setTextColor(73, 80, 87);
-        doc.text('Tanda Tangan:', leftColumnX, y);
-        y += 4;
+        doc.text(field.label, margin + 4, y + 5.5);
 
-        if (data.tandaTangan) {
-            try {
-                const sigWidth = 55;
-                const sigHeight = 28;
-                doc.setDrawColor(222, 226, 230);
-                doc.setLineWidth(0.3);
-                doc.rect(leftColumnX, y, sigWidth, sigHeight);
-                doc.addImage(data.tandaTangan, 'PNG', leftColumnX + 1, y + 1, sigWidth - 2, sigHeight - 2);
-            } catch (e) {}
-        }
+        // Value
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(33, 37, 41);
+        doc.text(valueLines, margin + labelWidth + 4, y + 5.5);
 
-        y = startY;
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text('Dokumentasi Foto:', rightColumnX, y);
-        y += 4;
-
-        const photoWidth = 58;
-        const photoHeight = 43;
-        let photoY = y;
-
-        if (data.fotoFront) {
-            try {
-                doc.setDrawColor(222, 226, 230);
-                doc.setLineWidth(0.3);
-                doc.rect(rightColumnX, photoY, photoWidth, photoHeight);
-                doc.addImage(data.fotoFront, 'PNG', rightColumnX + 1, photoY + 1, photoWidth - 2, photoHeight - 2);
-                
-                doc.setFontSize(6);
-                doc.setTextColor(100);
-                doc.text('Foto Depan', rightColumnX + photoWidth/2, photoY + photoHeight + 3, { align: 'center' });
-            } catch (e) {}
-        }
-
-        photoY += photoHeight + 5;
-        if (data.fotoBack) {
-            try {
-                doc.setDrawColor(222, 226, 230);
-                doc.setLineWidth(0.3);
-                doc.rect(rightColumnX, photoY, photoWidth, photoHeight);
-                doc.addImage(data.fotoBack, 'PNG', rightColumnX + 1, photoY + 1, photoWidth - 2, photoHeight - 2);
-                
-                doc.setFontSize(6);
-                doc.setTextColor(100);
-                doc.text('Foto Belakang', rightColumnX + photoWidth/2, photoY + photoHeight + 3, { align: 'center' });
-            } catch (e) {}
-        }
-
-        const bottomY = pageHeight - 15;
-        doc.setDrawColor(220);
-        doc.setLineWidth(0.2);
-        doc.line(margin, bottomY, pageWidth - margin, bottomY);
-
-        doc.setFontSize(6);
-        doc.setTextColor(140);
-        doc.text('Dokumen dibuat otomatis oleh Sistem Buku Tamu Digital - Inspektorat Kab. Tulang Bawang Barat', pageWidth/2, bottomY + 4, { align: 'center' });
+        y += rowHeight;
     });
 
-    const filename = `Buku_Tamu_Detail_${new Date().toISOString().slice(0,10)}.pdf`;
+    y += 12;
+
+    // Bagian Dokumentasi Foto & Tanda Tangan
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(40, 167, 69);
+    doc.text("DOKUMENTASI FOTO & TANDA TANGAN", margin, y);
+    y += 8;
+
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 6;
+
+    // Foto berjejer horizontal
+    const photoSize = 70;      // lebar & tinggi foto
+    const photoGap = 12;
+    let photoX = margin;
+
+    if (data.fotoFront) {
+        try {
+            doc.setDrawColor(180);
+            doc.rect(photoX, y, photoSize, photoSize, 'S');
+            doc.addImage(data.fotoFront, 'PNG', photoX + 1, y + 1, photoSize - 2, photoSize - 2);
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text("Foto 1", photoX + photoSize/2, y + photoSize + 5, { align: 'center' });
+        } catch (e) { console.log("Gagal render foto depan", e); }
+    }
+
+    photoX += photoSize + photoGap;
+
+    if (data.fotoBack) {
+        try {
+            doc.setDrawColor(180);
+            doc.rect(photoX, y, photoSize, photoSize, 'S');
+            doc.addImage(data.fotoBack, 'PNG', photoX + 1, y + 1, photoSize - 2, photoSize - 2);
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text("Foto 2", photoX + photoSize/2, y + photoSize + 5, { align: 'center' });
+        } catch (e) { console.log("Gagal render foto belakang", e); }
+    }
+
+    y += photoSize + 18;  // turun setelah foto + caption
+
+    // Tanda Tangan (di bawah foto)
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 123, 255);
+    doc.text("Tanda Tangan:", margin, y);
+    y += 6;
+
+    if (data.tandaTangan) {
+        try {
+            const sigWidth = 100;
+            const sigHeight = 50;
+            doc.setDrawColor(180);
+            doc.rect(margin, y, sigWidth, sigHeight, 'S');
+            doc.addImage(data.tandaTangan, 'PNG', margin + 2, y + 2, sigWidth - 4, sigHeight - 4);
+        } catch (e) { console.log("Gagal render tanda tangan", e); }
+    } else {
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text("(Tidak ada tanda tangan)", margin + 4, y + 8);
+    }
+
+    // Footer
+    const bottomY = 280;
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.3);
+    doc.line(margin, bottomY, pageWidth - margin, bottomY);
+
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital - Inspektorat Kab. Tulang Bawang Barat', 
+             pageWidth/2, bottomY + 6, { align: 'center' });
+
+    // Simpan file
+    const cleanTimestamp = data.timestamp.replace(/[\s,:]/g, '-');
+    const filename = `Detail_Tamu_${index + 1}_${cleanTimestamp}.pdf`;
     doc.save(filename);
 
-    setTimeout(() => {
-        alert('✅ File berhasil diunduh!\n\nKembali ke halaman selamat datang...');
-        goToWelcome();
-    }, 1000);
-}
-
-function updateDataCounter() {
+    alert('✅ PDF detail tamu telah diunduh!');
+}function updateDataCounter() {
     document.getElementById('dataCount').textContent = dataBukuTamu.length;
 }
 </script>
