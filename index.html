@@ -1331,9 +1331,154 @@ function exportData() {
         alert('Tidak ada data untuk di-export!');
         return;
     }
-    alert('Export tabel ringkasan - Fitur dalam pengembangan');
-}
 
+    const instansiData = dataBukuTamu.filter(d => d.asal === 'INSTANSI');
+    const masyarakatData = dataBukuTamu.filter(d => d.asal === 'MASYARAKAT');
+
+    function createSummaryPDF(data, type) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4'); // landscape untuk tabel lebar
+        const pageWidth = 297;
+        const margin = 10;
+        let y = margin;
+
+        // Title
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, y, { align: 'center' });
+        y += 10;
+
+        doc.setFontSize(10);
+        doc.text(`Tanggal Export: ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, y, { align: 'center' });
+        y += 15;
+
+        // Header tabel
+        const title = type === 'instansi' ? 'DAFTAR TAMU INSTANSI / UNIT KERJA' : 'DAFTAR TAMU MASYARAKAT';
+        doc.setFontSize(12);
+        doc.text(title, margin, y);
+        y += 10;
+
+        // Kolom
+        let columns;
+        if (type === 'instansi') {
+            columns = [
+                { header: 'No', dataKey: 'no' },
+                { header: 'Nama', dataKey: 'nama' },
+                { header: 'Instansi', dataKey: 'instansi' },
+                { header: 'Pihak Ditemui', dataKey: 'pihakDitemui' },
+                { header: 'Layanan', dataKey: 'jenisLayanan' },
+                { header: 'Uraian', dataKey: 'uraian' },
+                { header: 'No HP', dataKey: 'nomorHp' },
+                { header: 'Waktu', dataKey: 'timestamp' },
+                { header: 'TTD', dataKey: 'tandaTangan' },
+                { header: 'Foto Depan', dataKey: 'fotoFront' },
+                { header: 'Foto Belakang', dataKey: 'fotoBack' }
+            ];
+        } else {
+            columns = [
+                { header: 'No', dataKey: 'no' },
+                { header: 'Nama', dataKey: 'nama' },
+                { header: 'Kecamatan', dataKey: 'kecamatan' },
+                { header: 'Desa', dataKey: 'desa' },
+                { header: 'Pihak Ditemui', dataKey: 'pihakDitemui' },
+                { header: 'Layanan', dataKey: 'jenisLayanan' },
+                { header: 'Uraian', dataKey: 'uraian' },
+                { header: 'No HP', dataKey: 'nomorHp' },
+                { header: 'Waktu', dataKey: 'timestamp' },
+                { header: 'TTD', dataKey: 'tandaTangan' },
+                { header: 'Foto Depan', dataKey: 'fotoFront' },
+                { header: 'Foto Belakang', dataKey: 'fotoBack' }
+            ];
+        }
+
+        // Rows
+        const rows = data.map((d, i) => {
+            let ttdCell = '';
+            if (typeof d.tandaTangan === 'string' && d.tandaTangan.startsWith('data:image')) {
+                ttdCell = { image: d.tandaTangan, fit: [20, 20] };
+            }
+
+            let frontCell = '';
+            if (typeof d.fotoFront === 'string' && d.fotoFront.startsWith('data:image')) {
+                frontCell = { image: d.fotoFront, fit: [20, 20] };
+            }
+
+            let backCell = '';
+            if (typeof d.fotoBack === 'string' && d.fotoBack.startsWith('data:image')) {
+                backCell = { image: d.fotoBack, fit: [20, 20] };
+            }
+
+            // Bersihkan No HP jika ada prefix aneh seperti 'C '
+            let cleanedHp = d.nomorHp ? d.nomorHp.replace(/^C\s*/, '') : '';
+
+            return {
+                no: i + 1,
+                nama: d.nama,
+                instansi: d.instansi || '',
+                kecamatan: d.kecamatan || '',
+                desa: d.desa || '',
+                pihakDitemui: d.pihakDitemui,
+                jenisLayanan: d.jenisLayanan,
+                uraian: d.uraian || '-', // Jika uraian kosong, tampilkan '-'
+                nomorHp: cleanedHp,
+                timestamp: d.timestamp,
+                tandaTangan: ttdCell,
+                fotoFront: frontCell,
+                fotoBack: backCell
+            };
+        });
+
+        // AutoTable
+        doc.autoTable({
+            columns: columns,
+            body: rows,
+            startY: y,
+            margin: { left: margin, right: margin },
+            styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak', halign: 'left', valign: 'middle' },
+            headStyles: { fillColor: type === 'instansi' ? [0, 123, 255] : [40, 167, 69], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            columnStyles: {
+                no: { cellWidth: 10, halign: 'center' },
+                nama: { cellWidth: 25 },
+                instansi: { cellWidth: 30 },
+                kecamatan: { cellWidth: 25 },
+                desa: { cellWidth: 25 },
+                pihakDitemui: { cellWidth: 25 },
+                jenisLayanan: { cellWidth: 25 },
+                uraian: { cellWidth: 'auto' }, // Biarkan auto untuk uraian panjang
+                nomorHp: { cellWidth: 27 },
+                timestamp: { cellWidth: 20 },
+                tandaTangan: { cellWidth: 20, minCellHeight: 20, halign: 'center', valign: 'middle' },
+                fotoFront: { cellWidth: 25, minCellHeight: 25, halign: 'center', valign: 'middle' },
+                fotoBack: { cellWidth: 25, minCellHeight: 25, halign: 'center', valign: 'middle' }
+            },
+            didDrawCell: function (hookData) {
+                if (hookData.column.dataKey === 'tandaTangan' || hookData.column.dataKey === 'fotoFront' || hookData.column.dataKey === 'fotoBack') {
+                    if (hookData.cell.raw && hookData.cell.raw.image) {
+                        const imgProps = { x: hookData.cell.x + (hookData.cell.width - 18) / 2, y: hookData.cell.y + (hookData.cell.height - 18) / 2, width: 18, height: 18 };
+                        try {
+                            doc.addImage(hookData.cell.raw.image, 'PNG', imgProps.x, imgProps.y, imgProps.width, imgProps.height);
+                        } catch (e) {
+                            console.log('Gagal menambahkan gambar:', e);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Simpan
+        const dateStr = new Date().toISOString().split('T')[0];
+        const suffix = type === 'instansi' ? '' : ' (Masyarakat)';
+        doc.save(`Buku_Tamu_Ringkasan_${dateStr}${suffix}.pdf`);
+    }
+
+    if (instansiData.length > 0) createSummaryPDF(instansiData, 'instansi');
+    if (masyarakatData.length > 0) createSummaryPDF(masyarakatData, 'masyarakat');
+
+    if (instansiData.length > 0 || masyarakatData.length > 0) {
+        alert('✅ PDF ringkasan telah diunduh!');
+    }
+}
 function exportDetailPerTamuPDF(index) {
     if (dataBukuTamu.length === 0 || index < 0 || index >= dataBukuTamu.length) {
         alert('Tidak ada data untuk tamu ini!');
