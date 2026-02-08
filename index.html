@@ -1430,41 +1430,79 @@ function exportData() {
 
         // AutoTable
         doc.autoTable({
-            columns: columns,
-            body: rows,
-            startY: y,
-            margin: { left: margin, right: margin },
-            styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak', halign: 'left', valign: 'middle' },
-            headStyles: { fillColor: type === 'instansi' ? [0, 123, 255] : [40, 167, 69], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            columnStyles: {
-                no: { cellWidth: 10, halign: 'center' },
-                nama: { cellWidth: 25 },
-                instansi: { cellWidth: 30 },
-                kecamatan: { cellWidth: 25 },
-                desa: { cellWidth: 25 },
-                pihakDitemui: { cellWidth: 25 },
-                jenisLayanan: { cellWidth: 25 },
-                uraian: { cellWidth: 'auto' }, // Biarkan auto untuk uraian panjang
-                nomorHp: { cellWidth: 27 },
-                timestamp: { cellWidth: 20 },
-                tandaTangan: { cellWidth: 20, minCellHeight: 20, halign: 'center', valign: 'middle' },
-                fotoFront: { cellWidth: 25, minCellHeight: 25, halign: 'center', valign: 'middle' },
-                fotoBack: { cellWidth: 25, minCellHeight: 25, halign: 'center', valign: 'middle' }
-            },
-            didDrawCell: function (hookData) {
-                if (hookData.column.dataKey === 'tandaTangan' || hookData.column.dataKey === 'fotoFront' || hookData.column.dataKey === 'fotoBack') {
-                    if (hookData.cell.raw && hookData.cell.raw.image) {
-                        const imgProps = { x: hookData.cell.x + (hookData.cell.width - 18) / 2, y: hookData.cell.y + (hookData.cell.height - 18) / 2, width: 18, height: 18 };
-                        try {
-                            doc.addImage(hookData.cell.raw.image, 'PNG', imgProps.x, imgProps.y, imgProps.width, imgProps.height);
-                        } catch (e) {
-                            console.log('Gagal menambahkan gambar:', e);
-                        }
-                    }
+    columns: columns,
+    body: rows,
+    startY: y,
+    margin: { left: margin, right: margin },
+
+    styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak',
+        halign: 'left',
+        valign: 'middle'
+    },
+
+    headStyles: {
+        fillColor: type === 'instansi' ? [0, 123, 255] : [40, 167, 69],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+    },
+
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+
+    columnStyles: {
+        no: { cellWidth: 10, halign: 'center' },
+        nama: { cellWidth: 25 },
+        instansi: { cellWidth: 30 },
+        kecamatan: { cellWidth: 25 },
+        desa: { cellWidth: 25 },
+        pihakDitemui: { cellWidth: 25 },
+        jenisLayanan: { cellWidth: 25 },
+        uraian: { cellWidth: 'auto' },
+        nomorHp: { cellWidth: 27 },
+        timestamp: { cellWidth: 20 },
+        tandaTangan: { cellWidth: 20, minCellHeight: 20 },
+        fotoFront: { cellWidth: 25, minCellHeight: 25 },
+        fotoBack: { cellWidth: 25, minCellHeight: 25 }
+    },
+
+    // 🔥 INI PERBAIKAN UTAMA
+    didParseCell: function (data) {
+        if (
+            data.column.dataKey === 'tandaTangan' ||
+            data.column.dataKey === 'fotoFront' ||
+            data.column.dataKey === 'fotoBack'
+        ) {
+            data.cell.text = ''; // HILANGKAN [Object Object]
+        }
+    },
+
+    didDrawCell: function (hookData) {
+        if (
+            hookData.column.dataKey === 'tandaTangan' ||
+            hookData.column.dataKey === 'fotoFront' ||
+            hookData.column.dataKey === 'fotoBack'
+        ) {
+            if (hookData.cell.raw && hookData.cell.raw.image) {
+                try {
+                    doc.addImage(
+                        hookData.cell.raw.image,
+                        'PNG',
+                        hookData.cell.x + 1,
+                        hookData.cell.y + 1,
+                        18,
+                        18
+                    );
+                } catch (e) {
+                    console.log('Gagal render gambar:', e);
                 }
             }
-        });
+        }
+    }
+});
+
 
         // Simpan
         const dateStr = new Date().toISOString().split('T')[0];
