@@ -230,7 +230,11 @@
         <img src="wakil-bupati.png" alt="Bupati" class="foto-kepala" onerror="this.style.display='none'">
     </div>
 
-    <h1 style="text-align: center;">BUKU TAMU INSPEKTORAT TUBABA</h1>
+    <div style="text-align: center; font-weight: bold; line-height: 1.3; margin: 20px 0;">
+    <div>BUKU TAMU</div>
+    <div>INSPEKTORAT DAERAH</div>
+    <div>KABUPATEN TULANG BAWANG BARAT</div>
+</div>
 
     <div id="formSection">
         <form id="bukuTamuForm">
@@ -965,13 +969,11 @@ function capture() {
         
         hasPhoto = true;
         stopAll();
-        document.getElementById('photoWarning').style.display = 'none';
-        alert("✅ Kedua foto berhasil diambil!");
-        
         if (simpanData()) {
             alert("✅ Data berhasil disimpan!\nTotal data: " + dataBukuTamu.length);
             showData();
-        }
+        
+                }
     }
 }
 
@@ -1345,18 +1347,33 @@ function exportData() {
         // Title
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.text('BUKU TAMU DIGITAL INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, y, { align: 'center' });
-        y += 10;
+        doc.setFont("helvetica", "bold");
+doc.setFontSize(14);
+
+// Menggunakan array dan loop (lebih mudah jika ingin ubah-ubah teks)
+const titleLines = [
+    "BUKU TAMU DIGITAL",
+    "INSPEKTORAT DAERAH",
+    "KABUPATEN TULANG BAWANG BARAT"
+];
+
+let currentY = y;
+titleLines.forEach(line => {
+    doc.text(line, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 5;  // jarak antar baris (sesuaikan 8-10)
+});
+
+y = currentY + 5;  // tambah jarak setelah judul selesai
 
         doc.setFontSize(10);
         doc.text(`Tanggal Export: ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, y, { align: 'center' });
-        y += 15;
+        y += 10;
 
         // Header tabel
         const title = type === 'instansi' ? 'DAFTAR TAMU INSTANSI / UNIT KERJA' : 'DAFTAR TAMU MASYARAKAT';
         doc.setFontSize(12);
         doc.text(title, margin, y);
-        y += 10;
+        y += 2;
 
         // Kolom
         let columns;
@@ -1437,7 +1454,7 @@ function exportData() {
 
     styles: {
         fontSize: 8,
-        cellPadding: 3,
+        cellPadding: 3,           // padding default untuk kolom teks
         overflow: 'linebreak',
         halign: 'left',
         valign: 'middle'
@@ -1463,40 +1480,60 @@ function exportData() {
         uraian: { cellWidth: 'auto' },
         nomorHp: { cellWidth: 27 },
         timestamp: { cellWidth: 20 },
-        tandaTangan: { cellWidth: 20, minCellHeight: 20 },
-        fotoFront: { cellWidth: 25, minCellHeight: 25 },
-        fotoBack: { cellWidth: 25, minCellHeight: 25 }
+        
+        // Kolom gambar & tanda tangan
+        tandaTangan: { 
+            cellWidth: 22,          // sedikit diperbesar agar muat padding
+            minCellHeight: 24 
+        },
+        fotoFront: { 
+            cellWidth: 27, 
+            minCellHeight: 27 
+        },
+        fotoBack: { 
+            cellWidth: 27, 
+            minCellHeight: 27 
+        }
     },
 
-    // 🔥 INI PERBAIKAN UTAMA
     didParseCell: function (data) {
-        if (
-            data.column.dataKey === 'tandaTangan' ||
-            data.column.dataKey === 'fotoFront' ||
-            data.column.dataKey === 'fotoBack'
-        ) {
-            data.cell.text = ''; // HILANGKAN [Object Object]
+        // Hanya hapus teks di body (header tetap muncul)
+        if (data.row.section === 'body' && 
+            ['tandaTangan', 'fotoFront', 'fotoBack'].includes(data.column.dataKey)) {
+            data.cell.text = '';
         }
     },
 
     didDrawCell: function (hookData) {
-        if (
-            hookData.column.dataKey === 'tandaTangan' ||
-            hookData.column.dataKey === 'fotoFront' ||
-            hookData.column.dataKey === 'fotoBack'
-        ) {
+        const colKey = hookData.column.dataKey;
+        
+        if (['tandaTangan', 'fotoFront', 'fotoBack'].includes(colKey)) {
             if (hookData.cell.raw && hookData.cell.raw.image) {
                 try {
+                    // Padding 1 mm di semua sisi (≈ 2.83 pt)
+                    const padding = 2.8346;
+                    
+                    // Hitung posisi dan ukuran gambar dengan padding
+                    const imgX = hookData.cell.x + padding;
+                    const imgY = hookData.cell.y + padding;
+                    
+                    // Kurangi ukuran gambar sebanyak 2 × padding
+                    const availWidth  = hookData.cell.width  - (padding * 2);
+                    const availHeight = hookData.cell.height - (padding * 2);
+                    
+                    // Ukuran gambar maksimal (sesuaikan rasio, tapi pakai square untuk konsistensi)
+                    const imgSize = Math.min(availWidth, availHeight);
+                    
                     doc.addImage(
                         hookData.cell.raw.image,
                         'PNG',
-                        hookData.cell.x + 1,
-                        hookData.cell.y + 1,
-                        18,
-                        18
+                        imgX,
+                        imgY,
+                        imgSize,
+                        imgSize
                     );
                 } catch (e) {
-                    console.log('Gagal render gambar:', e);
+                    console.log('Gagal render gambar di kolom ' + colKey + ':', e);
                 }
             }
         }
@@ -1545,7 +1582,7 @@ function exportDetailPerTamuPDF(index) {
     doc.text('BUKU TAMU DIGITAL', pageWidth/2, y+10, { align: 'center' });
 
     doc.setFontSize(10);
-    doc.text('INSPEKTORAT KABUPATEN TULANG BAWANG BARAT', pageWidth/2, y+17, { align: 'center' });
+    doc.text('INSPEKTORAT DAERAH KABUPATEN TULANG BAWANG BARAT', pageWidth/2, y+17, { align: 'center' });
 
     doc.setFontSize(8);
     doc.setTextColor(220, 220, 255);
