@@ -979,14 +979,24 @@ function capture() {
         
         hasPhoto = true;
         stopAll();
-        if (simpanData()) {
-            alert("✅ Data berhasil disimpan!\nTotal data: " + dataBukuTamu.length);
-            showData();
-        
-                }
+
+        // ────────────────────────────────────────────────
+        // PERUBAHAN UTAMA DI SINI
+        // ────────────────────────────────────────────────
+        if (!isEditMode) {
+            // Hanya simpan & pindah ke daftar JIKA TAMBAH BARU
+            if (simpanData()) {
+                alert("✅ Data berhasil disimpan!\nTotal data: " + dataBukuTamu.length);
+                showData();
+            }
+        } else {
+            // Mode EDIT → hanya tutup kamera, biarkan user lanjut edit
+            alert("✅ Foto berhasil diambil.\nSilakan lanjut edit lalu tekan Simpan Perubahan.");
+            // Opsional: bisa auto-resize preview atau scroll ke tombol simpan
+            document.getElementById('photoPreview').scrollIntoView({ behavior: 'smooth' });
+        }
     }
 }
-
 function stopAll() {
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
