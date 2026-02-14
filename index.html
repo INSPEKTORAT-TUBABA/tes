@@ -840,7 +840,10 @@ function updateDesaList() {
         fieldDesa.classList.add('hidden');
     }
 }
-
+// Force reflow (kadang membantu di beberapa browser mobile)
+setTimeout(() => {
+    document.getElementById('formSection').style.display = 'block';
+}, 50);
 function checkAndShowNext(currentId, nextFieldId) {
     if (isEditMode) return;
 
@@ -1158,10 +1161,32 @@ function displayData() {
                 <div class="detail-value">${data.nama}</div>
             </div>
 
-            <div class="detail-row">
-                <div class="detail-label">Asal / Instansi</div>
-                <div class="detail-value">${data.instansi || (data.kecamatan ? `${data.kecamatan}${data.desa ? ', ' + data.desa : ''}` : data.asal)}</div>
-            </div>
+            
+
+${data.asal === 'INSTANSI' ? `
+<div class="detail-row">
+    <div class="detail-label">Instansi / Unit Kerja</div>
+    <div class="detail-value">${data.instansi || '-'}</div>
+</div>
+` : data.asal === 'MASYARAKAT' ? `
+<div class="detail-row">
+    <div class="detail-label">Asal</div>
+    <div class="detail-value">Masyarakat</div>
+</div>
+<div class="detail-row">
+    <div class="detail-label">Kecamatan</div>
+    <div class="detail-value">${data.kecamatan || '-'}</div>
+</div>
+<div class="detail-row">
+    <div class="detail-label">Desa / Kelurahan</div>
+    <div class="detail-value">${data.desa || '-'}</div>
+</div>
+` : `
+<div class="detail-row">
+    <div class="detail-label">Asal</div>
+    <div class="detail-value">${data.asal || '-'}</div>
+</div>
+`}
 
             <div class="detail-row">
                 <div class="detail-label">Pihak Ditemui</div>
@@ -1210,83 +1235,73 @@ function displayData() {
 
 // ===== EDIT & DELETE =====
 function editData(index) {
-    console.log("Edit data dipanggil untuk index:", index); // untuk debug
-
     if (confirm('Edit data tamu #' + (index + 1) + '?')) {
         const data = dataBukuTamu[index];
         
         editingIndex = index;
         originalEditData = JSON.parse(JSON.stringify(data));
         isEditMode = true;
-        
-        document.getElementById('mainNavigation').style.display = 'none';
-        document.getElementById('editModeButtons').style.display = 'block';
-        
-        document.getElementById('nama').value = data.nama;
-        document.getElementById('field-asal').classList.remove('hidden');
-        document.getElementById('asal').value = data.asal;
-        
+
+        // ────────────────────────────────────────────────
+        // ISI SEMUA FIELD (termasuk yang wajib seperti NAMA)
+        // ────────────────────────────────────────────────
+        document.getElementById('nama').value = data.nama || '';
+
+        // Trigger validasi nama supaya field berikutnya muncul
+        validateNama();   // ← ini penting agar field-asal muncul
+
+        // Asal & trigger perubahan asal
+        document.getElementById('asal').value = data.asal || '';
+        asalChanged();    // ← ini yang paling krusial untuk menampilkan/hide instansi vs kecamatan
+
+        // Lanjut isi field lain sesuai asal
         if (data.asal === 'INSTANSI') {
-            document.getElementById('daftarInstansi').classList.remove('hidden');
-            document.getElementById('instansi').value = data.instansi;
+            document.getElementById('instansi').value = data.instansi || '';
         } else if (data.asal === 'MASYARAKAT') {
-            document.getElementById('daftarMasyarakat').classList.remove('hidden');
-            document.getElementById('kecamatan').value = data.kecamatan;
+            document.getElementById('kecamatan').value = data.kecamatan || '';
             updateDesaList();
+            // Delay kecil supaya opsi desa sudah ter-render
             setTimeout(() => {
-                document.getElementById('desa').value = data.desa;
-            }, 100);
+                document.getElementById('desa').value = data.desa || '';
+            }, 50);
         }
-        
-        document.getElementById('field-pihakDitemui').classList.remove('hidden');
-        document.getElementById('pihakDitemui').value = data.pihakDitemui;
-        
-        document.getElementById('field-jenisLayanan').classList.remove('hidden');
-        document.getElementById('jenisLayanan').value = data.jenisLayanan;
-        
-        document.getElementById('field-uraian').classList.remove('hidden');
-        document.getElementById('uraian').value = data.uraian;
-        
-        document.getElementById('field-nomorHp').classList.remove('hidden');
-        document.getElementById('nomorHp').value = data.nomorHp;
-        
-        document.getElementById('field-tandaTangan').classList.remove('hidden');
-        resizeCanvas();
-        
+
+        document.getElementById('pihakDitemui').value = data.pihakDitemui || '';
+        document.getElementById('jenisLayanan').value = data.jenisLayanan || '';
+        document.getElementById('uraian').value = data.uraian || '';
+        document.getElementById('nomorHp').value = data.nomorHp || '';
+
+        // Tanda tangan
         if (data.tandaTangan) {
             const img = new Image();
+            img.crossOrigin = "Anonymous";
             img.onload = function() {
                 ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
                 ctx2.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
                 hasSignature = true;
-                totalStrokeLength = 100;
-
-                attachSignatureEvents();
-                
-                // Panggil resize 2x dengan delay
-                resizeCanvas();
-                setTimeout(resizeCanvas, 300);  // panggil lagi setelah 300ms
+                totalStrokeLength = 100; // cukup untuk lolos validasi
             };
             img.src = data.tandaTangan;
-        } else {
-            attachSignatureEvents();
-            resizeCanvas();
         }
-        
-        document.getElementById('field-aksi').classList.remove('hidden');
-        fotoDataURLFront = data.fotoFront;
-        fotoDataURLBack = data.fotoBack;
+
+        fotoDataURLFront = data.fotoFront || null;
+        fotoDataURLBack  = data.fotoBack  || null;
         hasPhoto = !!(data.fotoFront || data.fotoBack);
-        
+
+        if (data.fotoFront) document.getElementById('imgFront').src = data.fotoFront;
+        if (data.fotoBack)  document.getElementById('imgBack').src  = data.fotoBack;
+
+        // Force tampilkan field yang relevan
         forceShowEditFields();
-        
+
+        // Pastikan form terlihat
         document.getElementById('formSection').style.display = 'block';
         document.getElementById('dataSection').style.display = 'none';
-        
-        alert('Data telah dimuat ke form.\nAnda bebas mengedit tanpa field hilang.\nSimpan setelah selesai.');
+        document.getElementById('editModeButtons').style.display = 'block'; // jika pakai tombol simpan/batal khusus edit
+
+        alert('Data telah dimuat ke form.\nSilakan edit dan tekan Simpan Perubahan.');
     }
 }
-
 function saveEditedData() {
     if (simpanData()) {
         alert("✅ Perubahan berhasil disimpan!");
@@ -1591,15 +1606,34 @@ function exportDetailPerTamuPDF(index) {
     y += 35;
 
     // Informasi utama (sama seperti tampilan web)
-    const fields = [
-        { label: "Nama Lengkap", value: data.nama || '-' },
-        { label: "Asal / Instansi", value: data.instansi || (data.kecamatan ? `${data.kecamatan}${data.desa ? ', ' + data.desa : ''}` : data.asal || '-') },
-        { label: "Pihak yang Ditemui", value: data.pihakDitemui || '-' },
-        { label: "Jenis Layanan", value: data.jenisLayanan || '-' },
-        { label: "Uraian Keperluan", value: data.uraian || '-' },
-        { label: "Nomor WhatsApp", value: data.nomorHp || '-' },
-        { label: "Waktu Kunjungan", value: data.timestamp || '-' }
-    ];
+    // ================== DATA UTAMA ==================
+const fields = [
+    { label: "Nama Lengkap", value: data.nama || '-' }
+];
+
+if (data.asal === 'INSTANSI') {
+    fields.push(
+        { label: "Instansi / Unit Kerja", value: data.instansi || '-' }
+    );
+} else if (data.asal === 'MASYARAKAT') {
+    fields.push(
+        { label: "Asal",               value: "Masyarakat" },
+        { label: "Kecamatan",          value: data.kecamatan || '-' },
+        { label: "Desa / Kelurahan",   value: data.desa || '-' }
+    );
+} else {
+    fields.push(
+        { label: "Asal", value: data.asal || '-' }
+    );
+}
+
+fields.push(
+    { label: "Pihak yang Ditemui", value: data.pihakDitemui || '-' },
+    { label: "Jenis Layanan",      value: data.jenisLayanan || '-' },
+    { label: "Uraian Keperluan",   value: data.uraian || '-' },
+    { label: "Nomor WhatsApp",     value: data.nomorHp || '-' },
+    { label: "Waktu Kunjungan",    value: data.timestamp || '-' }
+);
 
     const labelWidth = 55;
     const rowHeightBase = 8;
