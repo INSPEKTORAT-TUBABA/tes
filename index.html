@@ -744,22 +744,29 @@ function validateNomorHp(input) {
 }
 
 function asalChanged() {
-    if (isEditMode) {
+   if (isEditMode) {
         const asal = document.getElementById('asal').value;
         const daftarInstansi = document.getElementById('daftarInstansi');
         const daftarMasyarakat = document.getElementById('daftarMasyarakat');
-        
+        const fieldDesa = document.getElementById('fieldDesa');   // ← TAMBAHKAN INI
+
         if (asal === 'INSTANSI') {
             daftarInstansi.classList.remove('hidden');
             daftarMasyarakat.classList.add('hidden');
-        } else if (asal === 'MASYARAKAT') {
+            fieldDesa.classList.add('hidden');                    // ← INI YANG DIBUTUHKAN
+        } 
+        else if (asal === 'MASYARAKAT') {
             daftarMasyarakat.classList.remove('hidden');
             daftarInstansi.classList.add('hidden');
-        } else {
+            fieldDesa.classList.remove('hidden');                 // opsional, biar konsisten
+        } 
+        else {
             daftarInstansi.classList.add('hidden');
             daftarMasyarakat.classList.add('hidden');
+            fieldDesa.classList.add('hidden');
         }
         return;
+    
     }
 
     const asal = document.getElementById('asal').value;
