@@ -14,8 +14,8 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 50%;
-            height: 80vh;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a2f4a 100%);
             display: flex;
             flex-direction: column;
@@ -40,11 +40,10 @@
         }
         
         .welcome-title {
-            font-size: 1.5em;
+            font-size: 2.2em;
             font-weight: bold;
             color: #fff;
-            text-shadow: 0 0 20px rgba(102, 126, 234, 0.8),
-                         0 0 40px rgba(118, 75, 162, 0.6);
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6);
             margin-bottom: 20px;
             animation: glow 2s ease-in-out infinite alternate;
         }
@@ -55,7 +54,25 @@
         }
         
         .welcome-subtitle {
-            font-size: 1,5em;
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 40px;
+            animation: fadeIn 1.5s ease-in;
+        }
+        
+        .welcome-subtitle strong {
+            font-size: 1.8em;
+            display: block;
+            margin-top: 10px;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6); }
+            to { text-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 0 60px rgba(118, 75, 162, 0.8); }
+        }
+        
+        .welcome-subtitle {
+            font-size: 1,6em;
 font-weight: bold;
 
             color: #fff;
@@ -64,7 +81,7 @@ font-weight: bold;
         }
         
         .welcome-subtitle strong {
-            font-size: 1.5em;
+            font-size: 1.8em;
             display: block;
             margin-top: 10px;
         }
@@ -75,8 +92,8 @@ font-weight: bold;
         }
         
         .btn-start {
-            padding: 15px 40px;
-            font-size: 1.2em;
+            padding: 15px 50px;
+            font-size: 1.4em;
             font-weight: bold;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -103,32 +120,32 @@ font-weight: bold;
             display: none;
             max-width: 700px;
             margin: auto;
-            padding: 20px 10px;
+            padding: 20px 15px;
             background: white;
         }
         
-        .header-gambar { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; flex-wrap: nowrap; }
-        .foto-kepala { width: 80px; height: auto; }
-        .logo { width: 100px; height: auto; }
+        .header-gambar { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: nowrap; }
+        .foto-kepala { width: 90px; height: auto; }
+        .logo { width: 110px; height: auto; }
         
         label { font-weight: bold; }
         select, input, textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
         .hidden { display: none !important; }
         .required { color: red; }
         .error { border: 2px solid red !important; }
-        .success { border: 2px solid green !important; }
-        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        
-        #mainNavigation { margin: 20px 0; text-align: center; display: none; }
+        .success { border: 2px solid #28a745n !important; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; margin: 12px 0; border-radius: 6px; font-size: 0.95em; }        
+       #mainNavigation { margin: 25px 0; text-align: center; display: none; }
         #mainNavigation button {
             background: #007bff;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 5px;
-            margin: 5px;
+            border-radius: 6px;
+            margin: 8px 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 1em;
+            font-weight: bold;
         }
         
         #photoModal {
@@ -143,7 +160,7 @@ font-weight: bold;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            padding: 10px;
+            padding: 15px;
         }
 
         #signature-pad { 
@@ -166,17 +183,19 @@ font-weight: bold;
             margin: 20px auto;
             background-color: white;
             border: 1px solid #ddd;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
             border-radius: 8px;
             overflow: hidden;
         }
         .detail-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px 20px;
+            padding: 18px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+flex-wrap: wrap;
+            gap: 12px;
         }
         .detail-row {
             display: flex;
@@ -185,35 +204,38 @@ font-weight: bold;
         }
         .detail-label {
             width: 200px;
-            padding: 15px 20px;
+            padding: 15px 24px;
             background-color: #f8f9fa;
             border-right: 1px solid #e0e0e0;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 0.95em;
             color: #495057;
             display: flex;
             align-items: center;
         }
         .detail-value {
             flex: 1;
-            padding: 15px 20px;
+            padding: 16px 24px;
             font-size: 14px;
             color: #212529;
             display: flex;
             align-items: center;
+flex-wrap: wrap;
+            gap: 10px;
         }
         
         @media (max-width: 768px) {
-            .welcome-title { font-size: 1.8em; }
+            .welcome-title { font-size: 1.9em; }
             .detail-row { flex-direction: column; }
             .detail-label { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; }
-        }
-    </style>
+none; border-bottom: 1px solid #e0e0e0; }
+            .header-gambar { gap: 15px; }        
+}
+        </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-
 <!-- Welcome Page -->
 <div id="welcomePage">
     <canvas id="particleCanvas"></canvas>
@@ -984,7 +1006,6 @@ function capture() {
         fotoDataURLFront = dataUrl;
         document.getElementById('imgFront').src = dataUrl;
         document.getElementById('imgFront').style.display = 'block';
-        
         step = 2;
         document.getElementById('infoKamera').innerText = 'Ambil foto kedua';
         initCamera('environment');
@@ -992,24 +1013,17 @@ function capture() {
         fotoDataURLBack = dataUrl;
         document.getElementById('imgBack').src = dataUrl;
         document.getElementById('imgBack').style.display = 'block';
-        
         hasPhoto = true;
         stopAll();
 
-        // ────────────────────────────────────────────────
-        // PERUBAHAN UTAMA DI SINI
-        // ────────────────────────────────────────────────
         if (!isEditMode) {
-            // Hanya simpan & pindah ke daftar JIKA TAMBAH BARU
             if (simpanData()) {
-                alert("✅ Data berhasil disimpan!\nTotal data: " + dataBukuTamu.length);
+                alert("Data berhasil disimpan!\nTotal: " + dataBukuTamu.length);
                 showData();
             }
         } else {
-            // Mode EDIT → hanya tutup kamera, biarkan user lanjut edit
-            alert("✅ Foto berhasil diambil.\nSilakan lanjut edit lalu tekan Simpan Perubahan.");
-            // Opsional: bisa auto-resize preview atau scroll ke tombol simpan
-            document.getElementById('photoPreview').scrollIntoView({ behavior: 'smooth' });
+            alert("Foto berhasil diambil. Lanjut edit lalu simpan perubahan.");
+            document.getElementById('photoPreview').scrollIntoView({behavior:'smooth'});
         }
     }
 }
@@ -1810,7 +1824,7 @@ y += sigHeight + 10;   // naikkan y lebih banyak karena ada tambahan nama + gari
 
     doc.setFontSize(8);
     doc.setTextColor(120);
-    doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital - Inspektorat Daerah Kab. Tulang Bawang Barat', 
+    doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital - Inspektorat Kab. Tulang Bawang Barat', 
              pageWidth/2, bottomY + 6, { align: 'center' });
 
     // Simpan file
