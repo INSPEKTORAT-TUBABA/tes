@@ -3,8 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Buku Tamu Digital - Inspektorat Tubaba</title>
+    <title>Buku Tamu Digital - Inspektorat Daerah Tubaba</title>
     <style>
+
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; background: #0a0e27; }
         body { font-family: 'Arial', sans-serif; min-height: 100vh; }
@@ -43,29 +44,12 @@
             font-size: 2.2em;
             font-weight: bold;
             color: #fff;
-            text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6);
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.8),
+                         0 0 40px rgba(118, 75, 162, 0.6);
             margin-bottom: 20px;
             animation: glow 2s ease-in-out infinite alternate;
         }
         
-        @keyframes glow {
-            from { text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6); }
-            to { text-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 0 60px rgba(118, 75, 162, 0.8); }
-        }
-        
-        .welcome-subtitle {
-            font-size: 1.6em;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 40px;
-            animation: fadeIn 1.5s ease-in;
-        }
-        
-        .welcome-subtitle strong {
-            font-size: 1.8em;
-            display: block;
-            margin-top: 10px;
-        }
         @keyframes glow {
             from { text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6); }
             to { text-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 0 60px rgba(118, 75, 162, 0.8); }
@@ -394,11 +378,11 @@ none; border-bottom: 1px solid #e0e0e0; }
             <div id="field-tandaTangan" class="hidden">
                 <label>Tanda Tangan: <span class="required">*</span></label>
                 <div class="warning" id="signatureWarning" style="display:none;">⚠️ Tanda tangan terlalu pendek (min 2 cm)</div>
-                <canvas id="signature-pad" width="900" height="30"></canvas>
+                <canvas id="signature-pad" width="900" height="25"></canvas>
             </div>
 
             <!-- Tombol Aksi (Ambil Foto + Hapus Tanda Tangan) -->
-            <div id="field-aksi" class="hidden" style="margin-top: 15px; text-align: center;">
+            <div id="field-aksi" class="hidden" style="margin-top: 1px; text-align: center;">
                 <div style="margin-bottom: 15px;">
                     <button type="button" onclick="bukaKamera()" 
                             style="font-size: 16px; background: #ffc107; color: black; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 0 10px;">
@@ -406,7 +390,7 @@ none; border-bottom: 1px solid #e0e0e0; }
                     </button>
                     
                     <button type="button" onclick="clearSignature()" 
-                            style="font-size: 16px; background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 0 10px;">
+                            style="font-size: 16px; background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 0 1px;">
                         🗑️ Hapus Tanda Tangan
                     </button>
                 </div>
@@ -1904,6 +1888,76 @@ function recenterSignature() {
 
     return finalCanvas.toDataURL('image/png');
 }
+</script>
+<script>
+// Fungsi scroll yang lebih lembut & nyaman dilihat
+function smoothScrollTo(element) {
+    if (!element) return;
+
+    // Hitung posisi yang diinginkan: agak di atas tengah layar
+    const rect = element.getBoundingClientRect();
+    const offset = 80;  // jarak dari atas layar (pixel) – bisa diubah 60–120
+    const targetY = rect.top + window.scrollY - offset;
+
+    // Scroll dengan animasi yang sangat halus
+    window.scrollTo({
+        top: targetY,
+        behavior: 'smooth'
+    });
+}
+
+// Versi dengan timeout kecil (lebih stabil di Android/iOS saat keyboard muncul)
+function scrollToFieldWhenFocused(el) {
+    setTimeout(() => {
+        smoothScrollTo(el);
+    }, 280);   // 280–350 ms biasanya pas setelah keyboard muncul
+}
+
+// Pasang event ke semua field input
+document.addEventListener('DOMContentLoaded', () => {
+    const focusable = document.querySelectorAll(
+        'input, textarea, select, button:not(.btn-capture):not(.btn-cancel)'
+    );
+
+    focusable.forEach(field => {
+        field.addEventListener('focus', () => {
+            scrollToFieldWhenFocused(field);
+        });
+
+        // Khusus textarea → scroll ulang saat ukuran berubah
+        if (field.tagName === 'TEXTAREA') {
+            field.addEventListener('input', () => {
+                setTimeout(() => scrollToFieldWhenFocused(field), 120);
+            });
+        }
+    });
+
+    // Khusus field tanda tangan (saat muncul)
+    const ttdField = document.getElementById('field-tandaTangan');
+    if (ttdField) {
+        const observer = new MutationObserver(() => {
+            if (!ttdField.classList.contains('hidden')) {
+                setTimeout(() => {
+                    smoothScrollTo(ttdField);
+                }, 450);  // sedikit lebih lama karena canvas butuh waktu render
+            }
+        });
+        observer.observe(ttdField, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Deteksi keyboard muncul via resize (cadangan)
+    let prevHeight = window.innerHeight;
+    window.addEventListener('resize', () => {
+        const currHeight = window.innerHeight;
+        if (currHeight < prevHeight * 0.82) {  // keyboard kemungkinan muncul
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+                scrollToFieldWhenFocused(active);
+            }
+        }
+        prevHeight = currHeight;
+    });
+});
 </script>
 </body>
 </html>
