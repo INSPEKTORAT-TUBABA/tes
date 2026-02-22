@@ -218,12 +218,28 @@ none; border-bottom: 1px solid #e0e0e0; }
         </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Logo 3D Canvas */
+        #logoCanvas3D {
+            position: relative;
+            display: block;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 20px auto;
+            opacity: 0;
+            border-radius: 8px;
+            /* background hitam dinonaktifkan agar gradient welcomePage tetap terlihat */
+        }
+    </style>
 </head>
+
 <body>
 <!-- Welcome Page -->
 <div id="welcomePage">
     <canvas id="particleCanvas"></canvas>
     <div class="welcome-content">
+        <canvas id="logoCanvas3D"></canvas>
         <h1 class="welcome-title">SELAMAT DATANG</h1>
         <p class="welcome-subtitle">DI <strong>INSPEKTORAT DAERAH</strong><br/>KABUPATEN TULANG BAWANG BARAT</p>
         <button class="btn-start" onclick="startApp()">📝 ISI BUKU TAMU</button>
@@ -462,7 +478,181 @@ none; border-bottom: 1px solid #e0e0e0; }
 </div>
 
 <script>
-// ===== PARTICLE ANIMATION =====
+// ===== LOGO 3D (Three.js) - Animasi Logo Tulang Bawang Barat =====
+(function() {
+    const LOGO_IMG_URL = "https://upload.wikimedia.org/wikipedia/commons/6/6b/Lambang_Kabupaten_Tulang_Bawang_Barat.png";
+
+    const logoImgEl = new Image();
+    logoImgEl.crossOrigin = "anonymous";
+    logoImgEl.src = LOGO_IMG_URL;
+
+    logoImgEl.onload = function() {
+        const oc = document.createElement("canvas"), ot = oc.getContext("2d");
+        const MAXW = Math.min(300, 300);
+        const SC = Math.min(1, MAXW / logoImgEl.width);
+        oc.width = Math.round(logoImgEl.width * SC);
+        oc.height = Math.round(logoImgEl.height * SC);
+        ot.drawImage(logoImgEl, 0, 0, oc.width, oc.height);
+        const px = ot.getImageData(0, 0, oc.width, oc.height);
+
+        const LP = [], RP = [];
+        for (let y = 0; y < oc.height; y++) {
+            let lx = -1, rx = -1;
+            for (let x = 0; x < oc.width; x++) if (px.data[(y * oc.width + x) * 4 + 3] > 20) { lx = x; break; }
+            for (let x = oc.width - 1; x >= 0; x--) if (px.data[(y * oc.width + x) * 4 + 3] > 20) { rx = x; break; }
+            if (lx >= 0 && rx >= 0) {
+                const W3 = 2.0, H3 = 2.0 * (oc.height / oc.width), ny = y / oc.height;
+                LP.push([-W3 / 2 + (lx / oc.width) * W3, H3 / 2 - ny * H3]);
+                RP.push([-W3 / 2 + (rx / oc.width) * W3, H3 / 2 - ny * H3]);
+            }
+        }
+        launchLogo3D({ LP, RP });
+    };
+
+    logoImgEl.onerror = function() { console.warn("Logo 3D: Gagal memuat gambar logo."); };
+
+    function launchLogo3D({ LP, RP }) {
+        const c3 = document.getElementById("logoCanvas3D");
+        if (!c3) return;
+
+        const logoR = new THREE.WebGLRenderer({ canvas: c3, antialias: true, alpha: true });
+        logoR.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        logoR.setSize(300, 300);
+        logoR.setClearColor(0x000000, 0); // transparan agar background gradient terlihat
+
+        const logoScene = new THREE.Scene();
+        const logoCam = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+        logoCam.position.set(0, 0.3, 7.2);
+        logoCam.lookAt(0, 0, 0);
+
+        logoScene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        const kl = new THREE.DirectionalLight(0xfffaf0, 0.9); kl.position.set(3, 5, 8); logoScene.add(kl);
+        const kl2 = new THREE.DirectionalLight(0xfff8f0, 0.9); kl2.position.set(-3, -5, -8); logoScene.add(kl2);
+        const fl = new THREE.DirectionalLight(0xe0eeff, 0.7); fl.position.set(-5, -2, 4); logoScene.add(fl);
+        const fl2 = new THREE.DirectionalLight(0xffe0d0, 0.7); fl2.position.set(5, 2, -4); logoScene.add(fl2);
+        const r1 = new THREE.PointLight(0xffcc44, 1.2, 25); r1.position.set(-5, 2, -6); logoScene.add(r1);
+        const r2 = new THREE.PointLight(0x44aaff, 0.8, 20); r2.position.set(5, -1, -5); logoScene.add(r2);
+        const logoMV = new THREE.PointLight(0xffe080, 1.2, 22); logoScene.add(logoMV);
+
+        function buildLogoShape() {
+            const T = 100, st = Math.max(1, Math.floor(LP.length / T));
+            const sL = [], sR = [];
+            for (let i = 0; i < LP.length; i += st) { sL.push(LP[i]); sR.push(RP[i]); }
+            sL.push(LP[LP.length - 1]); sR.push(RP[RP.length - 1]);
+            const sh = new THREE.Shape();
+            sh.moveTo(sL[0][0], sL[0][1]);
+            for (let i = 0; i < sR.length; i++) sh.lineTo(sR[i][0], sR[i][1]);
+            for (let i = sL.length - 1; i >= 0; i--) sh.lineTo(sL[i][0], sL[i][1]);
+            sh.closePath();
+            return sh;
+        }
+
+        function uvGeoLogo(sh, seg) {
+            const g = new THREE.ShapeGeometry(sh, seg);
+            g.computeBoundingBox();
+            const bb = g.boundingBox, sx = bb.max.x - bb.min.x, sy = bb.max.y - bb.min.y;
+            const pos = g.attributes.position, uv = new Float32Array(pos.count * 2);
+            for (let i = 0; i < pos.count; i++) {
+                uv[i * 2] = (pos.getX(i) - bb.min.x) / sx;
+                uv[i * 2 + 1] = (pos.getY(i) - bb.min.y) / sy;
+            }
+            g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+            return g;
+        }
+
+        const logoTL = new THREE.TextureLoader();
+        logoTL.crossOrigin = "anonymous";
+        logoTL.load(LOGO_IMG_URL, function(tex) {
+            tex.anisotropy = logoR.capabilities.getMaxAnisotropy();
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+
+            const shape = buildLogoShape();
+            const faceM = new THREE.MeshBasicMaterial({ map: tex });
+            const edgeM = new THREE.MeshStandardMaterial({ color: 0xd4a820, roughness: 0.13, metalness: 0.96 });
+            const edgD = new THREE.MeshStandardMaterial({ color: 0xa07810, roughness: 0.08, metalness: 0.98 });
+            const inv = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+
+            const D = 0.38, HD = D / 2;
+            const logoGrp = new THREE.Group();
+            logoScene.add(logoGrp);
+
+            const eg = new THREE.ExtrudeGeometry(shape, {
+                depth: D, bevelEnabled: true, bevelThickness: 0.045, bevelSize: 0.045,
+                bevelSegments: 16, curveSegments: 128
+            });
+            eg.translate(0, 0, -HD);
+            logoGrp.add(new THREE.Mesh(eg, [inv, inv, edgeM]));
+
+            const fg = uvGeoLogo(shape, 128);
+            const fm = new THREE.Mesh(fg, faceM); fm.position.z = HD + 0.002; logoGrp.add(fm);
+
+            const bg2 = uvGeoLogo(shape, 128);
+            const pb = bg2.attributes.position, ub = bg2.attributes.uv;
+            for (let i = 0; i < pb.count; i++) { pb.setX(i, -pb.getX(i)); ub.setX(i, 1 - ub.getX(i)); }
+            pb.needsUpdate = true; ub.needsUpdate = true; bg2.computeVertexNormals();
+            const bm = new THREE.Mesh(bg2, faceM); bm.position.z = -(HD + 0.002); logoGrp.add(bm);
+
+            const sp = shape.getPoints(120);
+            const ro = new THREE.Shape(sp.map(p => new THREE.Vector2(p.x * 1.045, p.y * 1.045)));
+            ro.holes.push(new THREE.Path(sp));
+            const rg = new THREE.ExtrudeGeometry(ro, {
+                depth: D * 0.70, bevelEnabled: true, bevelThickness: 0.022,
+                bevelSize: 0.022, bevelSegments: 10, curveSegments: 128
+            });
+            rg.translate(0, 0, -(HD * 0.70));
+            logoGrp.add(new THREE.Mesh(rg, edgD));
+
+            // Halo belakang (sprite glow)
+            const hc = document.createElement("canvas"); hc.width = hc.height = 256;
+            const ht = hc.getContext("2d");
+            const hg = ht.createRadialGradient(128, 128, 5, 128, 128, 128);
+            hg.addColorStop(0, "rgba(255,220,80,0.6)");
+            hg.addColorStop(0.3, "rgba(255,160,30,0.3)");
+            hg.addColorStop(0.6, "rgba(80,120,255,0.18)");
+            hg.addColorStop(1, "rgba(0,0,0,0)");
+            ht.fillStyle = hg; ht.fillRect(0, 0, 256, 256);
+            const logoHS = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: new THREE.CanvasTexture(hc), transparent: true,
+                blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8
+            }));
+            logoHS.scale.set(7.2, 9.5, 1); logoHS.position.z = -0.5; logoGrp.add(logoHS);
+
+            // Bintang latar
+            const sv = new Float32Array(2000 * 3);
+            for (let i = 0; i < sv.length; i++) sv[i] = (Math.random() - 0.5) * 150;
+            const sgg = new THREE.BufferGeometry();
+            sgg.setAttribute('position', new THREE.BufferAttribute(sv, 3));
+            logoScene.add(new THREE.Points(sgg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.055, sizeAttenuation: true })));
+
+            // Fade in
+            let fo = 0;
+            const fi = setInterval(function() {
+                fo += 0.04;
+                c3.style.opacity = Math.min(fo, 1).toFixed(2);
+                if (fo >= 1) clearInterval(fi);
+            }, 16);
+
+            logoGrp.rotation.x = 0.12;
+            let logoAng = 0, logoLast = performance.now(), logoGT2 = 0;
+
+            (function logoRender(now) {
+                const dt = (now - logoLast) / 1000; logoLast = now;
+                logoAng += dt * (Math.PI * 2 / 22);
+                logoGT2 += dt;
+                logoGrp.rotation.y = logoAng;
+                logoGrp.rotation.x = 0.12 + Math.sin(logoAng * 0.35) * 0.08;
+                logoHS.material.opacity = 0.55 + 0.25 * Math.sin(logoGT2 * 0.9);
+                logoMV.position.set(Math.sin(-logoAng * 1.2) * 6, Math.cos(-logoAng * 0.6) * 2.5, Math.sin(logoAng * 0.4) * 2 - 2);
+                logoR.render(logoScene, logoCam);
+                requestAnimationFrame(logoRender);
+            })(performance.now());
+        });
+    }
+})();
+</script>
+
+<script>
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 
