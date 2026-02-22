@@ -1027,6 +1027,7 @@ let stream = null;
 let step = 1; // 1 = depan, 2 = belakang
 let editingIndex = -1, originalEditData = null;
 let isEditMode = false;
+let editingSementara = false;   // true jika sedang edit data dari dataTamuSementara
 
 const PIXELS_PER_CM = 37.7952755906;
 const MIN_STROKE_LENGTH_CM = 2;
@@ -1588,14 +1589,20 @@ if (uraianValue.length < 15) {
         jenisLayanan: document.getElementById('jenisLayanan').value,
         uraian: document.getElementById('uraian').value.trim(),
         nomorHp: document.getElementById('nomorHp').value.trim(),
-        tandaTangan: hasSignature ? signatureCanvas.toDataURL('image/png') : (dataBukuTamu[editingIndex]?.tandaTangan || ''),
-        fotoFront: fotoDataURLFront || (dataBukuTamu[editingIndex]?.fotoFront || null),
-        fotoBack: fotoDataURLBack || (dataBukuTamu[editingIndex]?.fotoBack || null),
-        timestamp: isEditMode ? (dataBukuTamu[editingIndex]?.timestamp || new Date().toLocaleString('id-ID')) : new Date().toLocaleString('id-ID')
+        tandaTangan: hasSignature ? signatureCanvas.toDataURL('image/png') : (editingSementara ? (dataTamuSementara[editingIndex]?.tandaTangan || '') : (dataBukuTamu[editingIndex]?.tandaTangan || '')),
+        fotoFront: fotoDataURLFront || (editingSementara ? (dataTamuSementara[editingIndex]?.fotoFront || null) : (dataBukuTamu[editingIndex]?.fotoFront || null)),
+        fotoBack: fotoDataURLBack || (editingSementara ? (dataTamuSementara[editingIndex]?.fotoBack || null) : (dataBukuTamu[editingIndex]?.fotoBack || null)),
+        timestamp: isEditMode ? (editingSementara ? (dataTamuSementara[editingIndex]?.timestamp || new Date().toLocaleString('id-ID')) : (dataBukuTamu[editingIndex]?.timestamp || new Date().toLocaleString('id-ID'))) : new Date().toLocaleString('id-ID')
     };
 
     if (editingIndex >= 0) {
-        dataBukuTamu[editingIndex] = formData;
+        if (editingSementara) {
+            // Pertahankan flag _sementara saat edit data pending
+            formData._sementara = true;
+            dataTamuSementara[editingIndex] = formData;
+        } else {
+            dataBukuTamu[editingIndex] = formData;
+        }
     } else {
         dataBukuTamu.push(formData);
     }
@@ -1659,6 +1666,7 @@ function resetFormComplete() {
     hideAllFields();
     isEditMode = false;
     editingIndex = -1;
+    editingSementara = false;
 }
 
 // ===== NAVIGATION =====
@@ -1717,7 +1725,8 @@ function buildDetailHTML(data, index, isSementara) {
         : `<span style="background:#28a745;color:#fff;font-size:0.8em;padding:3px 8px;border-radius:20px;font-weight:bold;margin-right:8px;">✅ TERKONFIRMASI</span>`;
     const nomor     = isSementara ? `S-${index + 1}` : `${index + 1}`;
     const editBtn   = isSementara
-        ? `<button onclick="hapusSementara(${index})" style="background:#dc3545;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;margin-right:5px;">🗑️ Hapus</button>`
+        ? `<button onclick="editSementara(${index})" style="background:#17a2b8;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;margin-right:5px;">✏️ Edit</button>
+           <button onclick="hapusSementara(${index})" style="background:#dc3545;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;margin-right:5px;">🗑️ Hapus</button>`
         : `<button onclick="editData(${index})" style="background:#ffc107;color:black;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;margin-right:5px;">✏️ Edit</button>`;
     const simpanBtn = isSementara
         ? `<button type="button" onclick="konfirmasiDanSimpanPDF(${index})"
@@ -1838,6 +1847,7 @@ function editData(index) {
         editingIndex = index;
         originalEditData = JSON.parse(JSON.stringify(data));
         isEditMode = true;
+        editingSementara = false;
 
         // ────────────────────────────────────────────────
         // ISI SEMUA FIELD (termasuk yang wajib seperti NAMA)
@@ -1898,12 +1908,81 @@ function editData(index) {
 
            }
 }
+// ── Fungsi edit khusus data SEMENTARA (belum dikonfirmasi) — diadaptasi dari V7 ──
+function editSementara(sIndex) {
+    if (confirm('Edit data sementara #S-' + (sIndex + 1) + '?')) {
+        const data = dataTamuSementara[sIndex];
+
+        editingIndex = sIndex;
+        originalEditData = JSON.parse(JSON.stringify(data));
+        isEditMode = true;
+        editingSementara = true;   // ← tandai bahwa kita sedang edit array sementara
+
+        // ────────────────────────────────────────────────
+        // ISI SEMUA FIELD (termasuk yang wajib seperti NAMA)
+        // ────────────────────────────────────────────────
+        document.getElementById('nama').value = data.nama || '';
+
+        // Trigger validasi nama supaya field berikutnya muncul
+        validateNama();
+
+        // Asal & trigger perubahan asal
+        document.getElementById('asal').value = data.asal || '';
+        asalChanged();    // ← krusial untuk tampilkan/hide instansi vs kecamatan
+
+        // Isi field sesuai asal
+        if (data.asal === 'INSTANSI') {
+            document.getElementById('instansi').value = data.instansi || '';
+        } else if (data.asal === 'MASYARAKAT') {
+            document.getElementById('kecamatan').value = data.kecamatan || '';
+            updateDesaList();
+            setTimeout(() => {
+                document.getElementById('desa').value = data.desa || '';
+            }, 50);
+        }
+
+        document.getElementById('pihakDitemui').value = data.pihakDitemui || '';
+        document.getElementById('jenisLayanan').value = data.jenisLayanan || '';
+        document.getElementById('uraian').value = data.uraian || '';
+        document.getElementById('nomorHp').value = data.nomorHp || '';
+
+        // Tanda tangan
+        if (data.tandaTangan) {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = function() {
+                ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                ctx2.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
+                hasSignature = true;
+                totalStrokeLength = 100; // cukup untuk lolos validasi
+            };
+            img.src = data.tandaTangan;
+        }
+
+        fotoDataURLFront = data.fotoFront || null;
+        fotoDataURLBack  = data.fotoBack  || null;
+        hasPhoto = !!(data.fotoFront || data.fotoBack);
+
+        if (data.fotoFront) document.getElementById('imgFront').src = data.fotoFront;
+        if (data.fotoBack)  document.getElementById('imgBack').src  = data.fotoBack;
+
+        // Force tampilkan field yang relevan
+        forceShowEditFields();
+
+        // Pastikan form terlihat
+        document.getElementById('formSection').style.display = 'block';
+        document.getElementById('dataSection').style.display = 'none';
+        document.getElementById('editModeButtons').style.display = 'block';
+    }
+}
+
 function saveEditedData() {
     if (simpanData()) {
         alert("✅ Perubahan berhasil disimpan!");
         editingIndex = -1;
         originalEditData = null;
         isEditMode = false;
+        editingSementara = false;
         document.getElementById('mainNavigation').style.display = 'block';
         document.getElementById('editModeButtons').style.display = 'none';
         showData();
@@ -1914,17 +1993,23 @@ function saveEditedData() {
 
 function cancelEdit() {
     if (originalEditData && editingIndex >= 0) {
-        dataBukuTamu[editingIndex] = originalEditData;
+        // Kembalikan ke array yang sesuai
+        if (editingSementara) {
+            dataTamuSementara[editingIndex] = originalEditData;
+        } else {
+            dataBukuTamu[editingIndex] = originalEditData;
+        }
         updateDataCounter();
     }
-    
+
     editingIndex = -1;
     originalEditData = null;
     isEditMode = false;
-    
+    editingSementara = false;
+
     document.getElementById('mainNavigation').style.display = 'block';
     document.getElementById('editModeButtons').style.display = 'none';
-    
+
     showData();
     alert('Edit dibatalkan. Data asli dikembalikan.');
 }
