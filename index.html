@@ -1407,8 +1407,11 @@ function capture() {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/png');
+    const ctxCap = canvas.getContext('2d');
+    ctxCap.fillStyle = '#ffffff';
+    ctxCap.fillRect(0, 0, canvas.width, canvas.height);
+    ctxCap.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     if (step === 1) {
         fotoDataURLFront = dataUrl;
         document.getElementById('imgFront').src = dataUrl;
@@ -1518,7 +1521,7 @@ function simpanData() {
         jenisLayanan: document.getElementById('jenisLayanan').value,
         uraian: document.getElementById('uraian').value.trim(),
         nomorHp: document.getElementById('nomorHp').value.trim(),
-        tandaTangan: hasSignature ? signatureCanvas.toDataURL('image/png') : (editingSementara ? (dataTamuSementara[editingIndex]?.tandaTangan || '') : (dataBukuTamu[editingIndex]?.tandaTangan || '')),
+        tandaTangan: hasSignature ? ttdKeJpeg() : (editingSementara ? (dataTamuSementara[editingIndex]?.tandaTangan || '') : (dataBukuTamu[editingIndex]?.tandaTangan || '')),
         fotoFront: fotoDataURLFront || (editingSementara ? (dataTamuSementara[editingIndex]?.fotoFront || null) : (dataBukuTamu[editingIndex]?.fotoFront || null)),
         fotoBack: fotoDataURLBack || (editingSementara ? (dataTamuSementara[editingIndex]?.fotoBack || null) : (dataBukuTamu[editingIndex]?.fotoBack || null)),
         timestamp: isEditMode ? (editingSementara ? (dataTamuSementara[editingIndex]?.timestamp || new Date().toLocaleString('id-ID')) : (dataBukuTamu[editingIndex]?.timestamp || new Date().toLocaleString('id-ID'))) : new Date().toLocaleString('id-ID')
@@ -1537,6 +1540,19 @@ function simpanData() {
     lsSave();
     resetFormComplete();
     return true;
+}
+
+// Helper: ambil TTD dari canvas dengan latar putih → JPEG (bukan PNG transparan)
+function ttdKeJpeg() {
+    if (!signatureCanvas) return '';
+    const cvs = document.createElement('canvas');
+    cvs.width  = signatureCanvas.width;
+    cvs.height = signatureCanvas.height;
+    const c = cvs.getContext('2d');
+    c.fillStyle = '#ffffff';
+    c.fillRect(0, 0, cvs.width, cvs.height);
+    c.drawImage(signatureCanvas, 0, 0);
+    return cvs.toDataURL('image/jpeg', 0.95);
 }
 
 function simpanDataSementara() {
@@ -1565,7 +1581,7 @@ function simpanDataSementara() {
         jenisLayanan: document.getElementById('jenisLayanan').value,
         uraian: document.getElementById('uraian').value.trim(),
         nomorHp: document.getElementById('nomorHp').value.trim(),
-        tandaTangan: signatureCanvas ? signatureCanvas.toDataURL('image/png') : '',
+        tandaTangan: ttdKeJpeg(),
         fotoFront: fotoDataURLFront || null,
         fotoBack: fotoDataURLBack || null,
         timestamp: new Date().toLocaleString('id-ID'),
@@ -1868,733 +1884,314 @@ function exportData() {
     document.body.appendChild(modal);
 }
 
+
+// ===== HELPER: Konversi data URL gambar → JPEG berlatar putih (ASYNC) =====
+// WAJIB async karena img.onload asinkron — img.naturalWidth = 0 sebelum onload
+function gambarKeJpeg(url) {
+    return new Promise(function(resolve) {
+        if (!url || typeof url !== 'string' || !url.startsWith('data:image')) return resolve(null);
+        var img = new Image();
+        img.onload = function() {
+            try {
+                var w = img.naturalWidth || 800, h = img.naturalHeight || 600;
+                var c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                var ctx = c.getContext('2d');
+                ctx.fillStyle = '#ffffff';   // latar putih → hilangkan alpha transparan
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(c.toDataURL('image/jpeg', 0.92));
+            } catch(e) { resolve(url); }
+        };
+        img.onerror = function() { resolve(null); };
+        img.src = url;
+    });
+}
+
 // ===== GENERATE PDF TABEL RINGKASAN =====
-function doExport(filter) {
+async function doExport(filter) {
     const modal = document.getElementById('_exportModal');
     if (modal) modal.remove();
     const parseTS = s => {
         if (!s) return 0;
-        const d = new Date(s);
-        if (!isNaN(d)) return d.getTime();
+        const d = new Date(s); if (!isNaN(d)) return d.getTime();
         const m = s.match(/(\d+)\/(\d+)\/(\d+),?\s*(\d+)[.,:](\d+)[.,:](\d+)?/);
-        if (m) return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5], +(m[6]||0)).getTime();
+        if (m) return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0)).getTime();
         return 0;
     };
-    const semuaTamu = dataBukuTamu.filter(d => d.asal === filter).sort((a, b) => parseTS(a.timestamp) - parseTS(b.timestamp));
+    const semuaTamu = dataBukuTamu.filter(d => d.asal === filter)
+                                  .sort((a,b) => parseTS(a.timestamp)-parseTS(b.timestamp));
     if (semuaTamu.length === 0) {
-        alert(`Tidak ada data tamu dari kategori "${filter === 'INSTANSI' ? 'Instansi / Unit Kerja' : 'Masyarakat'}"!`);
+        alert(`Tidak ada data tamu dari kategori "${filter==='INSTANSI'?'Instansi / Unit Kerja':'Masyarakat'}"!`);
         return;
     }
-    const judulFilter = filter === 'INSTANSI' ? 'INSTANSI / UNIT KERJA' : 'MASYARAKAT';
-    const namaFile    = filter === 'INSTANSI' ? 'Instansi' : 'Masyarakat';
+
+    // Konversi SEMUA gambar ke JPEG dulu — autoTable sinkron, tidak bisa await di dalamnya
+    const hasilJpeg = await Promise.all(
+        semuaTamu.flatMap(d => [gambarKeJpeg(d.tandaTangan), gambarKeJpeg(d.fotoFront), gambarKeJpeg(d.fotoBack)])
+    );
+    const jpegMap = {};
+    semuaTamu.forEach((d,i) => { jpegMap[i] = {ttd:hasilJpeg[i*3], front:hasilJpeg[i*3+1], back:hasilJpeg[i*3+2]}; });
+
+    const judulFilter = filter==='INSTANSI' ? 'INSTANSI / UNIT KERJA' : 'MASYARAKAT';
+    const namaFile    = filter==='INSTANSI' ? 'Instansi' : 'Masyarakat';
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4');
-    const pageWidth = 297;
-    const margin = 10;
+    const doc = new jsPDF('l','mm','a4');
+    const pageWidth = 297, margin = 10;
     let y = margin;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    ['BUKU TAMU DIGITAL', 'INSPEKTORAT DAERAH', 'KABUPATEN TULANG BAWANG BARAT'].forEach(line => {
-        doc.text(line, pageWidth / 2, y, { align: 'center' });
-        y += 5;
+    doc.setFont("helvetica","bold"); doc.setFontSize(14);
+    ['BUKU TAMU DIGITAL','INSPEKTORAT DAERAH','KABUPATEN TULANG BAWANG BARAT'].forEach(line => {
+        doc.text(line, pageWidth/2, y, {align:'center'}); y += 5;
     });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(`Tanggal Export: ${new Date().toLocaleString('id-ID')}  •  Total: ${semuaTamu.length} tamu`, pageWidth / 2, y + 1, { align: 'center' });
+    doc.setFont("helvetica","normal"); doc.setFontSize(9);
+    doc.text(`Tanggal Export: ${new Date().toLocaleString('id-ID')}  •  Total: ${semuaTamu.length} tamu`, pageWidth/2, y+1, {align:'center'});
     y += 9;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(`DAFTAR TAMU — ${judulFilter}`, margin, y);
-    y += 2;
+    doc.setFont("helvetica","bold"); doc.setFontSize(11);
+    doc.text(`DAFTAR TAMU — ${judulFilter}`, margin, y); y += 2;
 
     let columns, columnStyles;
     if (filter === 'INSTANSI') {
         columns = [
-            { header: 'No', dataKey: 'no' },
-            { header: 'Nama', dataKey: 'nama' },
-            { header: 'Instansi', dataKey: 'instansi' },
-            { header: 'Pihak Ditemui', dataKey: 'pihakDitemui' },
-            { header: 'Layanan', dataKey: 'jenisLayanan' },
-            { header: 'Uraian', dataKey: 'uraian' },
-            { header: 'No HP', dataKey: 'nomorHp' },
-            { header: 'Waktu', dataKey: 'timestamp' },
-            { header: 'TTD', dataKey: 'tandaTangan' },
-            { header: 'Foto Depan', dataKey: 'fotoFront' },
-            { header: 'Foto Belakang', dataKey: 'fotoBack' }
+            {header:'No',dataKey:'no'},{header:'Nama',dataKey:'nama'},{header:'Instansi',dataKey:'instansi'},
+            {header:'Pihak Ditemui',dataKey:'pihakDitemui'},{header:'Layanan',dataKey:'jenisLayanan'},
+            {header:'Uraian',dataKey:'uraian'},{header:'No HP',dataKey:'nomorHp'},
+            {header:'Waktu',dataKey:'timestamp'},{header:'TTD',dataKey:'tandaTangan'},
+            {header:'Foto Depan',dataKey:'fotoFront'},{header:'Foto Belakang',dataKey:'fotoBack'}
         ];
         columnStyles = {
-            no: { cellWidth: 10, halign: 'center' },
-            nama: { cellWidth: 26 },
-            instansi: { cellWidth: 38 },
-            pihakDitemui: { cellWidth: 24 },
-            jenisLayanan: { cellWidth: 26 },
-            uraian: { cellWidth: 'auto' },
-            nomorHp: { cellWidth: 26 },
-            timestamp: { cellWidth: 22 },
-            tandaTangan: { cellWidth: 22, minCellHeight: 24 },
-            fotoFront: { cellWidth: 27, minCellHeight: 27 },
-            fotoBack: { cellWidth: 27, minCellHeight: 27 }
+            no:{cellWidth:10,halign:'center'}, nama:{cellWidth:26}, instansi:{cellWidth:38},
+            pihakDitemui:{cellWidth:24}, jenisLayanan:{cellWidth:26}, uraian:{cellWidth:'auto'},
+            nomorHp:{cellWidth:26}, timestamp:{cellWidth:22},
+            tandaTangan:{cellWidth:24,minCellHeight:26}, fotoFront:{cellWidth:28,minCellHeight:28}, fotoBack:{cellWidth:28,minCellHeight:28}
         };
     } else {
         columns = [
-            { header: 'No', dataKey: 'no' },
-            { header: 'Nama', dataKey: 'nama' },
-            { header: 'Kecamatan', dataKey: 'kecamatan' },
-            { header: 'Desa', dataKey: 'desa' },
-            { header: 'Pihak Ditemui', dataKey: 'pihakDitemui' },
-            { header: 'Layanan', dataKey: 'jenisLayanan' },
-            { header: 'Uraian', dataKey: 'uraian' },
-            { header: 'No HP', dataKey: 'nomorHp' },
-            { header: 'Waktu', dataKey: 'timestamp' },
-            { header: 'TTD', dataKey: 'tandaTangan' },
-            { header: 'Foto Depan', dataKey: 'fotoFront' },
-            { header: 'Foto Belakang', dataKey: 'fotoBack' }
+            {header:'No',dataKey:'no'},{header:'Nama',dataKey:'nama'},{header:'Kecamatan',dataKey:'kecamatan'},
+            {header:'Desa',dataKey:'desa'},{header:'Pihak Ditemui',dataKey:'pihakDitemui'},
+            {header:'Layanan',dataKey:'jenisLayanan'},{header:'Uraian',dataKey:'uraian'},
+            {header:'No HP',dataKey:'nomorHp'},{header:'Waktu',dataKey:'timestamp'},
+            {header:'TTD',dataKey:'tandaTangan'},{header:'Foto Depan',dataKey:'fotoFront'},{header:'Foto Belakang',dataKey:'fotoBack'}
         ];
         columnStyles = {
-            no: { cellWidth: 10, halign: 'center' },
-            nama: { cellWidth: 26 },
-            kecamatan: { cellWidth: 24 },
-            desa: { cellWidth: 22 },
-            pihakDitemui: { cellWidth: 22 },
-            jenisLayanan: { cellWidth: 24 },
-            uraian: { cellWidth: 'auto' },
-            nomorHp: { cellWidth: 24 },
-            timestamp: { cellWidth: 20 },
-            tandaTangan: { cellWidth: 20, minCellHeight: 24 },
-            fotoFront: { cellWidth: 25, minCellHeight: 25 },
-            fotoBack: { cellWidth: 25, minCellHeight: 25 }
+            no:{cellWidth:10,halign:'center'}, nama:{cellWidth:26}, kecamatan:{cellWidth:24},
+            desa:{cellWidth:22}, pihakDitemui:{cellWidth:22}, jenisLayanan:{cellWidth:24},
+            uraian:{cellWidth:'auto'}, nomorHp:{cellWidth:24}, timestamp:{cellWidth:20},
+            tandaTangan:{cellWidth:22,minCellHeight:24}, fotoFront:{cellWidth:26,minCellHeight:26}, fotoBack:{cellWidth:26,minCellHeight:26}
         };
     }
 
-    // ── PERBAIKAN UTAMA: konversi gambar ke format yang aman untuk jsPDF ──
-    // Pastikan gambar dikonversi ke JPEG agar tidak ada isu transparansi/channel alpha
-    function toImgSafe(url) {
-        if (typeof url !== 'string' || !url.startsWith('data:image')) return null;
-        try {
-            // Konversi ke JPEG (hapus transparansi) menggunakan canvas
-            const img = new Image();
-            img.src = url;
-            const cvs = document.createElement('canvas');
-            cvs.width  = img.width  || 200;
-            cvs.height = img.height || 200;
-            const c = cvs.getContext('2d');
-            // Isi latar belakang putih sebelum gambar (hilangkan alpha channel)
-            c.fillStyle = '#ffffff';
-            c.fillRect(0, 0, cvs.width, cvs.height);
-            c.drawImage(img, 0, 0);
-            return { image: cvs.toDataURL('image/jpeg', 0.92), format: 'JPEG' };
-        } catch(e) {
-            // Fallback: gunakan data asli tapi tentukan format
-            const mime = url.substring(5, url.indexOf(';'));
-            const fmt  = mime === 'image/png' ? 'PNG' : 'JPEG';
-            return { image: url, format: fmt };
-        }
-    }
-
-    const rows = semuaTamu.map((d, i) => {
-        const baseRow = {
-            no: i + 1,
-            nama: d.nama || '',
-            pihakDitemui: d.pihakDitemui || '',
-            jenisLayanan: d.jenisLayanan || '',
-            uraian: d.uraian || '-',
-            nomorHp: (d.nomorHp || '').replace(/^C\s*/, ''),
-            timestamp: d.timestamp || '',
-            tandaTangan: toImgSafe(d.tandaTangan),
-            fotoFront: toImgSafe(d.fotoFront),
-            fotoBack: toImgSafe(d.fotoBack)
+    const imgKeys = ['tandaTangan','fotoFront','fotoBack'];
+    const rows = semuaTamu.map((d,i) => {
+        const r = {
+            no:i+1, nama:d.nama||'', pihakDitemui:d.pihakDitemui||'', jenisLayanan:d.jenisLayanan||'',
+            uraian:d.uraian||'-', nomorHp:(d.nomorHp||'').replace(/^C\s*/,''), timestamp:d.timestamp||'',
+            tandaTangan:i, fotoFront:i, fotoBack:i
         };
-        if (filter === 'INSTANSI') {
-            baseRow.instansi = d.instansi || '-';
-        } else {
-            baseRow.kecamatan = d.kecamatan || '-';
-            baseRow.desa      = d.desa      || '-';
-        }
-        return baseRow;
+        if (filter==='INSTANSI') r.instansi=d.instansi||'-';
+        else { r.kecamatan=d.kecamatan||'-'; r.desa=d.desa||'-'; }
+        return r;
     });
 
-    const headerFillColor = filter === 'INSTANSI' ? [13, 31, 69] : [20, 90, 50];
+    const hfc = filter==='INSTANSI' ? [13,31,69] : [20,90,50];
     doc.autoTable({
-        columns,
-        body: rows,
-        startY: y,
-        margin: { left: margin, right: margin },
-        styles: {
-            fontSize: 8,
-            cellPadding: 3,
-            overflow: 'linebreak',
-            halign: 'left',
-            valign: 'middle'
+        columns, body:rows, startY:y, margin:{left:margin,right:margin}, columnStyles,
+        styles:{fontSize:8,cellPadding:3,overflow:'linebreak',halign:'left',valign:'middle'},
+        headStyles:{fillColor:hfc,textColor:[245,224,122],fontStyle:'bold',halign:'center'},
+        willDrawCell(h) {
+            if (h.row.section!=='body') return;
+            if (imgKeys.includes(h.column.dataKey)) doc.setFillColor(255,255,255);
+            else if (filter==='MASYARAKAT') doc.setFillColor(235,250,238);
+            else doc.setFillColor(h.row.index%2===0?255:248, h.row.index%2===0?255:246, h.row.index%2===0?255:240);
+            doc.rect(h.cell.x, h.cell.y, h.cell.width, h.cell.height, 'F');
         },
-        headStyles: {
-            fillColor: headerFillColor,
-            textColor: [245, 224, 122],
-            fontStyle: 'bold',
-            halign: 'center'
+        didParseCell(h) {
+            if (h.row.section==='body' && imgKeys.includes(h.column.dataKey)) h.cell.text=[];
         },
-        willDrawCell(hookData) {
-            if (hookData.row.section !== 'body') return;
-            const imgKeys = ['tandaTangan','fotoFront','fotoBack'];
-            if (imgKeys.includes(hookData.column.dataKey)) {
-                // Latar putih bersih untuk kolom gambar
-                doc.setFillColor(255, 255, 255);
-            } else if (filter === 'MASYARAKAT') {
-                doc.setFillColor(235, 250, 238);
-            } else {
-                doc.setFillColor(
-                    hookData.row.index % 2 === 0 ? 255 : 248,
-                    hookData.row.index % 2 === 0 ? 255 : 246,
-                    hookData.row.index % 2 === 0 ? 255 : 240
-                );
-            }
-            doc.rect(hookData.cell.x, hookData.cell.y, hookData.cell.width, hookData.cell.height, 'F');
-        },
-        didParseCell(hookData) {
-            const imgKeys = ['tandaTangan','fotoFront','fotoBack'];
-            if (hookData.row.section === 'body' && imgKeys.includes(hookData.column.dataKey)) {
-                hookData.cell.text = [];
-            }
-        },
-        didDrawCell(hookData) {
-            if (hookData.row.section !== 'body') return;
-            const imgKeys = ['tandaTangan','fotoFront','fotoBack'];
-            if (!imgKeys.includes(hookData.column.dataKey)) return;
-            const raw = hookData.cell.raw;
-            if (!raw || !raw.image) return;
+        didDrawCell(h) {
+            if (h.row.section!=='body' || !imgKeys.includes(h.column.dataKey)) return;
+            const idx = h.cell.raw;
+            if (typeof idx!=='number' || !jpegMap[idx]) return;
+            let jpg = h.column.dataKey==='tandaTangan' ? jpegMap[idx].ttd
+                    : h.column.dataKey==='fotoFront'   ? jpegMap[idx].front
+                    : jpegMap[idx].back;
+            if (!jpg) return;
             try {
-                // ── PERBAIKAN KRITIS: Reset GState ke opacity 1.0 sebelum addImage ──
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                const p   = 2;
-                const cw  = hookData.cell.width  - p * 2;
-                const ch  = hookData.cell.height - p * 2;
-                const sz  = Math.min(cw, ch, 22);
-                // Gambar latar putih bersih
-                doc.setFillColor(255, 255, 255);
-                doc.rect(hookData.cell.x + p - 0.5, hookData.cell.y + p - 0.5, sz + 1, sz + 1, 'F');
-                // Render gambar dengan opacity penuh
-                doc.addImage(raw.image, raw.format, hookData.cell.x + p, hookData.cell.y + p, sz, sz);
-            } catch(e) {
-                console.warn('Gambar gagal render di PDF:', e);
-            }
+                doc.setGState(doc.GState({opacity:1.0}));
+                const p=2, sz=Math.min(h.cell.width-p*2, h.cell.height-p*2);
+                doc.setFillColor(255,255,255);
+                doc.rect(h.cell.x+p-0.5, h.cell.y+p-0.5, sz+1, sz+1, 'F');
+                doc.addImage(jpg, 'JPEG', h.cell.x+p, h.cell.y+p, sz, sz);
+            } catch(e) { console.warn('Gambar gagal render:', e); }
         }
     });
 
     const finalY = doc.lastAutoTable.finalY + 5;
     if (finalY < 195) {
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        if (filter === 'MASYARAKAT') {
-            doc.setFillColor(235, 250, 238);
-            doc.rect(margin, finalY, 5, 4, 'F');
-            doc.setFontSize(7.5);
-            doc.setTextColor(60, 100, 60);
-            doc.text('= Tamu Masyarakat', margin + 7, finalY + 3);
+        doc.setGState(doc.GState({opacity:1.0}));
+        if (filter==='MASYARAKAT') {
+            doc.setFillColor(235,250,238); doc.rect(margin,finalY,5,4,'F');
+            doc.setFontSize(7.5); doc.setTextColor(60,100,60); doc.text('= Tamu Masyarakat',margin+7,finalY+3);
         } else {
-            doc.setFillColor(255, 255, 255);
-            doc.rect(margin, finalY, 5, 4, 'FD');
-            doc.setFontSize(7.5);
-            doc.setTextColor(60);
-            doc.text('= Tamu Instansi / Unit Kerja', margin + 7, finalY + 3);
+            doc.setFillColor(255,255,255); doc.rect(margin,finalY,5,4,'FD');
+            doc.setFontSize(7.5); doc.setTextColor(60); doc.text('= Tamu Instansi / Unit Kerja',margin+7,finalY+3);
         }
     }
-
     const pageCount = doc.internal.getNumberOfPages();
-    for (let pg = 1; pg <= pageCount; pg++) {
-        doc.setPage(pg);
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        doc.setFontSize(7);
-        doc.setTextColor(120);
-        doc.text(`Halaman ${pg} / ${pageCount}  —  Dicetak: ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, 203, { align: 'center' });
+    for (let pg=1; pg<=pageCount; pg++) {
+        doc.setPage(pg); doc.setGState(doc.GState({opacity:1.0}));
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text(`Halaman ${pg} / ${pageCount}  —  Dicetak: ${new Date().toLocaleString('id-ID')}`, pageWidth/2, 203, {align:'center'});
     }
-
-    const dateStr = new Date().toISOString().split('T')[0];
-    doc.save(`Buku_Tamu_Ringkasan_${namaFile}_${dateStr}.pdf`);
+    doc.save(`Buku_Tamu_Ringkasan_${namaFile}_${new Date().toISOString().split('T')[0]}.pdf`);
     alert(`✅ PDF ringkasan berhasil diunduh!\nKategori: ${judulFilter}\nTotal: ${semuaTamu.length} tamu.`);
 }
 
 // ===== EXPORT DETAIL PER TAMU PDF =====
-function exportDetailPerTamuPDF(index) {
-    if (dataBukuTamu.length === 0 || index < 0 || index >= dataBukuTamu.length) {
-        alert('Tidak ada data untuk tamu ini!');
-        return;
+async function exportDetailPerTamuPDF(index) {
+    if (dataBukuTamu.length===0 || index<0 || index>=dataBukuTamu.length) {
+        alert('Tidak ada data untuk tamu ini!'); return;
     }
-
     const data = dataBukuTamu[index];
-    const { jsPDF } = window.jspdf;
-    const doc        = new jsPDF('p', 'mm', 'a4');
-    const pageWidth  = 210;
-    const pageHeight = 297;
-    const margin     = 15;
-    const contentWidth = pageWidth - margin * 2;
-    let y = 12;
 
-    // ── Fungsi helper: konversi gambar ke JPEG tanpa transparansi ──
-    // INI ADALAH PERBAIKAN UTAMA: menghilangkan alpha channel yang menyebabkan hitam
-    function konversiKeJPEG(dataUrl) {
-        if (!dataUrl || !dataUrl.startsWith('data:image')) return null;
-        try {
-            const img = new Image();
-            img.src = dataUrl;
-            // Tunggu gambar ter-load (sinkron karena sudah ada di memori)
-            const cvs = document.createElement('canvas');
-            cvs.width  = img.naturalWidth  || img.width  || 400;
-            cvs.height = img.naturalHeight || img.height || 300;
-            const c = cvs.getContext('2d');
-            // KRITIS: Isi latar putih SEBELUM gambar untuk menghapus alpha channel
-            c.fillStyle = '#ffffff';
-            c.fillRect(0, 0, cvs.width, cvs.height);
-            c.drawImage(img, 0, 0);
-            return cvs.toDataURL('image/jpeg', 0.92);
-        } catch(e) {
-            console.warn('konversiKeJPEG gagal:', e);
-            return dataUrl;
-        }
-    }
+    // Pre-load semua gambar ke JPEG sebelum PDF dibuat
+    const [jpegFront, jpegBack, jpegTTD] = await Promise.all([
+        gambarKeJpeg(data.fotoFront), gambarKeJpeg(data.fotoBack), gambarKeJpeg(data.tandaTangan)
+    ]);
 
-    // ❶ GRADIENT DIAGONAL - TANPA GState opacity (langsung gambar)
-    const GR = { r1:0xEE,g1:0xF3,b1:0xFB, r2:0xFD,g2:0xF8,b2:0xEC };
-    const STRIPS = 300;
-    const sH = pageHeight / STRIPS;
-    for (let i = 0; i < STRIPS; i++) {
-        const t = i / (STRIPS - 1);
-        doc.setFillColor(
-            Math.round(GR.r1 + t*(GR.r2-GR.r1)),
-            Math.round(GR.g1 + t*(GR.g2-GR.g1)),
-            Math.round(GR.b1 + t*(GR.b2-GR.b1))
-        );
-        doc.rect(0, i*sH, pageWidth, sH + 0.15, 'F');
-    }
-
-    // ❷ POLA GEOMETRIS - Dibatasi GState opacity, lalu RESET ke 1.0
-    function drawGeometricPattern() {
-        doc.setDrawColor(13, 31, 100);
-        doc.setLineWidth(0.08);
-        const WAVE_SETS = [
-            { amp:4.5, freq1:0.038, freq2:0.019, phase:0.0,  gap:9  },
-            { amp:3.5, freq1:0.052, freq2:0.026, phase:1.1,  gap:11 },
-            { amp:5.0, freq1:0.028, freq2:0.014, phase:2.3,  gap:14 },
-            { amp:3.0, freq1:0.065, freq2:0.032, phase:0.7,  gap:8  },
-            { amp:4.0, freq1:0.045, freq2:0.022, phase:1.8,  gap:12 },
-        ];
-        for (const ws of WAVE_SETS) {
-            let baseY = ws.gap;
-            while (baseY < pageHeight) {
-                const pts = [];
-                for (let px = 0; px <= pageWidth; px += 0.6) {
-                    const rad = px * ws.freq1 + ws.phase;
-                    const rad2 = px * ws.freq2 + ws.phase * 1.7;
-                    const dy = ws.amp * Math.sin(rad) + (ws.amp * 0.4) * Math.sin(rad2);
-                    pts.push({ x: px, y: baseY + dy });
-                }
-                for (let pi = 0; pi < pts.length - 1; pi++) {
-                    doc.line(pts[pi].x, pts[pi].y, pts[pi+1].x, pts[pi+1].y);
-                }
-                baseY += ws.gap * 2;
-            }
-        }
-        doc.setDrawColor(100, 31, 13);
-        const VWAVE_SETS = [
-            { amp:3.5, freq1:0.040, freq2:0.020, phase:0.5, gap:18 },
-            { amp:2.5, freq1:0.055, freq2:0.027, phase:1.5, gap:22 },
-        ];
-        for (const ws of VWAVE_SETS) {
-            let baseX = ws.gap;
-            while (baseX < pageWidth) {
-                const pts = [];
-                for (let py = 0; py <= pageHeight; py += 0.6) {
-                    const rad  = py * ws.freq1 + ws.phase;
-                    const rad2 = py * ws.freq2 + ws.phase * 1.9;
-                    const dx   = ws.amp * Math.sin(rad) + (ws.amp * 0.35) * Math.sin(rad2);
-                    pts.push({ x: baseX + dx, y: py });
-                }
-                for (let pi = 0; pi < pts.length - 1; pi++) {
-                    doc.line(pts[pi].x, pts[pi].y, pts[pi+1].x, pts[pi+1].y);
-                }
-                baseX += ws.gap * 2;
-            }
-        }
-        doc.setDrawColor(13, 60, 120);
-        doc.setLineWidth(0.07);
-        const corners = [
-            { cx:0, cy:0 }, { cx:pageWidth, cy:0 },
-            { cx:0, cy:pageHeight }, { cx:pageWidth, cy:pageHeight },
-        ];
-        const SPOKE_COUNT = 28, SPOKE_LEN = 120;
-        for (const corner of corners) {
-            for (let s = 0; s < SPOKE_COUNT; s++) {
-                const angle = (s / SPOKE_COUNT) * Math.PI / 2;
-                const baseAngle = (corner.cx === 0 ? 0 : Math.PI) + (corner.cy === 0 ? 0 : Math.PI);
-                const theta = baseAngle + angle - Math.PI / 4;
-                const ex = corner.cx + SPOKE_LEN * Math.cos(theta);
-                const ey = corner.cy + SPOKE_LEN * Math.sin(theta);
-                doc.line(corner.cx, corner.cy, ex, ey);
-            }
-        }
-        doc.setDrawColor(80, 60, 20);
-        doc.setLineWidth(0.06);
-        const DGAP = 28;
-        for (let d = -pageHeight; d < pageWidth + pageHeight; d += DGAP) {
-            doc.line(d, 0, d + pageHeight, pageHeight);
-        }
-        for (let d = -pageHeight; d < pageWidth + pageHeight; d += DGAP) {
-            doc.line(pageWidth - d, 0, pageWidth - d - pageHeight, pageHeight);
-        }
-        doc.setDrawColor(13, 31, 100);
-        doc.setLineWidth(0.07);
-        const CX = pageWidth / 2, CY = pageHeight / 2;
-        for (let r = 8; r < 160; r += 14) { doc.circle(CX, CY, r, 'S'); }
-        for (const corn of corners) {
-            for (let r = 5; r < 55; r += 10) { doc.circle(corn.cx, corn.cy, r, 'S'); }
-        }
-    }
-
-    // Gambar pola geometris dengan opacity rendah, LALU reset ke 1.0
-    doc.setGState(doc.GState({ opacity: 0.038 }));
-    drawGeometricPattern();
-    // ── PERBAIKAN: Reset opacity ke 1.0 segera setelah pola geometris ──
-    doc.setGState(doc.GState({ opacity: 1.0 }));
-
-    // ❸ Fungsi stempel timestamp pada foto
-    function stampPhotoWithTime(originalDataUrl, labelText, timestamp) {
-        try {
-            const cvs = document.createElement('canvas');
-            cvs.width  = 480;
-            cvs.height = 480;
-            const c = cvs.getContext('2d');
-
-            // Latar putih untuk menghilangkan transparansi
-            c.fillStyle = '#ffffff';
-            c.fillRect(0, 0, 480, 480);
-
-            const tmpImg = new Image();
-            tmpImg.src = originalDataUrl;
-            // Gambar foto di atas latar putih
-            c.drawImage(tmpImg, 0, 0, 480, 480);
-
-            const bannerH = 58;
-            const bannerY = 480 - bannerH;
-            const grad = c.createLinearGradient(0, bannerY - 10, 0, 480);
-            grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            grad.addColorStop(0.3, 'rgba(0, 10, 40, 0.72)');
-            grad.addColorStop(1,   'rgba(0, 10, 40, 0.88)');
-            c.fillStyle = grad;
-            c.fillRect(0, bannerY - 10, 480, bannerH + 10);
-
-            c.fillStyle = '#f5e07a';
-            c.font      = 'bold 26px Arial, sans-serif';
-            c.textAlign = 'left';
-            c.shadowColor = 'rgba(0,0,0,0.7)';
-            c.shadowBlur  = 4;
-            c.fillText(labelText, 14, bannerY + 22);
-
-            c.strokeStyle = 'rgba(212, 168, 32, 0.7)';
-            c.lineWidth   = 1.2;
-            c.beginPath();
-            c.moveTo(14, bannerY + 29);
-            c.lineTo(466, bannerY + 29);
-            c.stroke();
-
-            c.fillStyle = 'rgba(220, 235, 255, 0.92)';
-            c.font      = '18px Arial, sans-serif';
-            c.shadowBlur = 3;
-            c.fillText('🕐 ' + timestamp, 14, bannerY + 50);
-            c.shadowBlur = 0;
-
-            c.strokeStyle = 'rgba(212, 168, 32, 0.85)';
-            c.lineWidth   = 3;
-            c.strokeRect(2, 2, 476, 476);
-
-            // Selalu return JPEG (bukan PNG) untuk menghindari masalah alpha di jsPDF
-            return cvs.toDataURL('image/jpeg', 0.92);
-        } catch(e) {
-            console.warn('stampPhoto gagal:', e);
-            return originalDataUrl;
-        }
-    }
-
-    // ❹ Render seluruh konten PDF
-    function drawWatermarkThenContent(logoDataUrl) {
-
-        // Watermark logo - gunakan opacity rendah, lalu RESET ke 1.0
-        if (logoDataUrl) {
-            try {
-                const wmW = 170, wmH = 170;
-                const wmX = (pageWidth  - wmW) / 2;
-                const wmY = (pageHeight - wmH) / 2;
-                doc.setGState(doc.GState({ opacity: 0.052 }));
-                doc.addImage(logoDataUrl, 'PNG', wmX, wmY, wmW, wmH);
-            } catch(e) {
-                console.warn('Watermark gagal:', e);
-            } finally {
-                // ── PERBAIKAN KRITIS: Selalu reset opacity ke 1.0 setelah watermark ──
-                // Blok finally memastikan ini selalu berjalan, bahkan jika ada error
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-            }
-        }
-
-        // Dari sini ke bawah: SEMUA operasi dengan opacity 1.0 (normal)
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-
-        // Border luar
-        doc.setDrawColor(180, 140, 20);
-        doc.setLineWidth(0.65);
-        doc.rect(8, 8, pageWidth - 16, pageHeight - 16, 'S');
-        doc.setDrawColor(212, 168, 32);
-        doc.setLineWidth(0.25);
-        doc.rect(11, 11, pageWidth - 22, pageHeight - 22, 'S');
-
-        // Header biru
-        doc.setFillColor(13, 31, 69);
-        doc.rect(margin, y, contentWidth, 32, 'F');
-        doc.setFillColor(26, 58, 110);
-        doc.rect(margin + contentWidth * 0.4, y, contentWidth * 0.6, 32, 'F');
-
-        doc.setDrawColor(212, 168, 32);
-        doc.setLineWidth(1.2);
-        doc.line(margin, y,      margin + contentWidth, y);
-        doc.line(margin, y + 32, margin + contentWidth, y + 32);
-
-        doc.setFontSize(15);
-        doc.setTextColor(245, 224, 122);
-        doc.setFont("helvetica", "bold");
-        doc.text('BUKU TAMU DIGITAL', pageWidth / 2, y + 11, { align: 'center' });
-        doc.setFontSize(9.5);
-        doc.setTextColor(220, 235, 255);
-        doc.text('INSPEKTORAT DAERAH KABUPATEN TULANG BAWANG BARAT', pageWidth / 2, y + 19, { align: 'center' });
-        doc.setFontSize(7.5);
-        doc.setTextColor(180, 200, 240);
-        doc.text(`Data Tamu #${index + 1}  •  ${data.timestamp}`, pageWidth / 2, y + 27, { align: 'center' });
-
-        y += 40;
-
-        const fields = [{ label: "Nama Lengkap", value: data.nama || '-' }];
-        if (data.asal === 'INSTANSI') {
-            fields.push({ label: "Instansi / Unit Kerja", value: data.instansi || '-' });
-        } else if (data.asal === 'MASYARAKAT') {
-            fields.push(
-                { label: "Asal",             value: "Masyarakat"       },
-                { label: "Kecamatan",        value: data.kecamatan || '-' },
-                { label: "Desa / Kelurahan", value: data.desa      || '-' }
-            );
-        } else {
-            fields.push({ label: "Asal", value: data.asal || '-' });
-        }
-        fields.push(
-            { label: "Pihak yang Ditemui", value: data.pihakDitemui || '-' },
-            { label: "Jenis Layanan",      value: data.jenisLayanan  || '-' },
-            { label: "Uraian Keperluan",   value: data.uraian        || '-' },
-            { label: "Nomor WhatsApp",     value: data.nomorHp       || '-' },
-            { label: "Waktu Kunjungan",    value: data.timestamp     || '-' }
-        );
-
-        const labelWidth    = 55;
-        const rowHeightBase = 8;
-        doc.setFontSize(9.5);
-
-        fields.forEach((field, fi) => {
-            const valueLines = doc.splitTextToSize(field.value, contentWidth - labelWidth - 6);
-            const rowHeight  = Math.max(rowHeightBase, valueLines.length * 5 + 3);
-            const isEven     = fi % 2 === 0;
-
-            // ── PERBAIKAN: Pastikan opacity 1.0 saat gambar background baris ──
-            doc.setGState(doc.GState({ opacity: 1.0 }));
-
-            doc.setFillColor(isEven ? 232 : 240, isEven ? 238 : 245, isEven ? 252 : 255);
-            doc.rect(margin, y, labelWidth, rowHeight, 'F');
-
-            doc.setFillColor(255, 255, 255);
-            doc.rect(margin + labelWidth, y, contentWidth - labelWidth, rowHeight, 'F');
-
-            doc.setDrawColor(200, 210, 230);
-            doc.setLineWidth(0.25);
-            doc.rect(margin, y, contentWidth, rowHeight, 'S');
-            doc.line(margin + labelWidth, y, margin + labelWidth, y + rowHeight);
-
-            doc.setDrawColor(13, 31, 69);
-            doc.setLineWidth(1.8);
-            doc.line(margin, y, margin, y + rowHeight);
-            doc.setLineWidth(0.25);
-
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(13, 31, 69);
-            doc.text(field.label, margin + 4, y + 5.5);
-
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(30, 30, 50);
-            doc.text(valueLines, margin + labelWidth + 4, y + 5.5);
-
-            y += rowHeight;
+    // Stempel timestamp pada foto (perlu onload baru karena canvas baru)
+    function stampFoto(jpegUrl, labelText, timestamp) {
+        return new Promise(function(resolve) {
+            if (!jpegUrl) return resolve(null);
+            var img = new Image();
+            img.onload = function() {
+                var cvs = document.createElement('canvas'); cvs.width=480; cvs.height=480;
+                var c = cvs.getContext('2d');
+                c.fillStyle='#ffffff'; c.fillRect(0,0,480,480); c.drawImage(img,0,0,480,480);
+                var bY=480-58;
+                var g=c.createLinearGradient(0,bY-10,0,480);
+                g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.3,'rgba(0,10,40,0.72)'); g.addColorStop(1,'rgba(0,10,40,0.88)');
+                c.fillStyle=g; c.fillRect(0,bY-10,480,68);
+                c.fillStyle='#f5e07a'; c.font='bold 26px Arial'; c.textAlign='left';
+                c.shadowColor='rgba(0,0,0,0.7)'; c.shadowBlur=4; c.fillText(labelText,14,bY+22);
+                c.strokeStyle='rgba(212,168,32,0.7)'; c.lineWidth=1.2;
+                c.beginPath(); c.moveTo(14,bY+29); c.lineTo(466,bY+29); c.stroke();
+                c.fillStyle='rgba(220,235,255,0.92)'; c.font='18px Arial'; c.shadowBlur=3; c.fillText('🕐 '+timestamp,14,bY+50);
+                c.strokeStyle='rgba(212,168,32,0.85)'; c.lineWidth=3; c.shadowBlur=0; c.strokeRect(2,2,476,476);
+                resolve(cvs.toDataURL('image/jpeg', 0.92));
+            };
+            img.onerror=function(){ resolve(jpegUrl); };
+            img.src=jpegUrl;
         });
+    }
 
-        y += 14;
+    const [stampedFront, stampedBack] = await Promise.all([
+        stampFoto(jpegFront,'Foto Depan',data.timestamp),
+        stampFoto(jpegBack,'Foto Belakang',data.timestamp)
+    ]);
 
-        // Sub-header dokumentasi
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        doc.setFillColor(13, 31, 69);
-        doc.rect(margin, y, contentWidth, 8, 'F');
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(245, 224, 122);
-        doc.text("DOKUMENTASI FOTO & TANDA TANGAN", margin + 4, y + 5.5);
-        y += 12;
+    const { jsPDF } = window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const pageWidth=210, pageHeight=297, margin=15;
+    const contentWidth=pageWidth-margin*2;
+    let y=12;
 
-        const photoSize = 70;
-        const photoGap  = 12;
-        let photoX      = margin;
+    // Gradient latar
+    const GR={r1:0xEE,g1:0xF3,b1:0xFB,r2:0xFD,g2:0xF8,b2:0xEC};
+    for(let i=0;i<300;i++){
+        const t=i/299;
+        doc.setFillColor(Math.round(GR.r1+t*(GR.r2-GR.r1)),Math.round(GR.g1+t*(GR.g2-GR.g1)),Math.round(GR.b1+t*(GR.b2-GR.b1)));
+        doc.rect(0,i*(pageHeight/300),pageWidth,pageHeight/300+0.15,'F');
+    }
 
-        // ── PERBAIKAN KRITIS: Reset opacity ke 1.0 SEBELUM setiap addImage ──
-        doc.setGState(doc.GState({ opacity: 1.0 }));
+    // Pola geometris
+    function drawGeometricPattern() {
+        doc.setDrawColor(13,31,100); doc.setLineWidth(0.08);
+        const WS=[{amp:4.5,freq1:0.038,freq2:0.019,phase:0.0,gap:9},{amp:3.5,freq1:0.052,freq2:0.026,phase:1.1,gap:11},{amp:5.0,freq1:0.028,freq2:0.014,phase:2.3,gap:14},{amp:3.0,freq1:0.065,freq2:0.032,phase:0.7,gap:8},{amp:4.0,freq1:0.045,freq2:0.022,phase:1.8,gap:12}];
+        for(const ws of WS){let bY=ws.gap;while(bY<pageHeight){const pts=[];for(let px=0;px<=pageWidth;px+=0.6){pts.push({x:px,y:bY+ws.amp*Math.sin(px*ws.freq1+ws.phase)+(ws.amp*0.4)*Math.sin(px*ws.freq2+ws.phase*1.7)});}for(let pi=0;pi<pts.length-1;pi++)doc.line(pts[pi].x,pts[pi].y,pts[pi+1].x,pts[pi+1].y);bY+=ws.gap*2;}}
+        doc.setDrawColor(100,31,13);
+        const VW=[{amp:3.5,freq1:0.040,freq2:0.020,phase:0.5,gap:18},{amp:2.5,freq1:0.055,freq2:0.027,phase:1.5,gap:22}];
+        for(const ws of VW){let bX=ws.gap;while(bX<pageWidth){const pts=[];for(let py=0;py<=pageHeight;py+=0.6){pts.push({x:bX+ws.amp*Math.sin(py*ws.freq1+ws.phase)+(ws.amp*0.35)*Math.sin(py*ws.freq2+ws.phase*1.9),y:py});}for(let pi=0;pi<pts.length-1;pi++)doc.line(pts[pi].x,pts[pi].y,pts[pi+1].x,pts[pi+1].y);bX+=ws.gap*2;}}
+        doc.setDrawColor(13,60,120); doc.setLineWidth(0.07);
+        const corners=[{cx:0,cy:0},{cx:pageWidth,cy:0},{cx:0,cy:pageHeight},{cx:pageWidth,cy:pageHeight}];
+        for(const cr of corners)for(let s=0;s<28;s++){const th=(cr.cx===0?0:Math.PI)+(cr.cy===0?0:Math.PI)+(s/28)*Math.PI/2-Math.PI/4;doc.line(cr.cx,cr.cy,cr.cx+120*Math.cos(th),cr.cy+120*Math.sin(th));}
+        doc.setDrawColor(80,60,20); doc.setLineWidth(0.06);
+        for(let d=-pageHeight;d<pageWidth+pageHeight;d+=28){doc.line(d,0,d+pageHeight,pageHeight);doc.line(pageWidth-d,0,pageWidth-d-pageHeight,pageHeight);}
+        doc.setDrawColor(13,31,100); doc.setLineWidth(0.07);
+        for(let r=8;r<160;r+=14)doc.circle(pageWidth/2,pageHeight/2,r,'S');
+        for(const cr of corners)for(let r=5;r<55;r+=10)doc.circle(cr.cx,cr.cy,r,'S');
+    }
+    doc.setGState(doc.GState({opacity:0.038})); drawGeometricPattern(); doc.setGState(doc.GState({opacity:1.0}));
 
-        // Foto Depan
-        if (data.fotoFront) {
-            try {
-                const stampedFront = stampPhotoWithTime(data.fotoFront, 'Foto Depan', data.timestamp);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                doc.addImage(stampedFront, 'JPEG', photoX, y, photoSize, photoSize);
-            } catch(e) {
-                console.warn('Foto depan gagal render:', e);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                doc.setDrawColor(180, 140, 20);
-                doc.setLineWidth(0.5);
-                doc.rect(photoX, y, photoSize, photoSize, 'S');
-                try {
-                    // Fallback: konversi ke JPEG dulu
-                    const jpegFront = konversiKeJPEG(data.fotoFront);
-                    if (jpegFront) {
-                        doc.addImage(jpegFront, 'JPEG', photoX + 1, y + 1, photoSize - 2, photoSize - 2);
-                    }
-                } catch(e2) {
-                    doc.setFontSize(8); doc.setTextColor(80, 80, 100);
-                    doc.text("Foto Depan", photoX + photoSize / 2, y + photoSize / 2, { align: 'center' });
-                }
-            }
-        }
-
-        photoX += photoSize + photoGap;
-
-        // Foto Belakang
-        if (data.fotoBack) {
-            try {
-                const stampedBack = stampPhotoWithTime(data.fotoBack, 'Foto Belakang', data.timestamp);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                doc.addImage(stampedBack, 'JPEG', photoX, y, photoSize, photoSize);
-            } catch(e) {
-                console.warn('Foto belakang gagal render:', e);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                doc.setDrawColor(180, 140, 20);
-                doc.setLineWidth(0.5);
-                doc.rect(photoX, y, photoSize, photoSize, 'S');
-                try {
-                    const jpegBack = konversiKeJPEG(data.fotoBack);
-                    if (jpegBack) {
-                        doc.addImage(jpegBack, 'JPEG', photoX + 1, y + 1, photoSize - 2, photoSize - 2);
-                    }
-                } catch(e2) {
-                    doc.setFontSize(8); doc.setTextColor(80, 80, 100);
-                    doc.text("Foto Belakang", photoX + photoSize / 2, y + photoSize / 2, { align: 'center' });
-                }
-            }
-        }
-
-        y += photoSize + 16;
-
-        // Tanda Tangan
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(13, 31, 69);
-        doc.text("Tanda Tangan:", margin, y);
-        y += 4;
-
-        const sigWidth  = 80;
-        const sigHeight = 28;
-        const sigX = margin + 2;
-        const sigY = y + 2;
-
-        // Kotak putih untuk tanda tangan
-        doc.setFillColor(255, 255, 255);
-        doc.rect(sigX - 2, sigY - 2, sigWidth + 4, sigHeight + 14, 'F');
-        doc.setDrawColor(180, 140, 20);
-        doc.setLineWidth(0.5);
-        doc.rect(sigX - 2, sigY - 2, sigWidth + 4, sigHeight + 14, 'S');
-
-        if (data.tandaTangan) {
-            try {
-                // ── PERBAIKAN KRITIS: Konversi TTD ke JPEG & reset opacity ──
-                // Tanda tangan PNG transparan menjadi hitam di PDF!
-                const ttdJPEG = konversiKeJPEG(data.tandaTangan);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                doc.addImage(ttdJPEG, 'JPEG', sigX, sigY, sigWidth, sigHeight);
-            } catch(e) {
-                console.warn('TTD gagal render:', e);
-                doc.setGState(doc.GState({ opacity: 1.0 }));
-                try {
-                    doc.addImage(data.tandaTangan, 'PNG', sigX, sigY, sigWidth, sigHeight);
-                } catch(e2) {
-                    doc.setFontSize(9); doc.setTextColor(150);
-                    doc.text("(Gagal menampilkan tanda tangan)", sigX + 4, sigY + 8);
-                }
-            }
-        } else {
-            doc.setFontSize(9); doc.setTextColor(150);
-            doc.text("(Tidak ada tanda tangan)", sigX + 4, sigY + 8);
-        }
-
-        const namaBawah = data.nama || "________________________";
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(13, 31, 69);
-        doc.text(namaBawah, sigX + sigWidth / 2, sigY + sigHeight + 10, { align: 'center' });
-
-        // ❺ FOOTER
-        const footerLineY  = 280;
-        const footerTextY  = footerLineY + 6;
-
-        doc.setGState(doc.GState({ opacity: 1.0 }));
-        doc.setFillColor(250, 248, 244);
-        doc.rect(margin - 2, footerLineY - 1, contentWidth + 4, 16, 'F');
-        doc.setDrawColor(180, 140, 20);
-        doc.setLineWidth(0.55);
-        doc.line(margin, footerLineY, pageWidth - margin, footerLineY);
-        doc.setFillColor(212, 168, 32);
-        doc.circle(margin, footerLineY, 0.8, 'F');
-        doc.circle(pageWidth - margin, footerLineY, 0.8, 'F');
-        doc.setFontSize(7.5);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(70, 70, 95);
-        doc.text(
-            'Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital \u2014 Inspektorat Kab. Tulang Bawang Barat',
-            pageWidth / 2, footerTextY, { align: 'center' }
-        );
-
-        const cleanTimestamp = data.timestamp.replace(/[\s,:]/g, '-');
-        doc.save(`Detail_Tamu_${index + 1}_${cleanTimestamp}.pdf`);
+    function renderKonten(logoDataUrl) {
+        if(logoDataUrl){try{doc.setGState(doc.GState({opacity:0.052}));doc.addImage(logoDataUrl,'PNG',(pageWidth-170)/2,(pageHeight-170)/2,170,170);}catch(e){}}
+        doc.setGState(doc.GState({opacity:1.0}));
+        doc.setDrawColor(180,140,20); doc.setLineWidth(0.65); doc.rect(8,8,pageWidth-16,pageHeight-16,'S');
+        doc.setDrawColor(212,168,32); doc.setLineWidth(0.25); doc.rect(11,11,pageWidth-22,pageHeight-22,'S');
+        doc.setFillColor(13,31,69); doc.rect(margin,y,contentWidth,32,'F');
+        doc.setFillColor(26,58,110); doc.rect(margin+contentWidth*0.4,y,contentWidth*0.6,32,'F');
+        doc.setDrawColor(212,168,32); doc.setLineWidth(1.2);
+        doc.line(margin,y,margin+contentWidth,y); doc.line(margin,y+32,margin+contentWidth,y+32);
+        doc.setFontSize(15); doc.setTextColor(245,224,122); doc.setFont("helvetica","bold");
+        doc.text('BUKU TAMU DIGITAL',pageWidth/2,y+11,{align:'center'});
+        doc.setFontSize(9.5); doc.setTextColor(220,235,255);
+        doc.text('INSPEKTORAT DAERAH KABUPATEN TULANG BAWANG BARAT',pageWidth/2,y+19,{align:'center'});
+        doc.setFontSize(7.5); doc.setTextColor(180,200,240);
+        doc.text(`Data Tamu #${index+1}  •  ${data.timestamp}`,pageWidth/2,y+27,{align:'center'});
+        y+=40;
+        const fields=[{label:"Nama Lengkap",value:data.nama||'-'}];
+        if(data.asal==='INSTANSI') fields.push({label:"Instansi / Unit Kerja",value:data.instansi||'-'});
+        else if(data.asal==='MASYARAKAT') fields.push({label:"Asal",value:"Masyarakat"},{label:"Kecamatan",value:data.kecamatan||'-'},{label:"Desa / Kelurahan",value:data.desa||'-'});
+        else fields.push({label:"Asal",value:data.asal||'-'});
+        fields.push({label:"Pihak yang Ditemui",value:data.pihakDitemui||'-'},{label:"Jenis Layanan",value:data.jenisLayanan||'-'},{label:"Uraian Keperluan",value:data.uraian||'-'},{label:"Nomor WhatsApp",value:data.nomorHp||'-'},{label:"Waktu Kunjungan",value:data.timestamp||'-'});
+        const lW=55; doc.setFontSize(9.5);
+        fields.forEach((field,fi)=>{
+            const vL=doc.splitTextToSize(field.value,contentWidth-lW-6);
+            const rH=Math.max(8,vL.length*5+3); const ie=fi%2===0;
+            doc.setGState(doc.GState({opacity:1.0}));
+            doc.setFillColor(ie?232:240,ie?238:245,ie?252:255); doc.rect(margin,y,lW,rH,'F');
+            doc.setFillColor(255,255,255); doc.rect(margin+lW,y,contentWidth-lW,rH,'F');
+            doc.setDrawColor(200,210,230); doc.setLineWidth(0.25); doc.rect(margin,y,contentWidth,rH,'S'); doc.line(margin+lW,y,margin+lW,y+rH);
+            doc.setDrawColor(13,31,69); doc.setLineWidth(1.8); doc.line(margin,y,margin,y+rH); doc.setLineWidth(0.25);
+            doc.setFont("helvetica","bold"); doc.setTextColor(13,31,69); doc.text(field.label,margin+4,y+5.5);
+            doc.setFont("helvetica","normal"); doc.setTextColor(30,30,50); doc.text(vL,margin+lW+4,y+5.5);
+            y+=rH;
+        });
+        y+=14;
+        doc.setGState(doc.GState({opacity:1.0}));
+        doc.setFillColor(13,31,69); doc.rect(margin,y,contentWidth,8,'F');
+        doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(245,224,122);
+        doc.text("DOKUMENTASI FOTO & TANDA TANGAN",margin+4,y+5.5); y+=12;
+        const pSz=70,pGap=12; let pX=margin;
+        doc.setGState(doc.GState({opacity:1.0}));
+        if(stampedFront){try{doc.addImage(stampedFront,'JPEG',pX,y,pSz,pSz);}catch(e){doc.setDrawColor(180,140,20);doc.setLineWidth(0.5);doc.rect(pX,y,pSz,pSz,'S');}}
+        pX+=pSz+pGap;
+        if(stampedBack){try{doc.setGState(doc.GState({opacity:1.0}));doc.addImage(stampedBack,'JPEG',pX,y,pSz,pSz);}catch(e){doc.setDrawColor(180,140,20);doc.setLineWidth(0.5);doc.rect(pX,y,pSz,pSz,'S');}}
+        y+=pSz+16;
+        doc.setGState(doc.GState({opacity:1.0}));
+        doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(13,31,69);
+        doc.text("Tanda Tangan:",margin,y); y+=4;
+        const sW=80,sH=28,sX=margin+2,sY=y+2;
+        doc.setFillColor(255,255,255); doc.rect(sX-2,sY-2,sW+4,sH+14,'F');
+        doc.setDrawColor(180,140,20); doc.setLineWidth(0.5); doc.rect(sX-2,sY-2,sW+4,sH+14,'S');
+        if(jpegTTD){try{doc.setGState(doc.GState({opacity:1.0}));doc.addImage(jpegTTD,'JPEG',sX,sY,sW,sH);}catch(e){doc.setFontSize(9);doc.setTextColor(150);doc.text("(Gagal menampilkan tanda tangan)",sX+4,sY+8);}}
+        else{doc.setFontSize(9);doc.setTextColor(150);doc.text("(Tidak ada tanda tangan)",sX+4,sY+8);}
+        doc.setGState(doc.GState({opacity:1.0})); doc.setFontSize(11); doc.setFont("helvetica","bold"); doc.setTextColor(13,31,69);
+        doc.text(data.nama||"________________________",sX+sW/2,sY+sH+10,{align:'center'});
+        const fY=280;
+        doc.setFillColor(250,248,244); doc.rect(margin-2,fY-1,contentWidth+4,16,'F');
+        doc.setDrawColor(180,140,20); doc.setLineWidth(0.55); doc.line(margin,fY,pageWidth-margin,fY);
+        doc.setFillColor(212,168,32); doc.circle(margin,fY,0.8,'F'); doc.circle(pageWidth-margin,fY,0.8,'F');
+        doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.setTextColor(70,70,95);
+        doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital \u2014 Inspektorat Kab. Tulang Bawang Barat',pageWidth/2,fY+6,{align:'center'});
+        doc.save(`Detail_Tamu_${index+1}_${data.timestamp.replace(/[\s,:]/g,'-')}.pdf`);
         alert('✅ PDF detail tamu telah diunduh!');
     }
 
-    // Muat logo untuk watermark
-    const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/6/6b/Lambang_Kabupaten_Tulang_Bawang_Barat.png";
-    const logoImg  = new Image();
-    logoImg.crossOrigin = "anonymous";
-
-    logoImg.onload = function() {
-        try {
-            const cvs = document.createElement('canvas');
-            cvs.width  = logoImg.width;
-            cvs.height = logoImg.height;
-            cvs.getContext('2d').drawImage(logoImg, 0, 0);
-            drawWatermarkThenContent(cvs.toDataURL('image/png'));
-        } catch(e) {
-            drawWatermarkThenContent(null);
-        }
-    };
-
-    logoImg.onerror = function() {
-        drawWatermarkThenContent(null);
-    };
-
-    logoImg.src = LOGO_URL;
+    const logoImg=new Image(); logoImg.crossOrigin="anonymous";
+    logoImg.onload=function(){try{var cvs=document.createElement('canvas');cvs.width=logoImg.naturalWidth||logoImg.width;cvs.height=logoImg.naturalHeight||logoImg.height;cvs.getContext('2d').drawImage(logoImg,0,0);renderKonten(cvs.toDataURL('image/png'));}catch(e){renderKonten(null);}};
+    logoImg.onerror=function(){renderKonten(null);};
+    logoImg.src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Lambang_Kabupaten_Tulang_Bawang_Barat.png";
 }
 
 function updateDataCounter() {
