@@ -3984,5 +3984,22 @@ async function fbHapusSemua() {
     }
 }
 </script>
+    <script>
+  // Daftarkan service worker hanya jika browser mendukung
+  if ('serviceWorker' in navigator) {
+    // Tunggu sampai halaman selesai loading (best practice)
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js')   // <-- Ganti '/sw.js' jika nama file SW-mu beda
+        .then(function(registration) {
+          console.log('Service Worker berhasil didaftarkan! Scope:', registration.scope);
+        })
+        .catch(function(error) {
+          console.error('Gagal mendaftarkan Service Worker:', error);
+        });
+    });
+  } else {
+    console.log('Browser ini tidak mendukung Service Worker.');
+  }
+</script>
 </body>
 </html>
