@@ -3,13 +3,24 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <meta name="theme-color" content="#0d1f45"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="apple-mobile-web-app-title" content="Buku Tamu Inspektorat"/>
+    <meta name="application-name" content="Buku Tamu Inspektorat"/>
+    <meta name="description" content="Buku Tamu Digital Inspektorat Daerah Kabupaten Tulang Bawang Barat"/>
     <title>Buku Tamu Digital - Inspektorat Daerah Tubaba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        <link rel="manifest" href="/manifest.json">
 
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; background: #0a0e27; }
-        body { font-family: 'Arial', sans-serif; min-height: 100vh; }
+        /* Safe area padding untuk layar HP dengan notch/rounded corner */
+        body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+        body { font-family: 'Plus Jakarta Sans', 'Arial', sans-serif; min-height: 100vh; }
 
         /* ========================================
            BINGKAI DEKORATIF EMAS - FRAME OVERLAY
@@ -369,18 +380,7 @@
         .error { border: 2px solid red !important; }
         .success { border: 2px solid #28a745 !important; }
         .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; margin: 12px 0; border-radius: 6px; font-size: 0.95em; }        
-       #mainNavigation { margin: 25px 0; text-align: center; display: none; }
-        #mainNavigation button {
-            background: #007bff;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            margin: 8px 4px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-        }
+       /* #mainNavigation duplicate style removed — using unified style above */
         
         #photoModal {
             display: none;
@@ -1117,7 +1117,25 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        #logoCanvas3D {
+        /* ── Offline banner ── */
+        #offlineBanner {
+            display: none;
+            position: fixed;
+            top: env(safe-area-inset-top, 0);
+            left: 0; right: 0;
+            z-index: 999997;
+            background: #e74c3c;
+            color: #fff;
+            text-align: center;
+            padding: 8px 16px;
+            font-size: 0.82em;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+        /* ── Touch target minimum 44px (accessibility & mobile) ── */
+        button, select, input[type="file"] { min-height: 44px; }
+
             position: relative;
             display: block;
             width: 300px;
@@ -1130,6 +1148,8 @@
 </head>
 
 <body>
+<!-- Banner offline — muncul otomatis jika koneksi terputus -->
+<div id="offlineBanner">📡 Tidak ada koneksi internet — data tersimpan lokal saja</div>
 <!-- Ornamen sudut bingkai emas -->
 <div class="corner-ornament tl" aria-hidden="true"><div class="gem"></div></div>
 <div class="corner-ornament tr" aria-hidden="true"><div class="gem"></div></div>
@@ -3771,21 +3791,30 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 // ================================================================
 //  PENYIMPANAN TERPUSAT — FIREBASE REALTIME DATABASE
-//  Langkah Setup:
+//
+//  ⚙️  CARA SETUP FIREBASE (wajib diisi agar data tersimpan ke server):
 //  1. Buka https://console.firebase.google.com
-//  2. Buat proyek baru → tambah Web App
-//  3. Salin nilai konfigurasi ke FB_CONFIG di bawah
-//  4. Di Firebase Console → Realtime Database → Rules, set:
+//  2. Klik "Add project" → beri nama proyek → lanjutkan
+//  3. Di sidebar kiri: Build → Realtime Database → Create Database
+//     Pilih region: asia-southeast1 → Start in test mode → Enable
+//  4. Di sidebar kiri: Project Overview → </> (Web) → Register app
+//  5. Salin nilai-nilai config yang muncul ke FB_CONFIG di bawah
+//  6. Di Realtime Database → Rules → ganti isi dengan:
 //     { "rules": { ".read": true, ".write": true } }
+//     lalu klik Publish
+//
+//  ✅  Jika FB_CONFIG sudah diisi, data akan otomatis tersinkron
+//      antar perangkat secara real-time.
+//  ⚠️  Jika belum diisi, app tetap berjalan dalam mode lokal (offline).
 // ================================================================
 const FB_CONFIG = {
-    apiKey:            "GANTI_API_KEY",
-    authDomain:        "PROYEK_ANDA.firebaseapp.com",
-    databaseURL:       "https://PROYEK_ANDA-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:         "PROYEK_ANDA",
-    storageBucket:     "PROYEK_ANDA.appspot.com",
-    messagingSenderId: "000000000000",
-    appId:             "1:000000000000:web:000000000000"
+    apiKey:            "AIzaSyB4qTzL8l_RBOArxs1vOwZRlPxw0FxdaBw",
+    authDomain:        "buku-tamu-inspektorat.firebaseapp.com",
+    databaseURL:       "https://buku-tamu-inspektorat-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "buku-tamu-inspektorat",
+    storageBucket:     "buku-tamu-inspektorat.firebasestorage.app",
+    messagingSenderId: "143805723830",
+    appId:             "1:143805723830:web:d258e3d00997308fa2a217"
 };
 
 let fbDb = null;
@@ -3804,8 +3833,8 @@ function tampilStatusSync(pesan, warna) {
 
 // ── Inisialisasi Firebase saat app mulai ──
 async function inisialisasiFirebase() {
-    if (FB_CONFIG.apiKey === 'GANTI_API_KEY') {
-        tampilStatusSync('⚠️ Firebase belum dikonfigurasi — mode lokal aktif', '#e67e22');
+    if (FB_CONFIG.apiKey === 'GANTI_DENGAN_API_KEY_ANDA') {
+        tampilStatusSync('📴 Mode lokal aktif — Firebase belum dikonfigurasi', '#e67e22');
         return;
     }
     try {
@@ -3984,23 +4013,20 @@ async function fbHapusSemua() {
         console.warn('fbHapusSemua error:', e);
     }
 }
-</script>
-    <script>
-  // Daftarkan service worker hanya jika browser mendukung
-  if ('serviceWorker' in navigator) {
-    // Tunggu sampai halaman selesai loading (best practice)
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js')   // <-- Ganti '/sw.js' jika nama file SW-mu beda
-        .then(function(registration) {
-          console.log('Service Worker berhasil didaftarkan! Scope:', registration.scope);
-        })
-        .catch(function(error) {
-          console.error('Gagal mendaftarkan Service Worker:', error);
-        });
-    });
-  } else {
-    console.log('Browser ini tidak mendukung Service Worker.');
-  }
+// ── Deteksi offline / online ──
+(function() {
+    const banner = document.getElementById('offlineBanner');
+    function updateOnlineStatus() {
+        if (!navigator.onLine) {
+            banner.style.display = 'block';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+    window.addEventListener('online',  updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+})();
 </script>
 </body>
 </html>
