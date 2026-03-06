@@ -571,23 +571,23 @@
             display: grid;
             grid-template-columns: 22px 148px 14px 1fr;
             align-items: stretch;
-            background: #fffef8;
-            border-bottom: 1px solid rgba(212,168,32,0.15);
+            background: #e8f4fd;
+            border-bottom: 1px solid rgba(41,128,185,0.15);
             position: relative;
             overflow: hidden;
             /* Animasi BERGULIR dari atas */
             clip-path: inset(0 0 100% 0);
             animation: rollDown 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
         }
-        .ps-row:nth-child(odd)  { background: #fffef8; }
-        .ps-row:nth-child(even) { background: #fff8e8; }
+        .ps-row:nth-child(odd)  { background: #e8f4fd; }
+        .ps-row:nth-child(even) { background: #d6eaf8; }
 
-        /* Garis aksen emas kiri */
+        /* Garis aksen biru kiri */
         .ps-row::before {
             content: '';
             position: absolute;
             left: 0; top: 0; bottom: 0; width: 3.5px;
-            background: linear-gradient(180deg, #f5e07a 0%, #d4a820 50%, #b8860b 100%);
+            background: linear-gradient(180deg, #85c1e9 0%, #2980b9 50%, #1a5276 100%);
         }
 
         /* ── Keyframe: gulir turun seperti tirai membuka ── */
@@ -630,8 +630,8 @@
             font-size: 0.80em;
             font-weight: 700;
             color: #0d1f45;
-            background: rgba(253,242,220,0.50);
-            border-right: 1.5px solid rgba(212,168,32,0.28);
+            background: rgba(174,214,241,0.55);
+            border-right: 1.5px solid rgba(41,128,185,0.28);
             display: flex;
             align-items: center;
             line-height: 1.3;
@@ -650,10 +650,10 @@
             justify-content: center;
             padding: 0 2px;
             font-weight: 800;
-            color: #b8860b;
+            color: #1a5276;
             font-size: 0.90em;
-            background: rgba(253,242,220,0.30);
-            border-right: 1px solid rgba(212,168,32,0.15);
+            background: rgba(174,214,241,0.30);
+            border-right: 1px solid rgba(41,128,185,0.15);
         }
 
         /* ── Nilai (kolom kanan) ── */
@@ -688,7 +688,7 @@
 
         /* Baris TTD — tampil khusus dengan latar beda */
         .ps-row[data-field="tandaTangan"] {
-            background: linear-gradient(90deg, rgba(13,31,69,0.06), rgba(212,168,32,0.06));
+            background: linear-gradient(90deg, rgba(41,128,185,0.10), rgba(133,193,233,0.12));
         }
         .ps-row[data-field="tandaTangan"] .ps-val-inner {
             color: #1a7a1a;
@@ -715,7 +715,7 @@
             content: '';
             display: block;
             height: 6px;
-            background: linear-gradient(180deg, rgba(160,120,16,0.12), transparent);
+            background: linear-gradient(180deg, rgba(41,128,185,0.10), transparent);
         }
 
         /* ── Stagger animasi: setiap baris sedikit terlambat ── */
@@ -724,16 +724,16 @@
         .ps-row:nth-child(3)  { animation-delay: 0ms; }
         /* dst — tidak perlu stagger karena tiap baris muncul satu persatu */
 
-        /* ── Kilap emas saat baris muncul ── */
+        /* ── Kilap biru saat baris muncul ── */
         .ps-row::after {
             content: '';
             position: absolute;
             inset: 0;
             background: linear-gradient(90deg,
                 transparent 0%,
-                rgba(245,224,122,0.18) 40%,
-                rgba(245,224,122,0.32) 52%,
-                rgba(245,224,122,0.18) 64%,
+                rgba(133,193,233,0.22) 40%,
+                rgba(174,214,241,0.40) 52%,
+                rgba(133,193,233,0.22) 64%,
                 transparent 100%
             );
             transform: translateX(-100%);
@@ -745,12 +745,12 @@
             100% { transform: translateX(110%);  opacity:0; }
         }
 
-        /* ── Update nilai: flash highlight ── */
+        /* ── Update nilai: flash highlight biru ── */
         .ps-val-inner.updated {
             animation: flashUpdate 0.50s ease both;
         }
         @keyframes flashUpdate {
-            0%   { background: rgba(212,168,32,0.35); border-radius:3px; }
+            0%   { background: rgba(41,128,185,0.30); border-radius:3px; }
             100% { background: transparent; }
         }
 
@@ -1112,6 +1112,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Firebase SDK — Penyimpanan Terpusat Lintas Perangkat -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         #logoCanvas3D {
             position: relative;
@@ -1157,6 +1160,12 @@
     </div>
 
     <div id="formSection">
+
+        <!-- ══ KERTAS TERURAI: jawaban bergulir animatif ══ -->
+        <div id="paperScroll">
+            <div id="psTableHead" style="display:none;">📋 RINGKASAN ISIAN</div>
+            <div id="ps-section-dok" class="ps-section-sep" style="display:none;">📷 Dokumentasi Foto &amp; Tanda Tangan</div>
+        </div>
 
         <!-- ══ HEADER: label ringkas mewakili semua field ══ -->
         <div id="stepHeader">
@@ -1338,12 +1347,6 @@
 
         </form>
 
-        <!-- ══ KERTAS TERURAI: jawaban bergulir animatif ══ -->
-        <div id="paperScroll">
-            <div id="psTableHead" style="display:none;">📋 RINGKASAN ISIAN</div>
-            <div id="ps-section-dok" class="ps-section-sep" style="display:none;">📷 Dokumentasi Foto &amp; Tanda Tangan</div>
-        </div>
-
     </div>
 
     <div id="editModeButtons" style="margin-bottom: 80px; text-align: center; display: none;">
@@ -1362,6 +1365,7 @@
         <button onclick="showData()" id="btnData" style="display:none;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
         <button onclick="exportData()" id="btnExport" style="display:none;">📑 Export Tabel Ringkasan</button>
         <button onclick="resetSemuaData()" id="btnReset" style="display:none; background: linear-gradient(135deg,#7b0000,#c0392b) !important; color:#fff !important;">🗑️ Hapus Semua Data</button>
+        <div id="fbSyncStatus" style="margin-top:8px; font-size:0.75em; color:#888; letter-spacing:0.03em; transition: opacity 0.8s; opacity:0.4;">⚪ Menghubungkan ke server...</div>
     </div>
 
     <div id="dataSection" style="display: none;">
@@ -1729,6 +1733,8 @@ function startApp() {
     lsLoad();
     updateDataCounter();
     document.getElementById('mainNavigation').style.display = 'block';
+    // Hubungkan ke Firebase Penyimpanan Terpusat
+    inisialisasiFirebase();
 }
 
 function goToWelcome() {
@@ -2878,10 +2884,16 @@ async function simpanData() {
     };
     if (editingIndex >= 0) {
         if (editingSementara) {
+            const fbKey = dataTamuSementara[editingIndex]?._fbKey || null;
             formData._sementara = true;
+            formData._fbKey = fbKey;
             dataTamuSementara[editingIndex] = formData;
+            if (fbKey) await fbUpdate(fbKey, formData, true);
         } else {
+            const fbKey = dataBukuTamu[editingIndex]?._fbKey || null;
+            formData._fbKey = fbKey;
             dataBukuTamu[editingIndex] = formData;
+            if (fbKey) await fbUpdate(fbKey, formData, false);
         }
     } else {
         dataBukuTamu.push(formData);
@@ -2940,6 +2952,9 @@ async function simpanDataSementara() {
     dataTamuSementara.push(formData);
     updateDataCounter();
     await lsSave();
+    // Simpan juga ke Firebase Penyimpanan Terpusat
+    const fbKey = await fbSimpan(formData, true);
+    if (fbKey) dataTamuSementara[dataTamuSementara.length - 1]._fbKey = fbKey;
     resetFormComplete();
     return true;
 }
@@ -3062,7 +3077,13 @@ function buildDetailHTML(data, index, isSementara) {
 async function konfirmasiDanSimpanPDF(sIndex) {
     if (sIndex < 0 || sIndex >= dataTamuSementara.length) return;
     const data = dataTamuSementara[sIndex];
+    const fbKeySementara = data._fbKey || null;
     delete data._sementara;
+
+    // Pindahkan ke dataFinal di Firebase (hapus dari dataSementara, push ke dataFinal)
+    const newFbKey = await fbPindahKeFinal(fbKeySementara, data);
+    if (newFbKey) data._fbKey = newFbKey; else delete data._fbKey;
+
     dataBukuTamu.push(data);
     dataTamuSementara.splice(sIndex, 1);
     updateDataCounter();
@@ -3078,9 +3099,11 @@ async function hapusSementara(sIndex) {
     if (sIndex < 0 || sIndex >= dataTamuSementara.length) return;
     const data = dataTamuSementara[sIndex];
     if (confirm(`Hapus data sementara "${data.nama}"?\nData yang dihapus tidak dapat dikembalikan.`)) {
+        const fbKey = data._fbKey || null;
         dataTamuSementara.splice(sIndex, 1);
         updateDataCounter();
         await lsSave();
+        if (fbKey) await fbHapus(fbKey, true);
         displayData();
     }
 }
@@ -3267,9 +3290,11 @@ async function cancelEdit() {
 
 async function deleteData(index) {
     if (confirm('Yakin ingin menghapus data tamu #' + (index + 1) + '?')) {
+        const fbKey = dataBukuTamu[index]?._fbKey || null;
         dataBukuTamu.splice(index, 1);
         updateDataCounter();
         await lsSave();
+        if (fbKey) await fbHapus(fbKey, false);
         displayData();
         alert('Data berhasil dihapus!');
     }
@@ -3283,14 +3308,21 @@ function resetSemuaData() {
     dataBukuTamu = [];
     dataTamuSementara = [];
     lsClear();
+    fbHapusSemua(); // hapus juga dari Firebase
     updateDataCounter();
     displayData();
     alert('✅ Semua data berhasil dihapus.');
 }
 
 // ===== EXPORT TABEL RINGKASAN =====
-function exportData() {
-    lsLoad();
+async function exportData() {
+    // Refresh data dari Firebase sebelum export agar selalu terkini
+    if (fbDb) {
+        tampilStatusSync('🔄 Memuat data terkini dari server...', '#3498db');
+        await fbMuatSemua();
+    } else {
+        lsLoad();
+    }
     updateDataCounter();
     if (dataBukuTamu.length === 0) {
         alert('Tidak ada data untuk di-export!\n\nPastikan sudah klik 🖨️ Simpan Detail Lengkap (Per Tamu) untuk setiap tamu agar data masuk ke ringkasan.');
@@ -3607,12 +3639,10 @@ async function exportDetailPerTamuPDF(index) {
         doc.setDrawColor(180,140,20); doc.setLineWidth(0.5); doc.rect(sX-2,sY-2,sW+4,sH+14,'S');
         if(jpegTTD){try{doc.setGState(doc.GState({opacity:1.0}));doc.addImage(jpegTTD,'JPEG',sX,sY,sW,sH);}catch(e){doc.setFontSize(9);doc.setTextColor(150);doc.text("(Gagal menampilkan tanda tangan)",sX+4,sY+8);}}
         else{doc.setFontSize(9);doc.setTextColor(150);doc.text("(Tidak ada tanda tangan)",sX+4,sY+8);}
-        doc.setGState(doc.GState({opacity:1.0})); doc.setFontSize(11); doc.setFont("helvetica","bold"); doc.setTextColor(13,31,69);
+        doc.setGState(doc.GState({opacity:1.0})); doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.setTextColor(13,31,69);
         doc.text(data.nama||"________________________",sX+sW/2,sY+sH+10,{align:'center'});
         const fY=280;
-        doc.setFillColor(250,248,244); doc.rect(margin-2,fY-1,contentWidth+4,16,'F');
-        doc.setDrawColor(180,140,20); doc.setLineWidth(0.55); doc.line(margin,fY,pageWidth-margin,fY);
-        doc.setFillColor(212,168,32); doc.circle(margin,fY,0.8,'F'); doc.circle(pageWidth-margin,fY,0.8,'F');
+        
         doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.setTextColor(70,70,95);
         doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital \u2014 Inspektorat Kab. Tulang Bawang Barat',pageWidth/2,fY+6,{align:'center'});
         doc.save(`Detail_Tamu_${index+1}_${data.timestamp.replace(/[\s,:]/g,'-')}.pdf`);
@@ -3631,7 +3661,8 @@ async function exportDetailPerTamuPDF(index) {
             var cvs=document.createElement('canvas');
             cvs.width=logoImg.naturalWidth||logoImg.width||200;
             cvs.height=logoImg.naturalHeight||logoImg.height||200;
-            cvs.getContext('2d').drawImage(logoImg,0,0);
+            cvs.getContext('2d').drawImage(logoImg
+,0,0);
             panggalRenderKonten(cvs.toDataURL('image/png'));
         }catch(e){panggalRenderKonten(null);}
     };
@@ -3735,6 +3766,223 @@ document.addEventListener('DOMContentLoaded', () => {
         prevHeight = currHeight;
     });
 });
+</script>
+<script>
+// ================================================================
+//  PENYIMPANAN TERPUSAT — FIREBASE REALTIME DATABASE
+//  Langkah Setup:
+//  1. Buka https://console.firebase.google.com
+//  2. Buat proyek baru → tambah Web App
+//  3. Salin nilai konfigurasi ke FB_CONFIG di bawah
+//  4. Di Firebase Console → Realtime Database → Rules, set:
+//     { "rules": { ".read": true, ".write": true } }
+// ================================================================
+const FB_CONFIG = {
+    apiKey:            "GANTI_API_KEY",
+    authDomain:        "PROYEK_ANDA.firebaseapp.com",
+    databaseURL:       "https://PROYEK_ANDA-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "PROYEK_ANDA",
+    storageBucket:     "PROYEK_ANDA.appspot.com",
+    messagingSenderId: "000000000000",
+    appId:             "1:000000000000:web:000000000000"
+};
+
+let fbDb = null;
+let _fbOnWrites = 0; // menghindari listener memproses tulisan kita sendiri
+
+// ── Status indikator sync ──
+function tampilStatusSync(pesan, warna) {
+    const el = document.getElementById('fbSyncStatus');
+    if (!el) return;
+    el.textContent = pesan;
+    el.style.color = warna || '#888';
+    el.style.opacity = '1';
+    clearTimeout(el._ft);
+    el._ft = setTimeout(() => { el.style.opacity = '0.45'; }, 5000);
+}
+
+// ── Inisialisasi Firebase saat app mulai ──
+async function inisialisasiFirebase() {
+    if (FB_CONFIG.apiKey === 'GANTI_API_KEY') {
+        tampilStatusSync('⚠️ Firebase belum dikonfigurasi — mode lokal aktif', '#e67e22');
+        return;
+    }
+    try {
+        // Cegah double-init jika sudah ada
+        if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+        fbDb = firebase.database();
+        tampilStatusSync('🔄 Menghubungkan ke server...', '#888');
+
+        // Muat data dari Firebase (source of truth)
+        await fbMuatSemua();
+
+        // Pasang listener real-time agar perangkat lain auto-sinkron
+        fbPasangListener();
+    } catch (e) {
+        console.warn('Firebase init gagal:', e);
+        tampilStatusSync('⚠️ Tidak terhubung — mode lokal aktif', '#e67e22');
+    }
+}
+
+// ── Muat semua data dari Firebase ──
+async function fbMuatSemua() {
+    if (!fbDb) return;
+    try {
+        const [snapF, snapS] = await Promise.all([
+            fbDb.ref('bukuTamu/dataFinal').get(),
+            fbDb.ref('bukuTamu/dataSementara').get()
+        ]);
+        if (snapF.exists()) {
+            dataBukuTamu = Object.entries(snapF.val())
+                .map(([k, v]) => ({ ...v, _fbKey: k }));
+        } else {
+            dataBukuTamu = [];
+        }
+        if (snapS.exists()) {
+            dataTamuSementara = Object.entries(snapS.val())
+                .map(([k, v]) => ({ ...v, _fbKey: k }));
+        } else {
+            dataTamuSementara = [];
+        }
+        await lsSave();
+        updateDataCounter();
+        tampilStatusSync('✅ Data termuat dari server', '#27ae60');
+    } catch (e) {
+        console.warn('fbMuatSemua gagal:', e);
+        tampilStatusSync('⚠️ Gagal muat dari server', '#e74c3c');
+    }
+}
+
+// ── Real-time listener — update otomatis saat perangkat lain menyimpan data ──
+function fbPasangListener() {
+    if (!fbDb) return;
+
+    fbDb.ref('bukuTamu/dataFinal').on('value', snap => {
+        if (_fbOnWrites > 0) { _fbOnWrites--; return; }
+        dataBukuTamu = snap.exists()
+            ? Object.entries(snap.val()).map(([k, v]) => ({ ...v, _fbKey: k }))
+            : [];
+        updateDataCounter();
+        lsSave();
+        // Refresh tampilan data jika sedang dibuka
+        const ds = document.getElementById('dataSection');
+        if (ds && ds.style.display !== 'none') displayData();
+        tampilStatusSync('✅ Data diperbarui dari server', '#27ae60');
+    });
+
+    fbDb.ref('bukuTamu/dataSementara').on('value', snap => {
+        if (_fbOnWrites > 0) { _fbOnWrites--; return; }
+        dataTamuSementara = snap.exists()
+            ? Object.entries(snap.val()).map(([k, v]) => ({ ...v, _fbKey: k }))
+            : [];
+        updateDataCounter();
+    });
+}
+
+// ── Helper: kompres data sebelum dikirim ke Firebase ──
+async function _fbKompresData(formData) {
+    return {
+        nama:         formData.nama        || '',
+        asal:         formData.asal        || '',
+        instansi:     formData.instansi    || '',
+        kecamatan:    formData.kecamatan   || '',
+        desa:         formData.desa        || '',
+        pihakDitemui: formData.pihakDitemui || '',
+        jenisLayanan: formData.jenisLayanan || '',
+        uraian:       formData.uraian      || '',
+        nomorHp:      formData.nomorHp     || '',
+        timestamp:    formData.timestamp   || new Date().toLocaleString('id-ID'),
+        tandaTangan:  await kompresGambar(formData.tandaTangan, 500, 200, 0.75),
+        fotoFront:    await kompresGambar(formData.fotoFront,   480, 480, 0.60),
+        fotoBack:     await kompresGambar(formData.fotoBack,    480, 480, 0.60)
+    };
+}
+
+// ── Simpan record baru ke Firebase, kembalikan key ──
+async function fbSimpan(formData, isSementara) {
+    if (!fbDb) return null;
+    const path = isSementara ? 'bukuTamu/dataSementara' : 'bukuTamu/dataFinal';
+    try {
+        tampilStatusSync('💾 Menyimpan ke server...', '#3498db');
+        const dataKirim = await _fbKompresData(formData);
+        _fbOnWrites++;
+        const ref = fbDb.ref(path).push();
+        await ref.set(dataKirim);
+        tampilStatusSync('✅ Tersimpan di server', '#27ae60');
+        return ref.key;
+    } catch (e) {
+        _fbOnWrites = Math.max(0, _fbOnWrites - 1);
+        console.warn('fbSimpan error:', e);
+        tampilStatusSync('⚠️ Gagal simpan ke server', '#e74c3c');
+        return null;
+    }
+}
+
+// ── Hapus record dari Firebase ──
+async function fbHapus(fbKey, isSementara) {
+    if (!fbDb || !fbKey) return;
+    const path = isSementara
+        ? `bukuTamu/dataSementara/${fbKey}`
+        : `bukuTamu/dataFinal/${fbKey}`;
+    try {
+        _fbOnWrites++;
+        await fbDb.ref(path).remove();
+    } catch (e) {
+        _fbOnWrites = Math.max(0, _fbOnWrites - 1);
+        console.warn('fbHapus error:', e);
+    }
+}
+
+// ── Update record yang ada di Firebase ──
+async function fbUpdate(fbKey, formData, isSementara) {
+    if (!fbDb || !fbKey) return;
+    const path = isSementara
+        ? `bukuTamu/dataSementara/${fbKey}`
+        : `bukuTamu/dataFinal/${fbKey}`;
+    try {
+        tampilStatusSync('💾 Memperbarui data di server...', '#3498db');
+        const dataKirim = await _fbKompresData(formData);
+        _fbOnWrites++;
+        await fbDb.ref(path).set(dataKirim);
+        tampilStatusSync('✅ Data diperbarui di server', '#27ae60');
+    } catch (e) {
+        _fbOnWrites = Math.max(0, _fbOnWrites - 1);
+        console.warn('fbUpdate error:', e);
+        tampilStatusSync('⚠️ Gagal perbarui di server', '#e74c3c');
+    }
+}
+
+// ── Pindahkan satu record dari dataSementara → dataFinal di Firebase ──
+async function fbPindahKeFinal(fbKeySementara, formData) {
+    if (!fbDb) return null;
+    try {
+        tampilStatusSync('💾 Menyimpan ke server...', '#3498db');
+        const dataKirim = await _fbKompresData(formData);
+        _fbOnWrites += 2; // 1 push + 1 remove
+        const newRef = fbDb.ref('bukuTamu/dataFinal').push();
+        await newRef.set(dataKirim);
+        if (fbKeySementara) await fbDb.ref(`bukuTamu/dataSementara/${fbKeySementara}`).remove();
+        tampilStatusSync('✅ Data terkonfirmasi & tersimpan di server', '#27ae60');
+        return newRef.key;
+    } catch (e) {
+        _fbOnWrites = Math.max(0, _fbOnWrites - 2);
+        console.warn('fbPindahKeFinal error:', e);
+        tampilStatusSync('⚠️ Gagal konfirmasi di server', '#e74c3c');
+        return null;
+    }
+}
+
+// ── Hapus seluruh data di Firebase ──
+async function fbHapusSemua() {
+    if (!fbDb) return;
+    try {
+        _fbOnWrites += 2;
+        await fbDb.ref('bukuTamu').remove();
+    } catch (e) {
+        _fbOnWrites = Math.max(0, _fbOnWrites - 2);
+        console.warn('fbHapusSemua error:', e);
+    }
+}
 </script>
 </body>
 </html>
