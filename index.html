@@ -4,6 +4,21 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Buku Tamu Digital - Inspektorat Daerah Tubaba</title>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--        PWA - Progressive Web App        -->
+    <!-- ═══════════════════════════════════════ -->
+    <link rel="manifest" href="manifest.json"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="apple-mobile-web-app-title" content="Buku Tamu"/>
+    <meta name="theme-color" content="#d4a820"/>
+    <meta name="description" content="Aplikasi Buku Tamu Digital Inspektorat Daerah Tubaba"/>
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="icon-192.png"/>
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
     <style>
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -3998,6 +4013,131 @@ async function doExport(filter) {
     alert(`✅ PDF ringkasan berhasil diunduh!\nKategori: ${judulFilter}\nTotal: ${semuaTamu.length} tamu.`);
 }
 
+// ===== KIRIM VIA WHATSAPP =====
+// 📌 SESUAIKAN nomor WA pihak yang dituju di sini:
+const NOMOR_WA_PIHAK = {
+    'INSPEKTUR'  : '6281277779710',   // ← ganti dengan nomor WA Inspektur
+    'SEKRETARIS' : '6281277779710',   // ← ganti dengan nomor WA Sekretaris
+    'IRBANSUS'   : '6281277779710',   // ← ganti dengan nomor WA Irbansus
+    'IRBAN 1'    : '6282374854100',   // ← ganti dengan nomor WA Irban 1
+    'IRBAN 2'    : '6282374854100',   // ← ganti dengan nomor WA Irban 2
+    'IRBAN 3'    : '6282374854100',   // ← ganti dengan nomor WA Irban 3
+    'IRBAN 4'    : '6285185418197',   // ← ganti dengan nomor WA Irban 4
+};
+
+function kirimViaWhatsApp(data, namaFile) {
+    const pihak      = (data.pihakDitemui || '').toUpperCase().trim();
+    const nomorTujuan = NOMOR_WA_PIHAK[pihak] || null;
+
+    // Susun pesan teks
+    const pesan = [
+        '📋 *NOTIFIKASI BUKU TAMU DIGITAL*',
+        '_Inspektorat Daerah Kab. Tulang Bawang Barat_',
+        '',
+        `👤 *Nama*      : ${data.nama || '-'}`,
+        `🏢 *Asal*       : ${data.asal === 'INSTANSI' ? (data.instansi || '-') : ('Masyarakat – ' + (data.kecamatan || '-'))}`,
+        `👥 *Dituju*     : ${data.pihakDitemui || '-'}`,
+        `📋 *Layanan*  : ${data.jenisLayanan || '-'}`,
+        `📝 *Keperluan*: ${data.uraian || '-'}`,
+        `📱 *No. WA*   : ${data.nomorHp || '-'}`,
+        `🕐 *Waktu*    : ${data.timestamp || '-'}`,
+        '',
+        '📎 _PDF terlampir — silakan lihat file yang baru diunduh._',
+    ].join('\n');
+
+    const pesanEncoded = encodeURIComponent(pesan);
+
+    // Tampilkan dialog konfirmasi
+    tampilDialogWA(nomorTujuan, pihak, pesanEncoded, namaFile, data);
+}
+
+function tampilDialogWA(nomorTujuan, pihak, pesanEncoded, namaFile, data) {
+    // Hapus dialog lama jika ada
+    const lama = document.getElementById('modal-wa-kirim');
+    if (lama) lama.remove();
+
+    const sudahAdaNomor = nomorTujuan && nomorTujuan.length > 8;
+    const urlWA = sudahAdaNomor
+        ? `https://wa.me/${nomorTujuan}?text=${pesanEncoded}`
+        : `https://wa.me/?text=${pesanEncoded}`;
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-wa-kirim';
+    modal.style.cssText = `
+        position:fixed; inset:0; z-index:9999999;
+        background:rgba(0,0,0,0.75); display:flex;
+        align-items:center; justify-content:center; padding:16px;
+    `;
+
+    modal.innerHTML = `
+    <div style="
+        background:#fff; border-radius:16px; max-width:380px; width:100%;
+        box-shadow:0 8px 40px rgba(0,0,0,0.4); overflow:hidden;
+        font-family:Arial,sans-serif;
+    ">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#075E54,#128C7E); padding:18px 20px; text-align:center;">
+            <div style="font-size:2em;">📲</div>
+            <div style="color:#fff; font-size:1.1em; font-weight:bold; margin-top:6px;">Kirim ke WhatsApp</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:0.82em; margin-top:4px;">PDF sudah diunduh ke HP Anda</div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:20px;">
+            <!-- Langkah -->
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px; margin-bottom:16px;">
+                <div style="font-weight:bold; color:#166534; margin-bottom:8px;">📋 Cara kirim PDF via WA:</div>
+                <div style="color:#374151; font-size:0.88em; line-height:1.8;">
+                    <div>1️⃣ Klik <b>"Buka WhatsApp"</b> di bawah</div>
+                    <div>2️⃣ WA terbuka ke <b>${pihak || 'pihak yang dituju'}</b></div>
+                    <div>3️⃣ Tap ikon <b>📎 lampiran</b> → pilih <b>Dokumen</b></div>
+                    <div>4️⃣ Pilih file: <b style="color:#075E54;">${namaFile}</b></div>
+                    <div>5️⃣ Tap <b>Kirim ✅</b></div>
+                </div>
+            </div>
+
+            ${!sudahAdaNomor ? `
+            <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px; margin-bottom:14px; font-size:0.83em; color:#92400e;">
+                ⚠️ Nomor WA <b>${pihak}</b> belum diatur.<br>
+                WA akan terbuka tanpa nomor tujuan.<br>
+                <span style="color:#666;">Hubungi admin untuk mengisi nomor di kode.</span>
+            </div>` : `
+            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-bottom:14px; font-size:0.83em; color:#0c4a6e;">
+                📨 Akan dikirim ke: <b>${pihak}</b><br>
+                <span style="color:#555;">Nomor: +${nomorTujuan}</span>
+            </div>`}
+
+            <!-- Tombol -->
+            <button onclick="
+                window.open('${urlWA}', '_blank');
+                document.getElementById('modal-wa-kirim').remove();
+            " style="
+                width:100%; padding:14px; background:linear-gradient(135deg,#25D366,#128C7E);
+                color:#fff; border:none; border-radius:10px; font-size:1em;
+                font-weight:bold; cursor:pointer; margin-bottom:10px;
+                box-shadow:0 3px 12px rgba(37,211,102,0.4);
+            ">
+                💬 Buka WhatsApp
+            </button>
+
+            <button onclick="document.getElementById('modal-wa-kirim').remove()" style="
+                width:100%; padding:11px; background:#f3f4f6; color:#374151;
+                border:1px solid #d1d5db; border-radius:10px; font-size:0.9em;
+                cursor:pointer;
+            ">
+                ✖ Tutup
+            </button>
+        </div>
+    </div>`;
+
+    document.body.appendChild(modal);
+
+    // Tutup jika klik di luar modal
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
+    });
+}
+
 // ===== EXPORT DETAIL PER TAMU PDF =====
 async function exportDetailPerTamuPDF(index) {
     if (dataBukuTamu.length===0 || index<0 || index>=dataBukuTamu.length) {
@@ -4133,8 +4273,11 @@ async function exportDetailPerTamuPDF(index) {
        
         doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.setTextColor(70,70,95);
         doc.text('Dokumen ini dibuat otomatis oleh Sistem Buku Tamu Digital \u2014 Inspektorat Kab. Tulang Bawang Barat',pageWidth/2,fY+6,{align:'center'});
-        doc.save(`Detail_Tamu_${index+1}_${data.timestamp.replace(/[\s,:]/g,'-')}.pdf`);
-        alert('✅ PDF detail tamu telah diunduh!');
+        const namaFilePDF = `Detail_Tamu_${index+1}_${data.timestamp.replace(/[\s,:]/g,'-')}.pdf`;
+        doc.save(namaFilePDF);
+
+        // ── Kirim via WhatsApp ──
+        kirimViaWhatsApp(data, namaFilePDF);
     }
 
     const logoImg=new Image(); logoImg.crossOrigin="anonymous";
@@ -4508,5 +4651,65 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('load', function() { setTimeout(sesuaikan, 200); });
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--   PWA Service Worker Registration + Install Prompt  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+// ── Daftarkan Service Worker ──
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+            .then(function(reg) {
+                console.log('[PWA] Service Worker terdaftar:', reg.scope);
+            })
+            .catch(function(err) {
+                console.warn('[PWA] Gagal daftar Service Worker:', err);
+            });
+    });
+}
+
+// ── Tombol Install PWA (Add to Home Screen) ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btnInstall = document.getElementById('pwa-install-btn');
+    if (btnInstall) btnInstall.style.display = 'flex';
+});
+
+function installPWA() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+        if (choiceResult.outcome === 'accepted') {
+            const btnInstall = document.getElementById('pwa-install-btn');
+            if (btnInstall) btnInstall.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+}
+
+window.addEventListener('appinstalled', function() {
+    const btnInstall = document.getElementById('pwa-install-btn');
+    if (btnInstall) btnInstall.style.display = 'none';
+    deferredPrompt = null;
+});
+</script>
+
+<!-- Tombol Install ke Layar Utama -->
+<div id="pwa-install-btn" style="
+    display:none; position:fixed; bottom:80px; left:50%;
+    transform:translateX(-50%); z-index:999999;
+    background:linear-gradient(135deg,#d4a820,#f5e07a,#a07810);
+    color:#0a0e27; font-family:Arial,sans-serif; font-size:13px;
+    font-weight:bold; padding:10px 22px; border-radius:30px;
+    box-shadow:0 4px 18px rgba(212,168,32,0.5); cursor:pointer;
+    align-items:center; gap:8px; border:none; white-space:nowrap;"
+    onclick="installPWA()">
+    📲 Pasang ke Layar Utama
+</div>
+
 </body>
 </html>
