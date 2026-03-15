@@ -1402,12 +1402,27 @@
             to   { opacity:1; transform: scale(1); }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- Three.js dimuat langsung (diperlukan segera untuk logo 3D) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Firebase SDK — Penyimpanan Terpusat Lintas Perangkat -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Firebase dimuat dengan defer karena tidak dibutuhkan segera -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" defer></script>
+    <!-- jsPDF dimuat lazy saat pertama kali dibutuhkan -->
+    <script>
+    var _jsPDFLoaded = false;
+    function _muatJsPDF(cb) {
+        if (_jsPDFLoaded) { if(cb) cb(); return; }
+        var s1 = document.createElement('script');
+        s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s1.onload = function() {
+            var s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = function() { _jsPDFLoaded = true; if(cb) cb(); };
+            document.head.appendChild(s2);
+        };
+        document.head.appendChild(s1);
+    }
+    </script>
     <style>
         #logoCanvas3D {
             position: relative;
@@ -1915,21 +1930,22 @@
             const edgD = new THREE.MeshStandardMaterial({ color: 0xa07810, roughness: 0.08, metalness: 0.98 });
             const inv = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
 
+            const isMobile = window.innerWidth < 600;
             const D = 0.38, HD = D / 2;
             const logoGrp = new THREE.Group();
             logoScene.add(logoGrp);
 
             const eg = new THREE.ExtrudeGeometry(shape, {
                 depth: D, bevelEnabled: true, bevelThickness: 0.045, bevelSize: 0.045,
-                bevelSegments: 16, curveSegments: 128
+                bevelSegments: isMobile ? 4 : 16, curveSegments: isMobile ? 32 : 128
             });
             eg.translate(0, 0, -HD);
             logoGrp.add(new THREE.Mesh(eg, [inv, inv, edgeM]));
 
-            const fg = uvGeoLogo(shape, 128);
+            const fg = uvGeoLogo(shape, isMobile ? 32 : 128);
             const fm = new THREE.Mesh(fg, faceM); fm.position.z = HD + 0.002; logoGrp.add(fm);
 
-            const bg2 = uvGeoLogo(shape, 128);
+            const bg2 = uvGeoLogo(shape, isMobile ? 32 : 128);
             const pb = bg2.attributes.position, ub = bg2.attributes.uv;
             // Hanya balik posisi X (untuk winding order / culling) tapi JANGAN balik UV,
             // supaya teks tidak terbalik saat logo berputar dan sisi belakang terlihat.
@@ -1976,6 +1992,7 @@
 
             logoGrp.rotation.x = 0.12;
             let logoAng = 0, logoLast = performance.now(), logoGT2 = 0;
+            let _logoRAF = null;
 
             (function logoRender(now) {
                 const dt = (now - logoLast) / 1000; logoLast = now;
@@ -1986,8 +2003,12 @@
                 logoHS.material.opacity = 0.55 + 0.25 * Math.sin(logoGT2 * 0.9);
                 logoMV.position.set(Math.sin(-logoAng * 1.2) * 6, Math.cos(-logoAng * 0.6) * 2.5, Math.sin(logoAng * 0.4) * 2 - 2);
                 logoR.render(logoScene, logoCam);
-                requestAnimationFrame(logoRender);
+                _logoRAF = requestAnimationFrame(logoRender);
             })(performance.now());
+
+            // Ekspos fungsi stop/resume untuk kontrol dari luar
+            window._stopLogoAnim  = () => { if(_logoRAF) { cancelAnimationFrame(_logoRAF); _logoRAF = null; } };
+            window._startLogoAnim = () => { if(!_logoRAF) (function lr(now){ const dt=(now-logoLast)/1000; logoLast=now; logoAng+=dt*(Math.PI*2/22); logoGT2+=dt; logoGrp.rotation.y=logoAng; logoGrp.rotation.x=0.12+Math.sin(logoAng*0.35)*0.08; logoHS.material.opacity=0.55+0.25*Math.sin(logoGT2*0.9); logoMV.position.set(Math.sin(-logoAng*1.2)*6,Math.cos(-logoAng*0.6)*2.5,Math.sin(logoAng*0.4)*2-2); logoR.render(logoScene,logoCam); _logoRAF=requestAnimationFrame(lr); })(performance.now()); };
         });
     }
 })();
@@ -2008,7 +2029,7 @@ resizeSpaceCanvas();
 window.addEventListener('resize', resizeSpaceCanvas);
 
 // ── Bintang ──
-const STAR_COUNT  = 320;
+const STAR_COUNT  = window.innerWidth < 600 ? 100 : 320;
 const stars = Array.from({ length: STAR_COUNT }, () => ({
     x: Math.random(),
     y: Math.random(),
@@ -2162,6 +2183,10 @@ function drawSpace() {
     requestAnimationFrame(drawSpace);
 }
 
+let _spaceRAF = null;
+function _startSpaceAnim() { if(!_spaceRAF) { _spaceRAF = requestAnimationFrame(function loop(){ drawSpace(); _spaceRAF = requestAnimationFrame(loop); }); } }
+function _stopSpaceAnim()  { if(_spaceRAF) { cancelAnimationFrame(_spaceRAF); _spaceRAF = null; } }
+
 drawSpace();
 
 function sembunyikanWelcome() {
@@ -2171,6 +2196,9 @@ function sembunyikanWelcome() {
     wp.style.visibility = 'hidden';
     wp.style.zIndex = '-1';
     wp.style.pointerEvents = 'none';
+    // Hentikan loop animasi welcome agar tidak buang CPU
+    if (window._stopLogoAnim) window._stopLogoAnim();
+    _stopSpaceAnim();
 }
 
 function tampilkanWelcome() {
@@ -2180,6 +2208,9 @@ function tampilkanWelcome() {
     wp.style.visibility = '';
     wp.style.zIndex = '';
     wp.style.pointerEvents = '';
+    // Nyalakan kembali animasi welcome
+    if (window._startLogoAnim) window._startLogoAnim();
+    drawSpace();
 }
 
 function startApp() {
@@ -4100,6 +4131,8 @@ function resetSemuaData() {
 
 // ===== EXPORT TABEL RINGKASAN =====
 async function exportData() {
+    // Muat jsPDF secara lazy jika belum ada
+    if (!window.jspdf) { await new Promise(res => _muatJsPDF(res)); }
     // Refresh data dari Firebase sebelum export agar selalu terkini
     if (fbDb) {
         tampilStatusSync('🔄 Memuat data terkini dari server...', '#3498db');
@@ -4296,6 +4329,8 @@ async function doExport(filter) {
 
 // ===== EXPORT DETAIL PER TAMU PDF =====
 async function exportDetailPerTamuPDF(index) {
+    // Muat jsPDF secara lazy jika belum ada
+    if (!window.jspdf) { await new Promise(res => _muatJsPDF(res)); }
     if (dataBukuTamu.length===0 || index<0 || index>=dataBukuTamu.length) {
         alert('Tidak ada data untuk tamu ini!'); return;
     }
