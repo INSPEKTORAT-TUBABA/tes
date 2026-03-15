@@ -2352,9 +2352,9 @@ function attachSignatureEvents() {
     signatureCanvas.addEventListener('mousemove', draw);
     signatureCanvas.addEventListener('mouseup', stopDrawing);
     signatureCanvas.addEventListener('mouseout', stopDrawing);
-    signatureCanvas.addEventListener('touchstart', handleTouch);
-    signatureCanvas.addEventListener('touchmove', handleTouch);
-    signatureCanvas.addEventListener('touchend', stopDrawing);
+    signatureCanvas.addEventListener('touchstart',  handleTouch, { passive: false });
+    signatureCanvas.addEventListener('touchmove',   handleTouch, { passive: false });
+    signatureCanvas.addEventListener('touchend',    handleTouch, { passive: false });
 }
 
 function resizeCanvas() {
@@ -2375,29 +2375,50 @@ function resizeCanvas() {
     }, 100);
 }
 
+let _sigRect = null;
+let _rafPending = false;
+let _lastX = 0, _lastY = 0, _curX = 0, _curY = 0;
+
+function _updateSigRect() {
+    _sigRect = signatureCanvas.getBoundingClientRect();
+}
+
 function startDrawing(e) {
     isDrawing = true;
-    const rect = signatureCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    _updateSigRect();
+    const x = (e.clientX - _sigRect.left) * (signatureCanvas.width / _sigRect.width);
+    const y = (e.clientY - _sigRect.top)  * (signatureCanvas.height / _sigRect.height);
+    _lastX = x; _lastY = y; _curX = x; _curY = y;
     ctx2.beginPath();
     ctx2.moveTo(x, y);
 }
 
 function draw(e) {
     if (!isDrawing) return;
-    const rect = signatureCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    ctx2.lineTo(x, y);
-    ctx2.stroke();
+    _curX = (e.clientX - _sigRect.left) * (signatureCanvas.width / _sigRect.width);
+    _curY = (e.clientY - _sigRect.top)  * (signatureCanvas.height / _sigRect.height);
+    if (!_rafPending) {
+        _rafPending = true;
+        requestAnimationFrame(_drawSegment);
+    }
     totalStrokeLength += 2;
     hasSignature = true;
+}
+
+function _drawSegment() {
+    _rafPending = false;
+    ctx2.beginPath();
+    ctx2.moveTo(_lastX, _lastY);
+    ctx2.lineTo(_curX, _curY);
+    ctx2.stroke();
+    _lastX = _curX;
+    _lastY = _curY;
 }
 
 function stopDrawing() {
     if (!isDrawing) return;
     isDrawing = false;
+    _rafPending = false;
     const strokeLengthCm = totalStrokeLength / PIXELS_PER_CM;
     if (strokeLengthCm >= MIN_STROKE_LENGTH_CM) {
         signatureCanvas.classList.remove('error');
@@ -2409,14 +2430,11 @@ function stopDrawing() {
                 ctx2.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
                 ctx2.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
                 if (!isEditMode && !_editBebasMode) {
-                    /* Step mode: tampil TTD di ringkasan, tutup overlay step, buka kamera */
                     tampilJawabTTD(signatureDataURL);
-                    // Tutup overlay step isian, lalu otomatis buka kamera
                     _tutupStepIsian(() => {
                         setTimeout(() => bukaKamera(), 400);
                     });
                 } else {
-                    /* Edit/bebas mode: cukup tampilkan field-aksi */
                     document.getElementById('field-aksi').classList.remove('hidden');
                 }
             };
@@ -2427,12 +2445,29 @@ function stopDrawing() {
 
 function handleTouch(e) {
     e.preventDefault();
-    const touch = e.touches[0];
-    const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-    });
-    signatureCanvas.dispatchEvent(mouseEvent);
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    if (e.type === 'touchstart') {
+        isDrawing = true;
+        _updateSigRect();
+        const x = (touch.clientX - _sigRect.left) * (signatureCanvas.width / _sigRect.width);
+        const y = (touch.clientY - _sigRect.top)  * (signatureCanvas.height / _sigRect.height);
+        _lastX = x; _lastY = y; _curX = x; _curY = y;
+        ctx2.beginPath();
+        ctx2.moveTo(x, y);
+    } else if (e.type === 'touchmove') {
+        if (!isDrawing) return;
+        _curX = (touch.clientX - _sigRect.left) * (signatureCanvas.width / _sigRect.width);
+        _curY = (touch.clientY - _sigRect.top)  * (signatureCanvas.height / _sigRect.height);
+        if (!_rafPending) {
+            _rafPending = true;
+            requestAnimationFrame(_drawSegment);
+        }
+        totalStrokeLength += 2;
+        hasSignature = true;
+    } else if (e.type === 'touchend') {
+        stopDrawing();
+    }
 }
 
 function clearSignature() {
