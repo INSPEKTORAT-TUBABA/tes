@@ -200,8 +200,9 @@
             position: relative;
             z-index: 2;
             text-align: center;
-            padding: 20px;
+            padding: 20px 10px;
             animation: contentRise 1.2s cubic-bezier(0.22,1,0.36,1) both;
+            width: 100%;
         }
 
         @keyframes contentRise {
@@ -210,12 +211,13 @@
         }
 
         .welcome-title {
-            font-size: 1.3em;
+            font-size: clamp(0.75rem, 4.2vw, 1.3em);
             font-weight: 600;
             color: rgba(200,220,255,0.85);
-            letter-spacing: 0.25em;
+            letter-spacing: clamp(0.08em, 1.5vw, 0.25em);
             text-transform: uppercase;
             margin-bottom: 12px;
+            white-space: nowrap;
             animation: glow 3s ease-in-out infinite alternate;
         }
 
@@ -225,16 +227,17 @@
         }
 
         .welcome-subtitle {
-            font-size: 1.0em;
+            font-size: clamp(0.65rem, 2.8vw, 1.0em);
             font-weight: 400;
             color: rgba(180,210,255,0.70);
             margin-bottom: 8px;
-            letter-spacing: 0.08em;
+            letter-spacing: clamp(0.04em, 0.8vw, 0.08em);
+            white-space: nowrap;
             animation: fadeIn 1.8s ease both;
         }
 
         .welcome-subtitle strong {
-            font-size: 2em;
+            font-size: clamp(1.4rem, 6.5vw, 2em);
             display: block;
             margin-top: 6px;
             font-weight: 900;
@@ -242,7 +245,8 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: 0.05em;
+            letter-spacing: clamp(0.02em, 0.5vw, 0.05em);
+            white-space: nowrap;
             filter: drop-shadow(0 0 20px rgba(212,168,32,0.5));
             animation: titleShine 4s ease-in-out infinite alternate;
         }
@@ -264,9 +268,10 @@
 
         .btn-start {
             margin-top: 10px;
-            padding: 14px 52px;
-            font-size: 1.1em;
+            padding: clamp(10px, 2.5vw, 14px) clamp(24px, 8vw, 52px);
+            font-size: clamp(0.82em, 3.5vw, 1.1em);
             font-weight: 800;
+            white-space: nowrap;
             background: linear-gradient(135deg,
                 rgba(13,31,69,0.85) 0%,
                 rgba(26,58,110,0.90) 50%,
@@ -275,7 +280,7 @@
             border: 1.5px solid rgba(212,168,32,0.55);
             border-radius: 50px;
             cursor: pointer;
-            letter-spacing: 0.08em;
+            letter-spacing: clamp(0.04em, 1vw, 0.08em);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             box-shadow:
@@ -436,19 +441,44 @@
         }
 
         #mainApp .app-judul-utama {
-            background: transparent;
+            background: linear-gradient(180deg, #f0ead8 0%, #e8dfc8 100%);
             color: #d4a820;
-            text-align: center;
-            padding: 6px 20px 2px;
+            text-align: left;
+            padding: 7px 16px 7px 20px;
             letter-spacing: 0.06em;
             font-weight: bold;
             font-size: 1em;
             line-height: 1.4;
-            border-bottom: none;
+            border-bottom: 1px solid rgba(212,168,32,0.30);
             text-shadow: none;
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(13,31,69,0.08);
+        }
+        #btnFormHeader {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #0d1f45 0%, #1a3560 100%);
+            color: #f5e07a;
+            border: 1px solid rgba(212,168,32,0.55);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.82em;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(13,31,69,0.25);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        #btnFormHeader:hover {
+            background: linear-gradient(135deg, #d4a820, #f5e07a);
+            color: #0d1f45;
+            box-shadow: 0 4px 12px rgba(212,168,32,0.35);
         }
 
         #mainApp button[type="button"][onclick*="simpan"],
@@ -525,10 +555,9 @@
             display: block !important;
             margin: 10px auto;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            min-width: 300px;
-            width: 100% !important;
-            max-width: 600px;
-            height: 200px !important;
+            width: 220px !important;
+            max-width: 220px;
+            height: 220px !important;
         }
         
         .detail-container {
@@ -578,10 +607,10 @@
         }
         
         @media (max-width: 768px) {
-            .welcome-title { font-size: 1.9em; }
             .detail-row { flex-direction: column; }
             .detail-label { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; }
-            .header-gambar { gap: 15px; }        
+            .header-gambar { gap: 15px; }
+            #welcomePage { overflow: hidden; }
         }
     
         /* ===== STEP FORM ===== */
@@ -1263,29 +1292,11 @@
             to   { opacity: 0; transform: translateY(30px); }
         }
 
-        /* Header — transparan total, hanya teks & progress terlihat */
-        .si-header {
-            flex-shrink: 0;
-            background: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-            padding: 8px 14px 6px;
-            border: none;
-            border-bottom: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-radius: 0;
-            box-shadow: none;
-        }
-        .si-header-icon { font-size: 1.25em; flex-shrink: 0; }
+        .si-header { display: none; }
+        .si-header-icon { display: none; }
         .si-header-text { flex: 1; min-width: 0; }
         .si-header-title {
-            font-size: 0.88em;
-            font-weight: 800;
-            color: #0d1f45;
-            letter-spacing: 0.05em;
-            text-shadow: 0 1px 3px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.6);
+            display: none;
         }
         .si-progress-wrap {
             margin-top: 4px;
@@ -1437,6 +1448,7 @@
 
     <div class="app-judul-utama">
         <div style="font-size:0.85em; opacity:0.80; letter-spacing:0.12em;">✦ BUKU TAMU DIGITAL ✦</div>
+        <button id="btnFormHeader" onclick="showForm()" style="display:none;">📝 Form Input</button>
     </div>
 
     <div id="formSection">
@@ -1660,24 +1672,24 @@
         gap: 10px;
         align-items: center;
     ">
-        <button type="button" onclick="selesaiEditBebas()" style="
+        <button type="button" onclick="simpanDariEditBebas()" style="
             width: 62px; height: 62px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #0d1f45, #1a3a6e);
-            color: #f5e07a;
-            border: 2px solid rgba(212,168,32,0.7);
+            background: linear-gradient(135deg, #1a6e2a, #27ae60);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.45);
             font-size: 0.68em;
             font-weight: 800;
             letter-spacing: 0.03em;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(13,31,69,0.45), 0 0 0 3px rgba(212,168,32,0.18);
+            box-shadow: 0 4px 16px rgba(39,174,96,0.45), 0 0 0 3px rgba(39,174,96,0.18);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 2px;
             transition: all 0.2s;
         " onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-            <span style="font-size:1.5em;">🔍</span>
-            <span>Pratinjau</span>
+            <span style="font-size:1.5em;">💾</span>
+            <span>Simpan</span>
         </button>
         <button type="button" onclick="batalEditBebas()" style="
             width: 62px; height: 62px;
@@ -1701,7 +1713,6 @@
     </div>
 
     <div id="mainNavigation">
-        <button onclick="showForm()" id="btnForm">📝 Form Input</button>
         <button onclick="showData()" id="btnData" style="display:none;">📊 Lihat Data (<span id="dataCount">0</span>)</button>
         <button onclick="exportData()" id="btnExport" style="display:none;">📑 Export Tabel Ringkasan</button>
         <button onclick="resetSemuaData()" id="btnReset" style="display:none; background: linear-gradient(135deg,#7b0000,#c0392b) !important; color:#fff !important;">🗑️ Hapus Semua Data</button>
@@ -1920,7 +1931,9 @@
 
             const bg2 = uvGeoLogo(shape, 128);
             const pb = bg2.attributes.position, ub = bg2.attributes.uv;
-            for (let i = 0; i < pb.count; i++) { pb.setX(i, -pb.getX(i)); ub.setX(i, 1 - ub.getX(i)); }
+            // Hanya balik posisi X (untuk winding order / culling) tapi JANGAN balik UV,
+            // supaya teks tidak terbalik saat logo berputar dan sisi belakang terlihat.
+            for (let i = 0; i < pb.count; i++) { pb.setX(i, -pb.getX(i)); }
             pb.needsUpdate = true; ub.needsUpdate = true; bg2.computeVertexNormals();
             const bm = new THREE.Mesh(bg2, faceM); bm.position.z = -(HD + 0.002); logoGrp.add(bm);
 
@@ -2176,6 +2189,7 @@ function startApp() {
     lsLoad();
     updateDataCounter();
     document.getElementById('mainNavigation').style.display = 'block';
+    document.getElementById('btnFormHeader').style.display = '';
     // Hubungkan ke Firebase Penyimpanan Terpusat
     inisialisasiFirebase();
     // Tampilkan overlay isian untuk field nama pertama kali
@@ -2190,6 +2204,7 @@ function goToWelcome() {
     document.getElementById('bukuTamuForm').reset();
     hideAllFields();
     document.getElementById('mainNavigation').style.display = 'none';
+    document.getElementById('btnFormHeader').style.display = 'none';
     document.getElementById('formSection').style.display = 'block';
     document.getElementById('dataSection').style.display = 'none';
 }
@@ -2315,16 +2330,13 @@ function resizeCanvas() {
     const field = document.getElementById('field-tandaTangan');
     if (!field || field.classList.contains('hidden')) return;
     setTimeout(() => {
-        const container = signatureCanvas.parentElement;
-        let newWidth = Math.min(container.offsetWidth || 600, 600);
-        if (newWidth < 300) newWidth = 300;
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = signatureCanvas.width;
         tempCanvas.height = signatureCanvas.height;
         tempCanvas.getContext('2d').drawImage(signatureCanvas, 0, 0);
-        signatureCanvas.width = newWidth;
-        signatureCanvas.height = 200;
-        ctx2.drawImage(tempCanvas, 0, 0, newWidth, 200);
+        signatureCanvas.width = 220;
+        signatureCanvas.height = 220;
+        ctx2.drawImage(tempCanvas, 0, 0, 220, 220);
         ctx2.lineWidth = 2;
         ctx2.lineCap = 'round';
         ctx2.strokeStyle = '#00008B';
@@ -3317,6 +3329,8 @@ function editDariOverlay() {
             // ── Sembunyikan tombol Form Input saat mode edit ──
             const mainNav = document.getElementById('mainNavigation');
             if (mainNav) mainNav.style.display = 'none';
+            const bfh = document.getElementById('btnFormHeader');
+            if (bfh) bfh.style.display = 'none';
 
             // ── Tampilkan floating edit buttons ──
             const floatBtns = document.getElementById('floatingEditBtns');
@@ -3374,6 +3388,99 @@ function editDariOverlay() {
     }, 290);
 }
 
+async function simpanDariEditBebas() {
+    // ── Validasi semua field wajib di mode edit ──
+    let isValid = true;
+    const pesan = [];
+
+    // Nama minimal 5 huruf
+    const namaEl = document.getElementById('nama');
+    const huruf = (namaEl ? namaEl.value.trim().match(/[A-Za-z]/g) || [] : []).length;
+    if (huruf < 5) {
+        if (namaEl) namaEl.classList.add('error');
+        pesan.push('• Nama minimal 5 huruf');
+        isValid = false;
+    }
+
+    // Field wajib
+    ['asal','pihakDitemui','jenisLayanan'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) { el.classList.add('error'); pesan.push('• ' + (el.labels?.[0]?.textContent || id) + ' wajib diisi'); isValid = false; }
+    });
+
+    // Uraian minimal 15 karakter
+    const uraianEl = document.getElementById('uraian');
+    if (uraianEl && uraianEl.value.trim().length < 15) {
+        uraianEl.classList.add('error');
+        pesan.push('• Uraian keperluan minimal 15 karakter');
+        isValid = false;
+    }
+
+    // Nomor HP minimal 11 digit
+    const hpEl = document.getElementById('nomorHp');
+    if (hpEl && hpEl.value.trim().replace(/[^0-9]/g, '').length < 11) {
+        hpEl.classList.add('error');
+        pesan.push('• Nomor WhatsApp minimal 11 digit');
+        isValid = false;
+    }
+
+    // ── Validasi Tanda Tangan WAJIB: harus ada TTD baru ATAU TTD lama ──
+    const existingTTD = editingSementara
+        ? (dataTamuSementara[editingIndex]?.tandaTangan || '')
+        : (dataBukuTamu[editingIndex]?.tandaTangan || '');
+    const strokeCm = totalStrokeLength / PIXELS_PER_CM;
+    const ttdBaru  = hasSignature && strokeCm >= MIN_STROKE_LENGTH_CM;
+    if (!ttdBaru && !existingTTD) {
+        const sw = document.getElementById('signatureWarning');
+        if (sw) sw.style.display = 'block';
+        pesan.push('• Tanda tangan wajib diisi');
+        isValid = false;
+    } else {
+        const sw = document.getElementById('signatureWarning');
+        if (sw) sw.style.display = 'none';
+    }
+
+    if (!isValid) {
+        alert('❌ Data belum lengkap, perbaiki terlebih dahulu:\n\n' + pesan.join('\n'));
+        return;
+    }
+
+    // ── Catat index & status sebelum simpan (simpanData() akan reset editingIndex) ──
+    const savedIndex       = editingIndex;
+    const savedSementara   = editingSementara;
+
+    // ── Semua valid — jalankan simpan via simpanData() ──
+    _editBebasMode = false;
+    isEditMode = true;
+    const ok = await simpanData();
+    isEditMode = false;
+
+    if (!ok) {
+        _editBebasMode = true;
+        return;
+    }
+
+    // ── Tutup floating buttons, pulihkan UI ──
+    const floatBtns = document.getElementById('floatingEditBtns');
+    if (floatBtns) floatBtns.style.display = 'none';
+    const mainNav = document.getElementById('mainNavigation');
+    if (mainNav) mainNav.style.display = 'block';
+    const bfh2 = document.getElementById('btnFormHeader');
+    if (bfh2) bfh2.style.display = '';
+    const paperScroll = document.getElementById('paperScroll');
+    if (paperScroll) paperScroll.style.display = '';
+    _stepNamaDone = false; _stepUraianDone = false; _stepHpDone = false;
+
+    // ── Tampilkan tabel data & export PDF — sama persis dengan Simpan Detail Lengkap ──
+    showData();
+    // Jika data berasal dari dataSementara, sekarang sudah dipindah ke dataBukuTamu
+    // Index di dataBukuTamu adalah savedIndex (jika update final) atau length-1 (jika baru)
+    const pdfIndex = (!savedSementara && savedIndex >= 0) ? savedIndex : dataBukuTamu.length - 1;
+    if (pdfIndex >= 0 && pdfIndex < dataBukuTamu.length) {
+        exportDetailPerTamuPDF(pdfIndex);
+    }
+}
+
 function selesaiEditBebas() {
     // Pratinjau ulang dari mode edit bebas - tidak perlu foto baru jika sudah ada
     _editBebasMode = false;
@@ -3383,6 +3490,9 @@ function selesaiEditBebas() {
     // ── Tampilkan kembali mainNavigation ──
     const mainNavSel = document.getElementById('mainNavigation');
     if (mainNavSel) mainNavSel.style.display = 'block';
+    // Tampilkan kembali btnFormHeader
+    const bfhSel = document.getElementById('btnFormHeader');
+    if (bfhSel) bfhSel.style.display = '';
     // Sembunyikan floating edit buttons
     const floatBtns = document.getElementById('floatingEditBtns');
     if (floatBtns) floatBtns.style.display = 'none';
@@ -3407,6 +3517,9 @@ function batalEditBebas() {
     // ── Tampilkan kembali mainNavigation ──
     const mainNavBat = document.getElementById('mainNavigation');
     if (mainNavBat) mainNavBat.style.display = 'block';
+    // Tampilkan kembali btnFormHeader
+    const bfhBat = document.getElementById('btnFormHeader');
+    if (bfhBat) bfhBat.style.display = '';
     // Sembunyikan floating edit buttons
     const floatBtns = document.getElementById('floatingEditBtns');
     if (floatBtns) floatBtns.style.display = 'none';
@@ -3473,6 +3586,7 @@ async function simpanData() {
             isValid = false;
         }
     } else {
+        // ── Validasi field wajib ──
         const requiredFields = ['nama', 'asal', 'pihakDitemui', 'jenisLayanan'];
         requiredFields.forEach(id => {
             const el = document.getElementById(id);
@@ -3481,6 +3595,54 @@ async function simpanData() {
                 isValid = false;
             }
         });
+
+        // ── Validasi Nama minimal 5 huruf ──
+        const namaInputEdit = document.getElementById('nama');
+        const hurufCountEdit = (namaInputEdit.value.trim().match(/[A-Za-z]/g) || []).length;
+        if (hurufCountEdit < 5) {
+            namaInputEdit.classList.add('error');
+            isValid = false;
+            alert('Nama minimal 5 huruf!');
+        }
+
+        // ── Validasi Uraian minimal 15 karakter ──
+        const uraianEditEl = document.getElementById('uraian');
+        if (uraianEditEl && uraianEditEl.value.trim().length < 15) {
+            uraianEditEl.classList.add('error');
+            isValid = false;
+            alert('Uraian minimal 15 karakter!');
+        }
+
+        // ── Validasi Nomor HP minimal 11 digit ──
+        const nomorHpEditEl = document.getElementById('nomorHp');
+        if (nomorHpEditEl) {
+            const nomorHpEdit = nomorHpEditEl.value.trim().replace(/[^0-9]/g, '');
+            if (nomorHpEdit.length < 11) {
+                nomorHpEditEl.classList.add('error');
+                isValid = false;
+                alert('Nomor WA minimal 11 digit!');
+            }
+        }
+
+        // ── Validasi Tanda Tangan: harus ada TTD baru ATAU TTD lama di data ──
+        const existingTTD = editingSementara
+            ? (dataTamuSementara[editingIndex]?.tandaTangan || '')
+            : (dataBukuTamu[editingIndex]?.tandaTangan || '');
+        const strokeLengthCmEdit = totalStrokeLength / PIXELS_PER_CM;
+        const ttdBaruValid = hasSignature && strokeLengthCmEdit >= MIN_STROKE_LENGTH_CM;
+        if (!ttdBaruValid && !existingTTD) {
+            document.getElementById('signatureWarning').style.display = 'block';
+            isValid = false;
+        }
+
+        // ── Validasi Foto: harus ada foto baru ATAU foto lama di data ──
+        const existingFotoFront = editingSementara
+            ? (dataTamuSementara[editingIndex]?.fotoFront || null)
+            : (dataBukuTamu[editingIndex]?.fotoFront || null);
+        if (!fotoDataURLFront && !existingFotoFront) {
+            document.getElementById('photoWarning').style.display = 'block';
+            isValid = false;
+        }
     }
     if (!isValid) return false;
     const asal = document.getElementById('asal').value;
@@ -3627,7 +3789,8 @@ function showForm() {
     if (imgFront) { imgFront.src = ''; imgFront.style.display = 'none'; }
     if (imgBack)  { imgBack.src  = ''; imgBack.style.display  = 'none'; }
     document.getElementById('mainNavigation').style.display = 'block';
-    document.getElementById('btnForm').style.background = '#28a745';
+    document.getElementById('btnFormHeader').style.display = '';
+    document.getElementById('btnFormHeader').style.background = 'linear-gradient(135deg,#1a6e2a,#27ae60)';
     document.getElementById('btnData').style.background = '';
 }
 
@@ -3637,7 +3800,7 @@ function showData() {
         const formSec = document.getElementById('formSection');
         if (formSec) { formSec.style.visibility = ''; formSec.style.display = 'none'; }
         document.getElementById('dataSection').style.display = 'block';
-        document.getElementById('btnForm').style.background = '#6c757d';
+        document.getElementById('btnFormHeader').style.background = 'linear-gradient(135deg,#0d1f45,#1a3560)';
         document.getElementById('btnData').style.background = '#28a745';
         displayData();
     });
@@ -3880,6 +4043,7 @@ async function saveEditedData() {
         isEditMode = false;
         editingSementara = false;
         document.getElementById('mainNavigation').style.display = 'block';
+        document.getElementById('btnFormHeader').style.display = '';
         document.getElementById('editModeButtons').style.display = 'none';
         showData();
     } else {
@@ -3902,6 +4066,7 @@ async function cancelEdit() {
     isEditMode = false;
     editingSementara = false;
     document.getElementById('mainNavigation').style.display = 'block';
+    document.getElementById('btnFormHeader').style.display = '';
     document.getElementById('editModeButtons').style.display = 'none';
     showData();
     alert('Edit dibatalkan. Data asli dikembalikan.');
