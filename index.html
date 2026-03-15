@@ -1488,7 +1488,7 @@
                 <div id="field-nama">
                     <label>👤 Nama Lengkap <span class="required">*</span></label>
                     <input id="nama" required type="text" placeholder="Minimal 5 huruf"
-                        oninput="validateNama(); autoStepNama();"
+                        oninput="_debouncedValidateNama(); _debouncedAutoStepNama();"
                         onkeydown="if(event.key==='Enter'){event.preventDefault();stepNama();}"/>
                     <small id="namaHint" style="color:#888;font-size:0.75em;">Akan lanjut otomatis setelah selesai mengetik</small>
                 </div>
@@ -1595,7 +1595,7 @@
                 <div id="field-uraian" class="hidden">
                     <label>📝 Uraian Keperluan <span class="required">*</span></label>
                     <textarea id="uraian" required rows="3"
-                        oninput="validateUraian(); autoResize(this); autoStepUraian();"
+                        oninput="_debouncedValidateUraian(); _debouncedAutoStepUraian();"
                         onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();stepUraian();}"></textarea>
                     <small style="color:#888;font-size:0.75em;">Akan lanjut otomatis setelah selesai mengetik (min. 10 karakter)</small>
                 </div>
@@ -1605,7 +1605,7 @@
                     <small style="color:#555; display:block; margin-bottom:4px;">Awali dengan <strong>08</strong> (contoh: 081234567890)</small>
                     <input id="nomorHp" required type="tel" placeholder="08xxxxxxxxxx"
                         pattern="08[0-9]{9,11}" maxlength="13" minlength="11"
-                        oninput="validateNomorHp(this); autoStepNomorHp();"
+                        oninput="validateNomorHp(this); _debouncedAutoStepHp();"
                         onkeydown="if(event.key==='Enter'){event.preventDefault();stepNomorHp();}"/>
                     <small id="nomorHpInfo" style="color:#dc3545; display:block; min-height:1.2em;"></small>
                     <small style="color:#888;font-size:0.75em;">Akan lanjut otomatis setelah nomor valid</small>
@@ -2240,6 +2240,19 @@ function goToWelcome() {
     document.getElementById('dataSection').style.display = 'none';
 }
 
+// ===== DEBOUNCE UTILITY =====
+function debounce(fn, ms) {
+    let t;
+    return function(...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); };
+}
+
+// Debounced versions of heavy per-keystroke handlers
+const _debouncedValidateNama   = debounce(validateNama,   120);
+const _debouncedAutoStepNama   = debounce(autoStepNama,   120);
+const _debouncedValidateUraian = debounce(validateUraian, 120);
+const _debouncedAutoStepUraian = debounce(autoStepUraian, 120);
+const _debouncedAutoStepHp     = debounce(autoStepNomorHp, 120);
+
 // ===== GLOBAL VARIABLES =====
 const LS_KEY_FINAL     = 'bukuTamu_dataFinal_v1';
 const LS_KEY_SEMENTARA = 'bukuTamu_dataSementara_v1';
@@ -2523,8 +2536,6 @@ function tampilJawab(fieldKey, labelTeks, valueTeks) {
                 oldVal.style.transition = '';
                 oldVal.style.opacity = '1';
                 oldVal.style.transform = 'translateX(0)';
-                oldVal.classList.remove('updated');
-                void oldVal.offsetWidth;
                 oldVal.classList.add('updated');
             }, 180);
         }
@@ -2801,10 +2812,7 @@ function bersihJawab() {
 function validateNama() {
     if (isEditMode) return;
     const namaInput = document.getElementById('nama');
-    const namaValue = namaInput.value.trim();
-    let hurufCount = 0;
-    try { hurufCount = (namaValue.match(/\p{L}/gu) || []).length; }
-    catch(e) { hurufCount = (namaValue.match(/[A-Za-z]/g) || []).length; }
+    const hurufCount = (namaInput.value.trim().match(/[A-Za-z]/g) || []).length;
     if (hurufCount >= 5) {
         namaInput.classList.remove('error');
         namaInput.classList.add('success');
@@ -3042,7 +3050,6 @@ function hideAllFields() {
     if (fn) {
         fn.classList.remove('hidden');
         fn.classList.remove('field-step-enter');
-        void fn.offsetWidth;
         fn.classList.add('field-step-enter');
     }
     /* Reset referensi posisi area agar bisa dipindah ulang */
@@ -3107,10 +3114,7 @@ function autoStepNama() {
     if (isEditMode || _stepNamaDone || _editBebasMode) return;
     clearTimeout(_timerNama);
     const namaInput = document.getElementById('nama');
-    const namaValue = namaInput.value.trim();
-    let hurufCount = 0;
-    try { hurufCount = (namaValue.match(/\p{L}/gu) || []).length; }
-    catch(e) { hurufCount = (namaValue.match(/[A-Za-z]/g) || []).length; }
+    const hurufCount = (namaInput.value.trim().match(/[A-Za-z]/g) || []).length;
     if (hurufCount < 5) return;
     _timerNama = setTimeout(() => {
         if (!_stepNamaDone) stepNama();
@@ -4595,9 +4599,7 @@ document.addEventListener('DOMContentLoaded', () => {
     );
     focusable.forEach(field => {
         field.addEventListener('focus', () => { scrollToFieldWhenFocused(field); });
-        if (field.tagName === 'TEXTAREA') {
-            field.addEventListener('input', () => { setTimeout(() => scrollToFieldWhenFocused(field), 120); });
-        }
+        // DIHAPUS: listener 'input' pada textarea menyebabkan reflow tiap ketikan
     });
     const ttdField = document.getElementById('field-tandaTangan');
     if (ttdField) {
